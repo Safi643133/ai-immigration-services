@@ -18,6 +18,7 @@ export type DocumentCategory =
   | 'education' 
   | 'financial' 
   | 'employment' 
+  | 'general'
   | 'medical'
   | 'other'
 
