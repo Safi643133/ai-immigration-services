@@ -35,15 +35,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        const userProfile = await getUserProfile(session.user.id)
-        setProfile(userProfile)
+      try {
+        console.log('Getting initial session...')
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error getting session:', error)
+          setLoading(false)
+          return
+        }
+        
+        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          try {
+            console.log('Getting user profile...')
+            const userProfile = await getUserProfile(session.user.id)
+            setProfile(userProfile)
+          } catch (profileError) {
+            console.error('Error getting user profile:', profileError)
+            // Don't fail the entire auth process if profile fetch fails
+            setProfile(null)
+          }
+        }
+        
+        console.log('Initial session loaded, setting loading to false')
+        setLoading(false)
+      } catch (error) {
+        console.error('Error in getInitialSession:', error)
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
     getInitialSession()
@@ -51,11 +72,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id)
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          const userProfile = await getUserProfile(session.user.id)
-          setProfile(userProfile)
+          try {
+            const userProfile = await getUserProfile(session.user.id)
+            setProfile(userProfile)
+          } catch (profileError) {
+            console.error('Error getting user profile on auth change:', profileError)
+            setProfile(null)
+          }
         } else {
           setProfile(null)
         }
