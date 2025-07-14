@@ -6,6 +6,11 @@ import { createBrowserClient } from '@supabase/ssr'
 import { getUserProfile } from '@/lib/auth'
 import type { UserProfile } from '@/lib/supabase'
 
+// Check for required environment variables
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  console.error('Missing required Supabase environment variables')
+}
+
 const supabase = createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
