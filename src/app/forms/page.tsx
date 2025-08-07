@@ -213,6 +213,53 @@ export default function FormsPage() {
     }
   }
 
+  const handleExportPDF = async () => {
+    if (!selectedTemplate) return
+
+    setProcessing(true)
+    try {
+      const response = await fetch('/api/forms/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          form_template_id: selectedTemplate.id,
+          form_data: formData,
+          extracted_data_summary: extractedData.map(item => ({
+            field_name: item.field_name,
+            field_value: item.field_value,
+            confidence_score: item.confidence_score
+          })),
+          filename: `${selectedTemplate.name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`
+        })
+      })
+
+      if (response.ok) {
+        // Create blob and download
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${selectedTemplate.name.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        
+        alert('PDF exported successfully!')
+      } else {
+        const error = await response.json()
+        alert(error.error || 'Failed to export PDF')
+      }
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      alert('Failed to export PDF')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   const renderField = (fieldName: string, fieldConfig: FormField, value: string = '') => {
     const { type, required, options } = fieldConfig
 
@@ -399,18 +446,33 @@ export default function FormsPage() {
                         {selectedTemplate.description}
                       </p>
                     </div>
-                    <button
-                      onClick={handleSaveForm}
-                      disabled={processing}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center space-x-2"
-                    >
-                      {processing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                      <span>{processing ? 'Saving...' : 'Save Form'}</span>
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={handleSaveForm}
+                        disabled={processing}
+                        className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center space-x-2"
+                      >
+                        {processing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
+                        <span>{processing ? 'Saving...' : 'Save Form'}</span>
+                      </button>
+                      
+                      <button
+                        onClick={handleExportPDF}
+                        disabled={processing}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
+                      >
+                        {processing ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                        <span>{processing ? 'Generating...' : 'Export PDF'}</span>
+                      </button>
+                    </div>
                   </div>
 
                   <form className="space-y-6">

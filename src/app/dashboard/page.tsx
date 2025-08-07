@@ -128,6 +128,21 @@ export default function DashboardPage() {
                   </button>
                 </div>
 
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    View Submissions
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    View and download your previously generated forms.
+                  </p>
+                  <button 
+                    onClick={() => router.push('/submissions')}
+                    className="w-full bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
+                  >
+                    View Submissions
+                  </button>
+                </div>
+
                 <div className="bg-white p-6 rounded-lg shadow-lg border">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Review & Submit
