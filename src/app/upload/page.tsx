@@ -33,7 +33,10 @@ export default function UploadPage() {
     { value: 'passport', label: 'Passport', description: 'Passport or national ID documents' },
     { value: 'visa', label: 'Visa', description: 'Current and previous visas' },
     { value: 'education', label: 'Education', description: 'Academic certificates and transcripts' },
+    { value: 'employment', label: 'Employment', description: 'Employment letters, contracts, and pay stubs' },
     { value: 'financial', label: 'Financial', description: 'Bank statements and financial documents' },
+    { value: 'birth_certificate', label: 'Birth Certificate', description: 'Birth certificates and vital records' },
+    { value: 'marriage_certificate', label: 'Marriage Certificate', description: 'Marriage certificates and similar documents' },
     { value: 'medical', label: 'Medical', description: 'Medical certificates and health records' },
     { value: 'other', label: 'Other', description: 'Other supporting documents' }
   ]

@@ -1,3 +1,6 @@
+-- Fixed Supabase Setup Script
+-- This script handles existing tables and types properly
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -21,7 +24,7 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE document_category AS ENUM ('passport', 'visa', 'education', 'financial', 'medical', 'other');
+    CREATE TYPE document_category AS ENUM ('passport', 'visa', 'education', 'employment', 'financial', 'birth_certificate', 'marriage_certificate', 'medical', 'other');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -73,71 +76,6 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     UNIQUE(user_id)
 );
 
--- Create RLS (Row Level Security) policies
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
-
--- Policy for users to read their own profile
-CREATE POLICY "Users can view own profile" ON user_profiles
-    FOR SELECT USING (auth.uid() = user_id);
-
--- Policy for users to update their own profile
-CREATE POLICY "Users can update own profile" ON user_profiles
-    FOR UPDATE USING (auth.uid() = user_id);
-
--- Policy for users to insert their own profile
-CREATE POLICY "Users can insert own profile" ON user_profiles
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Create function to handle new user signup
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO public.user_profiles (user_id, email, full_name, avatar_url)
-    VALUES (
-        NEW.id,
-        NEW.email,
-        NEW.raw_user_meta_data->>'full_name',
-        NEW.raw_user_meta_data->>'avatar_url'
-    );
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Drop existing trigger if it exists
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-
--- Create trigger for new user signup
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Create function to update user profile timestamp
-CREATE OR REPLACE FUNCTION public.handle_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Drop existing trigger if it exists
-DROP TRIGGER IF EXISTS handle_user_profiles_updated_at ON user_profiles;
-
--- Create trigger for updating timestamp
-CREATE TRIGGER handle_user_profiles_updated_at
-    BEFORE UPDATE ON user_profiles
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
--- Create indexes for better performance (only if they don't exist)
-CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
-CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
-
 -- Create documents table (only if it doesn't exist)
 CREATE TABLE IF NOT EXISTS documents (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -153,40 +91,86 @@ CREATE TABLE IF NOT EXISTS documents (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create RLS policies for documents
+-- Create function to handle new user signup (only if it doesn't exist)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.user_profiles (user_id, email, full_name, avatar_url)
+    VALUES (
+        NEW.id,
+        NEW.email,
+        NEW.raw_user_meta_data->>'full_name',
+        NEW.raw_user_meta_data->>'avatar_url'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create function to update timestamps (only if it doesn't exist)
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create triggers (drop and recreate to avoid conflicts)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+DROP TRIGGER IF EXISTS handle_user_profiles_updated_at ON user_profiles;
+CREATE TRIGGER handle_user_profiles_updated_at
+    BEFORE UPDATE ON user_profiles
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS handle_documents_updated_at ON documents;
+CREATE TRIGGER handle_documents_updated_at
+    BEFORE UPDATE ON documents
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- Enable RLS (Row Level Security) policies
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if they exist
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
 DROP POLICY IF EXISTS "Users can view own documents" ON documents;
 DROP POLICY IF EXISTS "Users can insert own documents" ON documents;
 DROP POLICY IF EXISTS "Users can update own documents" ON documents;
 DROP POLICY IF EXISTS "Users can delete own documents" ON documents;
 
--- Policy for users to view their own documents
+-- Create RLS policies for user_profiles
+CREATE POLICY "Users can view own profile" ON user_profiles
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own profile" ON user_profiles
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own profile" ON user_profiles
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Create RLS policies for documents
 CREATE POLICY "Users can view own documents" ON documents
     FOR SELECT USING (auth.uid() = user_id);
 
--- Policy for users to insert their own documents
 CREATE POLICY "Users can insert own documents" ON documents
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
--- Policy for users to update their own documents
 CREATE POLICY "Users can update own documents" ON documents
     FOR UPDATE USING (auth.uid() = user_id);
 
--- Policy for users to delete their own documents
 CREATE POLICY "Users can delete own documents" ON documents
     FOR DELETE USING (auth.uid() = user_id);
 
--- Drop existing trigger if it exists
-DROP TRIGGER IF EXISTS handle_documents_updated_at ON documents;
-
--- Create trigger for updating timestamp
-CREATE TRIGGER handle_documents_updated_at
-    BEFORE UPDATE ON documents
-    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
-
--- Create indexes for documents (only if they don't exist)
+-- Create indexes (only if they don't exist)
+CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
 CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(document_category);
 CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(processing_status);

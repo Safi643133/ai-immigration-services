@@ -81,7 +81,7 @@ export class DocumentProcessor {
     if (!this.agentInitialized) {
       try {
         initializeAgent({
-          model: 'gpt-4',
+          model: 'gpt-4o-mini',
           temperature: 0.1,
           max_tokens: 4000,
           retry_attempts: 3,

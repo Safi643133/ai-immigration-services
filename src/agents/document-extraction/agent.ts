@@ -2,6 +2,7 @@ import { ChatOpenAI } from '@langchain/openai'
 import { StructuredOutputParser } from 'langchain/output_parsers'
 import { PromptTemplate } from '@langchain/core/prompts'
 import { RunnableSequence } from '@langchain/core/runnables'
+import { z } from 'zod'
 import { 
   ExtractionContext, 
   ExtractionResult, 
@@ -17,10 +18,13 @@ export class DocumentExtractionAgent {
   private model: ChatOpenAI
   private config: AgentConfig
   private extractionParser: StructuredOutputParser<typeof ExtractionResultSchema>
+  private fieldsArrayParser: StructuredOutputParser<z.ZodArray<typeof ExtractedFieldSchema> | any>
+  // Soft limit on how much document text we pass to the model to avoid context overflows
+  private readonly MAX_INPUT_CHARS = 5000
 
   constructor(config: Partial<AgentConfig> = {}) {
     this.config = {
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       temperature: 0.1,
       max_tokens: 4000,
       retry_attempts: 3,
@@ -35,9 +39,15 @@ export class DocumentExtractionAgent {
       temperature: this.config.temperature,
       maxTokens: this.config.max_tokens,
       openAIApiKey: process.env.OPENAI_API_KEY,
+      modelKwargs: {
+        response_format: { type: 'json_object' }
+      }
     })
 
     this.extractionParser = StructuredOutputParser.fromZodSchema(ExtractionResultSchema)
+    // Parser for compact per-category responses: { extracted_fields: ExtractedField[] }
+    const FieldsEnvelope = z.object({ extracted_fields: z.array(ExtractedFieldSchema) })
+    this.fieldsArrayParser = StructuredOutputParser.fromZodSchema(FieldsEnvelope)
   }
 
   async extractDocument(context: ExtractionContext): Promise<ExtractionResult> {
@@ -49,15 +59,15 @@ export class DocumentExtractionAgent {
       // Get document template
       const template = getTemplateForCategory(context.document_category)
       
-      // Create extraction chain
-      const extractionChain = await this.createExtractionChain(template)
+      // Truncate document text to fit within context limits
+      const truncatedText = this.truncateDocumentText(context.document_text)
       
-      // Extract fields using structured output parser
-      const extractionResult = await this.performExtraction(extractionChain, context.document_text)
+      // Multi-pass extraction by field category to reduce token pressure
+      const extractionResult = await this.extractInChunksByCategory(template, truncatedText)
       
       // Validate extraction if enabled
       if (this.config.enable_validation) {
-        await this.validateExtraction(extractionResult.extracted_fields, context.document_text)
+        await this.validateExtraction(extractionResult.extracted_fields, truncatedText)
       }
       
       // Calculate confidence summary
@@ -82,8 +92,12 @@ export class DocumentExtractionAgent {
     }
   }
 
-  private async createExtractionChain(template: any) {
-    const formatInstructions = this.extractionParser.getFormatInstructions()
+  private async createExtractionChain(template: any, opts?: { fieldsSubset?: any[], useFieldsOnly?: boolean }) {
+    const useFieldsOnly = opts?.useFieldsOnly === true
+    const fieldsToUse = opts?.fieldsSubset ?? template.fields
+    const formatInstructions = useFieldsOnly
+      ? this.fieldsArrayParser.getFormatInstructions()
+      : this.extractionParser.getFormatInstructions()
     
     const prompt = PromptTemplate.fromTemplate(
       `You are an expert immigration document analyzer. Your task is to extract structured information from immigration documents with high accuracy.
@@ -94,8 +108,8 @@ DESCRIPTION: {description}
 DOCUMENT TEXT:
 {document_text}
 
-AVAILABLE FIELDS TO EXTRACT:
-{fields}
+ AVAILABLE FIELDS TO EXTRACT:
+ {fields}
 
 EXTRACTION GUIDELINES:
 1. Only extract information that is explicitly present in the document text
@@ -105,13 +119,16 @@ EXTRACTION GUIDELINES:
 5. For names, include the complete name as written
 6. Be precise and avoid making assumptions
 7. If you're unsure about a field, set confidence_score to 0.5 or lower
+8. The document text may be truncated for length. Only use what is shown.
+9. Only extract fields from the ALLOWED list shown above. Ignore any other fields.
+10. Keep each extracted field object minimal: include field_name, field_value, confidence_score, field_category, validation_status only.
 
 EXAMPLES OF WHAT TO LOOK FOR:
 {examples}
 
 IMPORTANT: Only include fields that you can confidently extract from the document text. If you cannot find a field, do not include it in the response.
 
-Return the extracted information in the exact format specified by the format instructions.
+Return ONLY valid JSON, with no markdown fences or commentary.
 
 {format_instructions}`
     )
@@ -121,17 +138,45 @@ Return the extracted information in the exact format specified by the format ins
         document_text: (input: { document_text: string }) => input.document_text,
         document_type: () => template.name,
         description: () => template.description,
-        fields: () => template.fields.map((field: any) => 
-          `- ${field.name}: ${field.description} (${field.required ? 'REQUIRED' : 'OPTIONAL'})
-   Examples: ${field.examples.join(', ')}`
-        ).join('\n'),
-        examples: () => template.examples.join('\n'),
+        fields: () => {
+          const MAX_FIELDS = 80
+          const listed = fieldsToUse.slice(0, MAX_FIELDS).map((field: any) => 
+            `- ${field.name} (${field.required ? 'required' : 'optional'}; category: ${field.category})`
+          ).join('\n')
+          if (fieldsToUse.length > MAX_FIELDS) {
+            const remaining = fieldsToUse.length - MAX_FIELDS
+            return listed + `\n- ...and ${remaining} additional fields (not listed due to length). Extract them if present in the document.`
+          }
+          return listed
+        },
+        examples: () => {
+          if (useFieldsOnly) return ''
+          const MAX_EXAMPLES = 3
+          const examples = Array.isArray(template.examples) ? template.examples.slice(0, MAX_EXAMPLES) : []
+          return examples.join('\n')
+        },
         format_instructions: () => formatInstructions
       },
       prompt,
       this.model,
-      this.extractionParser
+      (raw: any) => useFieldsOnly ? this.safeParseWithParser(raw, this.fieldsArrayParser) : this.safeParseWithParser(raw, this.extractionParser)
     ])
+  }
+
+  /**
+   * Reduce the input document text to stay safely under model context limits.
+   * Keeps the beginning (where headers and identifiers often are) and the end
+   * (where signatures/footers can appear), with a clear truncation marker.
+   */
+  private truncateDocumentText(fullText: string): string {
+    if (!fullText || fullText.length <= this.MAX_INPUT_CHARS) {
+      return fullText
+    }
+    const headKeep = Math.floor(this.MAX_INPUT_CHARS * 0.8)
+    const tailKeep = this.MAX_INPUT_CHARS - headKeep
+    const head = fullText.slice(0, headKeep)
+    const tail = fullText.slice(-tailKeep)
+    return `${head}\n\n...[TRUNCATED FOR LENGTH]...\n\n${tail}`
   }
 
   private async performExtraction(chain: any, documentText: string): Promise<any> {
@@ -162,6 +207,89 @@ Return the extracted information in the exact format specified by the format ins
     }
     
     throw new Error(`All extraction attempts failed. Last error: ${lastError?.message}`)
+  }
+
+  private async safeParseWithParser(raw: any, parser: any): Promise<any> {
+    const text = typeof raw === 'string' ? raw : (raw?.content ?? String(raw))
+    try {
+      return await parser.parse(text)
+    } catch (err1) {
+      const cleaned = this.cleanJsonFences(text)
+      try {
+        return await parser.parse(cleaned)
+      } catch (err2) {
+        const sliced = this.extractJsonSubstring(cleaned)
+        return await parser.parse(sliced)
+      }
+    }
+  }
+
+  private cleanJsonFences(s: string): string {
+    return s
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```\s*$/i, '')
+  }
+
+  private extractJsonSubstring(s: string): string {
+    const start = s.indexOf('{')
+    const end = s.lastIndexOf('}')
+    if (start !== -1 && end !== -1 && end > start) {
+      return s.slice(start, end + 1)
+    }
+    return s
+  }
+
+  private async extractInChunksByCategory(template: any, documentText: string): Promise<ExtractionResult> {
+    // Group fields by category
+    const fieldsByCategory: Record<string, any[]> = {}
+    for (const f of template.fields) {
+      const key = f.category || 'other'
+      if (!fieldsByCategory[key]) fieldsByCategory[key] = []
+      fieldsByCategory[key].push(f)
+    }
+
+    const merged: Record<string, ExtractedField> = {}
+
+    const categoriesOrder = [
+      'personal', 'contact', 'address', 'identification', 'passport',
+      'travel', 'education', 'employment', 'financial', 'other'
+    ]
+
+    const orderedKeys = Object.keys(fieldsByCategory).sort((a, b) => {
+      const ia = categoriesOrder.indexOf(a)
+      const ib = categoriesOrder.indexOf(b)
+      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+    })
+
+    const BATCH_SIZE = 12
+    for (const key of orderedKeys) {
+      const subset = fieldsByCategory[key]
+      if (!subset || subset.length === 0) continue
+
+      for (let i = 0; i < subset.length; i += BATCH_SIZE) {
+        const batch = subset.slice(i, i + BATCH_SIZE)
+        const chain = await this.createExtractionChain({ ...template, fields: batch }, { fieldsSubset: batch, useFieldsOnly: true })
+        const res = await this.performExtraction(chain, documentText)
+        const arr: ExtractedField[] = res?.extracted_fields ?? []
+        for (const ef of arr) {
+          const existing = merged[ef.field_name]
+          if (!existing || (ef.confidence_score ?? 0) > (existing.confidence_score ?? 0)) {
+            merged[ef.field_name] = ef
+          }
+        }
+      }
+    }
+
+    const extracted_fields = Object.values(merged)
+    const confidence_summary = this.calculateConfidenceSummary(extracted_fields)
+    return {
+      document_type: template.name,
+      extracted_fields,
+      confidence_summary,
+      extraction_notes: [],
+      processing_time_ms: 0
+    }
   }
 
   private async validateExtraction(fields: ExtractedField[], documentText: string): Promise<void> {

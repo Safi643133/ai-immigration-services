@@ -16,10 +16,11 @@ export type DocumentCategory =
   | 'passport' 
   | 'visa' 
   | 'education' 
-  | 'financial' 
   | 'employment' 
-  | 'general'
+  | 'financial' 
   | 'medical'
+  | 'birth_certificate'
+  | 'marriage_certificate'
   | 'other'
 
 // Schema for extracted field
