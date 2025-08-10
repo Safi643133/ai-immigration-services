@@ -47,6 +47,20 @@ export async function GET(request: NextRequest) {
       }
     )
 
+    const { searchParams } = new URL(request.url)
+    const mappingsFor = searchParams.get('mappingsFor')
+
+    if (mappingsFor) {
+      const { data: mappings, error: mapError } = await supabaseAdmin
+        .from('field_mappings')
+        .select('extracted_field_name, form_field_name')
+        .eq('form_template_id', mappingsFor)
+      if (mapError) {
+        return NextResponse.json({ error: 'Failed to fetch field mappings' }, { status: 500 })
+      }
+      return NextResponse.json({ success: true, field_mappings: mappings || [] })
+    }
+
     // Get form templates
     const { data: templates, error: templatesError } = await supabaseAdmin
       .from('form_templates')

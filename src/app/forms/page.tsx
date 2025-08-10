@@ -78,7 +78,7 @@ export default function FormsPage() {
     autoFillForm(template, extractedData)
   }
 
-  const autoFillForm = (template: FormTemplate, data: ExtractedData[]) => {
+  const autoFillForm = async (template: FormTemplate, data: ExtractedData[]) => {
     const filledData: FormData = {}
     
     console.log('Auto-filling form with extracted data:', data)
@@ -123,7 +123,21 @@ export default function FormsPage() {
       return dateStr // Return original if conversion fails
     }
 
-    // Auto-fill form fields based on template and extracted data
+    // Load field mappings for this template
+    let mappingMap = new Map<string, string>()
+    try {
+      const res = await fetch(`/api/forms/templates?mappingsFor=${template.id}`)
+      // Fallback: if endpoint doesn't support mappings, build from SQL-like structure on client later
+      if (res.ok) {
+        const json = await res.json()
+        const mappings: Array<{ extracted_field_name: string; form_field_name: string }>= json.field_mappings || []
+        mappings.forEach(m => mappingMap.set(m.extracted_field_name, m.form_field_name))
+      }
+    } catch (e) {
+      console.warn('Failed to load field mappings, will use heuristics only')
+    }
+
+    // Auto-fill form fields based on template + field_mappings + extracted data
     if (template.fields && typeof template.fields === 'object') {
       Object.entries(template.fields as FormFields).forEach(([section, sectionFields]) => {
         if (sectionFields && typeof sectionFields === 'object') {
@@ -133,12 +147,18 @@ export default function FormsPage() {
             // Try to find matching extracted data
             let value = ''
             
-            // Direct field name match
+            // 1) Use explicit mapping if available
+            const mappedFrom = Array.from(mappingMap.entries()).find(([, formField]) => formField === fullFieldName)?.[0]
+            if (mappedFrom && dataMap.has(mappedFrom)) {
+              value = dataMap.get(mappedFrom) || ''
+            }
+
+            // 2) Direct field name match
             if (dataMap.has(fieldName)) {
               value = dataMap.get(fieldName) || ''
             }
             
-            // Try common variations
+            // 3) Try common variations
             const variations = [
               fieldName,
               fieldName.replace(/_/g, ''),
@@ -166,6 +186,28 @@ export default function FormsPage() {
           })
         }
       })
+    }
+
+    // Post-fill normalization for special US history fields
+    try {
+      const usDriverLicense = dataMap.get('us_driver_license') || dataMap.get('us driver license')
+      if (usDriverLicense && !/^(yes|no)$/i.test(usDriverLicense.trim())) {
+        filledData['us_history.driver_license_number'] = usDriverLicense
+        filledData['us_history.us_driver_license'] = 'Yes'
+      }
+
+      const prevUsVisa = dataMap.get('previous_us_visa') || dataMap.get('previous us visa')
+      if (prevUsVisa && !/^(yes|no)$/i.test(prevUsVisa.trim())) {
+        filledData['us_history.last_visa_number'] = prevUsVisa
+        filledData['us_history.previous_us_visa'] = 'Yes'
+      }
+
+      const tenPrinted = dataMap.get('ten_printed') || dataMap.get('ten printed')
+      if (tenPrinted && tenPrinted.trim().length > 0 && !/^(yes|no)$/i.test(tenPrinted.trim())) {
+        filledData['us_history.ten_printed'] = 'Yes'
+      }
+    } catch (e) {
+      console.warn('Normalization step failed', e)
     }
 
     setFormData(filledData)
