@@ -34,6 +34,7 @@ export default function FormsPage() {
   const [formData, setFormData] = useState<FormData>({})
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
+  const [ds160Step, setDs160Step] = useState<number>(1)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -302,6 +303,485 @@ export default function FormsPage() {
     }
   }
 
+  // DS-160 Step 1: Personal Information - Part 1
+  const DS160Step1 = () => {
+    const get = (key: string) => formData[key] || ''
+    const set = (key: string, val: string) => handleFieldChange(key, val)
+
+    const yesNo = ['Yes', 'No']
+
+    const countries = [
+      'United States', 'Canada', 'United Kingdom', 'Australia', 'India', 'China', 'Japan', 'Germany', 'France', 'Brazil', 'Mexico', 'Nigeria', 'Kenya', 'South Africa', 'Italy', 'Spain', 'Russia', 'Netherlands', 'Sweden', 'Norway', 'Denmark', 'Finland', 'Poland', 'Portugal', 'Ireland', 'New Zealand', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal', 'Philippines', 'Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Turkey', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Egypt', 'Israel', 'Argentina', 'Chile', 'Colombia', 'Peru'
+    ]
+
+    const otherNamesUsed = (get('personal_info.other_names_used') || '').toString().toLowerCase() === 'yes'
+    const telecodeName = (get('personal_info.telecode_name') || '').toString().toLowerCase() === 'yes'
+    const fullNameNativeNA = get('personal_info.full_name_native_na') === true || get('personal_info.full_name_native_alphabet') === 'N/A'
+
+    const setUpper = (key: string, val: string) => set(key, (val || '').toUpperCase())
+
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Surname (Write in capital) <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={get('personal_info.surnames')}
+              onChange={(e) => setUpper('personal_info.surnames', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Given Names (Write in capital) <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={get('personal_info.given_names')}
+              onChange={(e) => setUpper('personal_info.given_names', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Full Name in Native Alphabet</label>
+          <div className="flex items-center space-x-3 mt-1">
+            <input
+              type="text"
+              value={fullNameNativeNA ? 'N/A' : get('personal_info.full_name_native_alphabet')}
+              onChange={(e) => set('personal_info.full_name_native_alphabet', e.target.value)}
+              className="flex-1 rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              disabled={fullNameNativeNA}
+              placeholder="Enter native script name"
+            />
+            <label className="inline-flex items-center text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={fullNameNativeNA}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    set('personal_info.full_name_native_na', true as any)
+                    set('personal_info.full_name_native_alphabet', 'N/A')
+                  } else {
+                    set('personal_info.full_name_native_na', false as any)
+                    if (get('personal_info.full_name_native_alphabet') === 'N/A') {
+                      set('personal_info.full_name_native_alphabet', '')
+                    }
+                  }
+                }}
+              />
+              NA (Does Not Apply / Technology Not Available)
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Have you ever used other names?</label>
+            <div className="mt-2 flex items-center space-x-6">
+              {yesNo.map((opt) => (
+                <label key={opt} className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="other_names_used"
+                    className="mr-2"
+                    checked={get('personal_info.other_names_used') === opt}
+                    onChange={() => set('personal_info.other_names_used', opt)}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Do you have a telecode that represents your name?</label>
+            <div className="mt-2 flex items-center space-x-6">
+              {yesNo.map((opt) => (
+                <label key={opt} className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="telecode_name"
+                    className="mr-2"
+                    checked={get('personal_info.telecode_name') === opt}
+                    onChange={() => set('personal_info.telecode_name', opt)}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {otherNamesUsed && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Other Surnames Used</label>
+              <input
+                type="text"
+                value={get('personal_info.other_surnames_used')}
+                onChange={(e) => setUpper('personal_info.other_surnames_used', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Other Given Names Used</label>
+              <input
+                type="text"
+                value={get('personal_info.other_given_names_used')}
+                onChange={(e) => setUpper('personal_info.other_given_names_used', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
+              />
+            </div>
+          </div>
+        )}
+
+        {telecodeName && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Telecode Surnames</label>
+              <input
+                type="text"
+                value={get('personal_info.telecode_surnames')}
+                onChange={(e) => set('personal_info.telecode_surnames', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Telecode Given Names</label>
+              <input
+                type="text"
+                value={get('personal_info.telecode_given_names')}
+                onChange={(e) => set('personal_info.telecode_given_names', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Sex <span className="text-red-500">*</span></label>
+            <select
+              value={get('personal_info.sex')}
+              onChange={(e) => set('personal_info.sex', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
+            >
+              <option value="">Select</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Date of Birth <span className="text-red-500">*</span></label>
+            <input
+              type="date"
+              value={get('personal_info.date_of_birth')}
+              onChange={(e) => set('personal_info.date_of_birth', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">City of Birth <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={get('personal_info.place_of_birth_city')}
+              onChange={(e) => set('personal_info.place_of_birth_city', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">State/Province of Birth</label>
+            <input
+              type="text"
+              value={get('personal_info.place_of_birth_state')}
+              onChange={(e) => set('personal_info.place_of_birth_state', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Country/Region of Birth <span className="text-red-500">*</span></label>
+            <select
+              value={get('personal_info.place_of_birth_country')}
+              onChange={(e) => set('personal_info.place_of_birth_country', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
+            >
+              <option value="">Select a country</option>
+              {countries.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // DS-160 Step 2: Personal Information - Part 2
+  const DS160Step2 = () => {
+    const get = (key: string) => formData[key] || ''
+    const set = (key: string, val: string) => handleFieldChange(key, val)
+    const yesNo = ['Yes', 'No']
+    const countries = [
+      'United States', 'Canada', 'United Kingdom', 'Australia', 'India', 'China', 'Japan', 'Germany', 'France', 'Brazil', 'Mexico', 'Nigeria', 'Kenya', 'South Africa', 'Italy', 'Spain', 'Russia', 'Netherlands', 'Sweden', 'Norway', 'Denmark', 'Finland', 'Poland', 'Portugal', 'Ireland', 'New Zealand', 'Pakistan', 'Bangladesh', 'Sri Lanka', 'Nepal', 'Philippines', 'Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Turkey', 'Saudi Arabia', 'United Arab Emirates', 'Qatar', 'Egypt', 'Israel', 'Argentina', 'Chile', 'Colombia', 'Peru'
+    ]
+
+    const otherNationalities = (get('personal_info.other_nationalities') || '').toString().toLowerCase() === 'yes'
+    const otherNatPassport = (get('personal_info.other_nationality_passport') || '').toString().toLowerCase() === 'yes'
+    const isPROtherCountry = (get('personal_info.permanent_resident_other_country') || '').toString().toLowerCase() === 'yes'
+
+    const prNAChecked = get('personal_info.permanent_resident_country_na') === true || get('personal_info.permanent_resident_country') === 'N/A'
+    const ssnNAChecked = get('personal_info.us_ssn_na') === true || get('personal_info.us_social_security_number') === 'N/A'
+    const itinNAChecked = get('personal_info.us_itin_na') === true || get('personal_info.us_taxpayer_id_number') === 'N/A'
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Country/Region of Origin (Nationality) <span className="text-red-500">*</span></label>
+          <select
+            value={get('personal_info.nationality')}
+            onChange={(e) => set('personal_info.nationality', e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            required
+          >
+            <option value="">Select a country</option>
+            {countries.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Do you hold or have you held any other nationality?</label>
+            <div className="mt-2 flex items-center space-x-6">
+              {yesNo.map((opt) => (
+                <label key={opt} className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="other_nationalities"
+                    className="mr-2"
+                    checked={get('personal_info.other_nationalities') === opt}
+                    onChange={() => set('personal_info.other_nationalities', opt)}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {otherNationalities && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Other Country/Region of Origin (Nationality)</label>
+              <select
+                value={get('personal_info.other_nationality_country')}
+                onChange={(e) => set('personal_info.other_nationality_country', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select a country</option>
+                {countries.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Do you have a passport from this nationality?</label>
+              <div className="mt-2 flex items-center space-x-6">
+                {yesNo.map((opt) => (
+                  <label key={opt} className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="other_nationality_passport"
+                      className="mr-2"
+                      checked={get('personal_info.other_nationality_passport') === opt}
+                      onChange={() => set('personal_info.other_nationality_passport', opt)}
+                    />
+                    <span>{opt}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {otherNatPassport && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Passport Number</label>
+                <input
+                  type="text"
+                  value={get('personal_info.other_nationality_passport_number')}
+                  onChange={(e) => set('personal_info.other_nationality_passport_number', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Are you a permanent resident of a country/region other than your nationality?</label>
+            <div className="mt-2 flex items-center space-x-6">
+              {yesNo.map((opt) => (
+                <label key={opt} className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    name="permanent_resident_other_country"
+                    className="mr-2"
+                    checked={get('personal_info.permanent_resident_other_country') === opt}
+                    onChange={() => {
+                      set('personal_info.permanent_resident_other_country', opt)
+                      if (opt === 'No') {
+                        // If No, allow NA
+                        if (prNAChecked) {
+                          set('personal_info.permanent_resident_country', 'N/A')
+                        } else {
+                          set('personal_info.permanent_resident_country', '')
+                        }
+                      }
+                    }}
+                  />
+                  <span>{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {isPROtherCountry && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Country/Region of Permanent Residence</label>
+              <select
+                value={get('personal_info.permanent_resident_country')}
+                onChange={(e) => set('personal_info.permanent_resident_country', e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select a country</option>
+                {countries.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Always-available PR country with NA override */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Country/Region of Permanent Residence</label>
+          <div className="flex items-center space-x-3 mt-1">
+            <select
+              value={prNAChecked ? 'N/A' : get('personal_info.permanent_resident_country')}
+              onChange={(e) => set('personal_info.permanent_resident_country', e.target.value)}
+              className="flex-1 rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              disabled={prNAChecked}
+            >
+              <option value="">Select a country</option>
+              {countries.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <label className="inline-flex items-center text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={prNAChecked}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    set('personal_info.permanent_resident_country_na', true as any)
+                    set('personal_info.permanent_resident_country', 'N/A')
+                  } else {
+                    set('personal_info.permanent_resident_country_na', false as any)
+                    if (get('personal_info.permanent_resident_country') === 'N/A') {
+                      set('personal_info.permanent_resident_country', '')
+                    }
+                  }
+                }}
+              />
+              NA (Does Not Apply)
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">U.S. Social Security Number</label>
+            <div className="flex items-center space-x-3 mt-1">
+              <input
+                type="text"
+                value={ssnNAChecked ? 'N/A' : get('personal_info.us_social_security_number')}
+                onChange={(e) => set('personal_info.us_social_security_number', e.target.value)}
+                className="flex-1 rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+                disabled={ssnNAChecked}
+                placeholder="XXX-XX-XXXX"
+              />
+              <label className="inline-flex items-center text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  className="mr-2"
+                  checked={ssnNAChecked}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      set('personal_info.us_ssn_na', true as any)
+                      set('personal_info.us_social_security_number', 'N/A')
+                    } else {
+                      set('personal_info.us_ssn_na', false as any)
+                      if (get('personal_info.us_social_security_number') === 'N/A') {
+                        set('personal_info.us_social_security_number', '')
+                      }
+                    }
+                  }}
+                />
+                NA (Does Not Apply)
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">U.S. Taxpayer ID Number</label>
+            <div className="flex items-center space-x-3 mt-1">
+              <input
+                type="text"
+                value={itinNAChecked ? 'N/A' : get('personal_info.us_taxpayer_id_number')}
+                onChange={(e) => set('personal_info.us_taxpayer_id_number', e.target.value)}
+                className="flex-1 rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+                disabled={itinNAChecked}
+                placeholder="ITIN"
+              />
+              <label className="inline-flex items-center text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  className="mr-2"
+                  checked={itinNAChecked}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      set('personal_info.us_itin_na', true as any)
+                      set('personal_info.us_taxpayer_id_number', 'N/A')
+                    } else {
+                      set('personal_info.us_itin_na', false as any)
+                      if (get('personal_info.us_taxpayer_id_number') === 'N/A') {
+                        set('personal_info.us_taxpayer_id_number', '')
+                      }
+                    }
+                  }}
+                />
+                NA (Does Not Apply)
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const renderField = (fieldName: string, fieldConfig: FormField, value: string = '') => {
     const { type, required, options } = fieldConfig
 
@@ -517,35 +997,68 @@ export default function FormsPage() {
                     </div>
                   </div>
 
-                  <form className="space-y-6">
-                    {selectedTemplate.fields && typeof selectedTemplate.fields === 'object' && 
-                      Object.entries(selectedTemplate.fields as FormFields).map(([section, sectionFields]) => (
-                        <div key={section} className="border-t border-gray-200 pt-6">
-                          <h4 className="text-md font-medium text-gray-900 mb-4 capitalize">
-                            {section.replace(/_/g, ' ')}
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {sectionFields && typeof sectionFields === 'object' && 
-                              Object.entries(sectionFields as FormSection).map(([fieldName, fieldConfig]) => {
-                                const fullFieldName = `${section}.${fieldName}`
-                                const value = formData[fullFieldName] || ''
-                                
-                                return (
-                                  <div key={fieldName}>
-                                    <label className="block text-sm font-medium text-gray-700 capitalize">
-                                      {fieldName.replace(/_/g, ' ')}
-                                      {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
-                                    </label>
-                                    {renderField(fullFieldName, fieldConfig, value)}
-                                  </div>
-                                )
-                              })
-                            }
-                          </div>
+                  {selectedTemplate.form_type === 'ds160' ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-md font-semibold text-gray-900">{`Step ${ds160Step} / 17`}</h4>
+                        <div className="space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => setDs160Step((s) => Math.max(1, s - 1))}
+                            className="px-3 py-2 text-sm rounded-md border text-gray-700 hover:bg-gray-50"
+                            disabled={ds160Step === 1}
+                          >Back</button>
+                          <button
+                            type="button"
+                            onClick={() => setDs160Step((s) => Math.min(17, s + 1))}
+                            className="px-3 py-2 text-sm rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+                          >Next</button>
                         </div>
-                      ))
-                    }
-                  </form>
+                      </div>
+                      {ds160Step === 1 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Personal Information - Part 1</h5>
+                          <DS160Step1 />
+                        </>
+                      )}
+                      {ds160Step === 2 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Personal Information - Part 2</h5>
+                          <DS160Step2 />
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <form className="space-y-6">
+                      {selectedTemplate.fields && typeof selectedTemplate.fields === 'object' && 
+                        Object.entries(selectedTemplate.fields as FormFields).map(([section, sectionFields]) => (
+                          <div key={section} className="border-t border-gray-200 pt-6">
+                            <h4 className="text-md font-medium text-gray-900 mb-4 capitalize">
+                              {section.replace(/_/g, ' ')}
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {sectionFields && typeof sectionFields === 'object' && 
+                                Object.entries(sectionFields as FormSection).map(([fieldName, fieldConfig]) => {
+                                  const fullFieldName = `${section}.${fieldName}`
+                                  const value = formData[fullFieldName] || ''
+                                  
+                                  return (
+                                    <div key={fieldName}>
+                                      <label className="block text-sm font-medium text-gray-700 capitalize">
+                                        {fieldName.replace(/_/g, ' ')}
+                                        {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
+                                      </label>
+                                      {renderField(fullFieldName, fieldConfig, value)}
+                                    </div>
+                                  )
+                                })
+                              }
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </form>
+                  )}
                 </div>
               ) : (
                 <div className="bg-white shadow rounded-lg p-12 text-center">
