@@ -81,7 +81,7 @@ export default function UploadPage() {
     return null
   }
 
-  const handleFiles = (files: File[]) => {
+  function handleFiles(files: File[]) {
     const validFiles = files.filter(file => {
       const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/tiff']
       const maxSize = 10 * 1024 * 1024 // 10MB
