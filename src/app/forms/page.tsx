@@ -17,6 +17,8 @@ import Step9 from './ds160/Step9'
 import Step10 from './ds160/Step10'
 import Step11 from './ds160/Step11'
 import Step12 from './ds160/Step12'
+import Step13 from './ds160/Step13'
+import Step14 from './ds160/Step14'
 import type { FormTemplate, FormSubmission, ExtractedData } from '@/lib/supabase'
 
 interface FormField {
@@ -610,6 +612,18 @@ export default function FormsPage() {
                         <>
                           <h5 className="text-sm font-medium text-gray-900 mb-3">Additional Occupation Details</h5>
                           <Step12 formData={formData} onChange={handleFieldChange} />
+                        </>
+                      )}
+                      {ds160Step === 13 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Security Background - Part 1</h5>
+                          <Step13 formData={formData} onChange={handleFieldChange} />
+                        </>
+                      )}
+                      {ds160Step === 14 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Security Background - Part 2</h5>
+                          <Step14 formData={formData} onChange={handleFieldChange} />
                         </>
                       )}
                     </div>
