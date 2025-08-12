@@ -10,6 +10,10 @@ import Step2 from './ds160/Step2'
 import Step3 from './ds160/Step3'
 import Step4 from './ds160/Step4'
 import Step5 from './ds160/Step5'
+import Step6 from './ds160/Step6'
+import Step7 from './ds160/Step7'
+import Step8 from './ds160/Step8'
+import Step9 from './ds160/Step9'
 import type { FormTemplate, FormSubmission, ExtractedData } from '@/lib/supabase'
 
 interface FormField {
@@ -561,6 +565,30 @@ export default function FormsPage() {
                         <>
                           <h5 className="text-sm font-medium text-gray-900 mb-3">Previous U.S. Travel History</h5>
                           <Step5 formData={formData} onChange={handleFieldChange} />
+                        </>
+                      )}
+                      {ds160Step === 6 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Address and Phone Details</h5>
+                          <Step6 formData={formData} onChange={handleFieldChange} />
+                        </>
+                      )}
+                      {ds160Step === 7 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Passport Information</h5>
+                          <Step7 formData={formData} onChange={handleFieldChange} />
+                        </>
+                      )}
+                      {ds160Step === 8 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Contact Information</h5>
+                          <Step8 formData={formData} onChange={handleFieldChange} />
+                        </>
+                      )}
+                      {ds160Step === 9 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Family Information</h5>
+                          <Step9 formData={formData} onChange={handleFieldChange} />
                         </>
                       )}
                     </div>
