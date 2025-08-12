@@ -9,6 +9,7 @@ import Step1 from './ds160/Step1'
 import Step2 from './ds160/Step2'
 import Step3 from './ds160/Step3'
 import Step4 from './ds160/Step4'
+import Step5 from './ds160/Step5'
 import type { FormTemplate, FormSubmission, ExtractedData } from '@/lib/supabase'
 
 interface FormField {
@@ -554,6 +555,12 @@ export default function FormsPage() {
                         <>
                           <h5 className="text-sm font-medium text-gray-900 mb-3">Traveling Companions</h5>
                           <Step4 formData={formData} onChange={handleFieldChange} />
+                        </>
+                      )}
+                      {ds160Step === 5 && (
+                        <>
+                          <h5 className="text-sm font-medium text-gray-900 mb-3">Previous U.S. Travel History</h5>
+                          <Step5 formData={formData} onChange={handleFieldChange} />
                         </>
                       )}
                     </div>
