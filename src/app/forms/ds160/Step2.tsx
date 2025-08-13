@@ -7,12 +7,31 @@ export default function Step2({ formData, onChange }: StepProps) {
   const yesNo = ['Yes', 'No']
 
   const otherNationalities = (get('personal_info.other_nationalities') || '').toString().toLowerCase() === 'yes'
-  const otherNatPassport = (get('personal_info.other_nationality_passport') || '').toString().toLowerCase() === 'yes'
   const isPROtherCountry = (get('personal_info.permanent_resident_other_country') || '').toString().toLowerCase() === 'yes'
 
-  const prNAChecked = get('personal_info.permanent_resident_country_na') === true || get('personal_info.permanent_resident_country') === 'N/A'
   const ssnNAChecked = get('personal_info.us_ssn_na') === true || get('personal_info.us_social_security_number') === 'N/A'
   const itinNAChecked = get('personal_info.us_itin_na') === true || get('personal_info.us_taxpayer_id_number') === 'N/A'
+  const ninNAChecked = get('personal_info.national_identification_number_na') === true || get('personal_info.national_identification_number') === 'N/A'
+
+  // Manage dynamic list of other nationalities
+  const natList = Array.isArray(formData['personal_info.other_nationalities_list'])
+    ? (formData['personal_info.other_nationalities_list'] as Array<any>)
+    : []
+
+  const addNationality = () => {
+    const next = [...natList, { country: '', has_passport: '', passport_number: '' }]
+    set('personal_info.other_nationalities_list', next)
+  }
+
+  const updateNationality = (index: number, field: string, value: any) => {
+    const next = natList.map((item: any, i: number) => (i === index ? { ...item, [field]: value } : item))
+    set('personal_info.other_nationalities_list', next)
+  }
+
+  const removeNationality = (index: number) => {
+    const next = natList.filter((_: any, i: number) => i !== index)
+    set('personal_info.other_nationalities_list', next)
+  }
 
   return (
     <div className="space-y-6">
@@ -42,9 +61,23 @@ export default function Step2({ formData, onChange }: StepProps) {
                   name="other_nationalities"
                   className="mr-2"
                   checked={get('personal_info.other_nationalities') === opt}
-                  onChange={() => set('personal_info.other_nationalities', opt)}
+                  onChange={() => {
+                    set('personal_info.other_nationalities', opt)
+                    if (opt === 'Yes') {
+                      const existing = Array.isArray(formData['personal_info.other_nationalities_list'])
+                        ? (formData['personal_info.other_nationalities_list'] as Array<any>)
+                        : []
+                      if (existing.length === 0) {
+                        set('personal_info.other_nationalities_list', [
+                          { country: '', has_passport: '', passport_number: '' }
+                        ])
+                      }
+                    } else {
+                      set('personal_info.other_nationalities_list', [])
+                    }
+                  }}
                 />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -53,49 +86,74 @@ export default function Step2({ formData, onChange }: StepProps) {
 
       {otherNationalities && (
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Other Country/Region of Origin (Nationality)</label>
-            <select
-              value={get('personal_info.other_nationality_country')}
-              onChange={(e) => set('personal_info.other_nationality_country', e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              <option value="">Select a country</option>
-              {countries.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
+          {natList.map((entry, idx) => (
+            <div key={idx} className="border rounded-md p-4 space-y-4">
+              <div className="flex justify-between items-center">
+                <h4 className="text-sm font-medium text-gray-800">Other Nationality #{idx + 1}</h4>
+                {natList.length > 1 && (
+                  <button
+                    type="button"
+                    className="text-red-600 text-sm"
+                    onClick={() => removeNationality(idx)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Do you have a passport from this nationality?</label>
-            <div className="mt-2 flex items-center space-x-6">
-              {yesNo.map((opt) => (
-                <label key={opt} className="inline-flex items-center">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Other Country/Region of Origin (Nationality)</label>
+                <select
+                  value={entry.country}
+                  onChange={(e) => updateNationality(idx, 'country', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">Select a country</option>
+                  {countries.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Do you have a passport from this nationality?</label>
+                <div className="mt-2 flex items-center space-x-6">
+                  {yesNo.map((opt) => (
+                    <label key={opt} className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name={`other_nationality_passport_${idx}`}
+                        className="mr-2"
+                        checked={entry.has_passport === opt}
+                        onChange={() => updateNationality(idx, 'has_passport', opt)}
+                      />
+                      <span className='text-black'>{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {entry.has_passport === 'Yes' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Passport Number</label>
                   <input
-                    type="radio"
-                    name="other_nationality_passport"
-                    className="mr-2"
-                    checked={get('personal_info.other_nationality_passport') === opt}
-                    onChange={() => set('personal_info.other_nationality_passport', opt)}
+                    type="text"
+                    value={entry.passport_number}
+                    onChange={(e) => updateNationality(idx, 'passport_number', e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder='Enter passport number'
                   />
-                  <span>{opt}</span>
-                </label>
-              ))}
+                </div>
+              )}
             </div>
-          </div>
-
-          {otherNatPassport && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Passport Number</label>
-              <input
-                type="text"
-                value={get('personal_info.other_nationality_passport_number')}
-                onChange={(e) => set('personal_info.other_nationality_passport_number', e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-          )}
+          ))}
+          <button
+            type="button"
+            onClick={addNationality}
+            className="text-indigo-600 text-sm"
+          >
+            + Add Another Nationality
+          </button>
         </div>
       )}
 
@@ -112,7 +170,7 @@ export default function Step2({ formData, onChange }: StepProps) {
                   checked={get('personal_info.permanent_resident_other_country') === opt}
                   onChange={() => set('personal_info.permanent_resident_other_country', opt)}
                 />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -136,32 +194,29 @@ export default function Step2({ formData, onChange }: StepProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Country/Region of Permanent Residence</label>
+        <label className="block text-sm font-medium text-gray-700">National Identification Number</label>
         <div className="flex items-center space-x-3 mt-1">
-          <select
-            value={prNAChecked ? 'N/A' : get('personal_info.permanent_resident_country')}
-            onChange={(e) => set('personal_info.permanent_resident_country', e.target.value)}
+          <input
+            type="text"
+            value={ninNAChecked ? 'N/A' : get('personal_info.national_identification_number')}
+            onChange={(e) => set('personal_info.national_identification_number', e.target.value)}
             className="flex-1 rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
-            disabled={prNAChecked}
-          >
-            <option value="">Select a country</option>
-            {countries.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+            disabled={ninNAChecked}
+            placeholder="Enter National ID Number"
+          />
           <label className="inline-flex items-center text-sm text-gray-700">
             <input
               type="checkbox"
               className="mr-2"
-              checked={prNAChecked}
+              checked={ninNAChecked}
               onChange={(e) => {
                 if (e.target.checked) {
-                  set('personal_info.permanent_resident_country_na', true)
-                  set('personal_info.permanent_resident_country', 'N/A')
+                  set('personal_info.national_identification_number_na', true)
+                  set('personal_info.national_identification_number', 'N/A')
                 } else {
-                  set('personal_info.permanent_resident_country_na', false)
-                  if (get('personal_info.permanent_resident_country') === 'N/A') {
-                    set('personal_info.permanent_resident_country', '')
+                  set('personal_info.national_identification_number_na', false)
+                  if (get('personal_info.national_identification_number') === 'N/A') {
+                    set('personal_info.national_identification_number', '')
                   }
                 }
               }}

@@ -35,6 +35,7 @@ export default function Step9({ formData, onChange }: StepProps) {
                 onChange={(e) => set('family_info.father_surnames', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={fatherSurnameNA}
+                placeholder='Enter surnames'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -64,6 +65,7 @@ export default function Step9({ formData, onChange }: StepProps) {
                 onChange={(e) => set('family_info.father_given_names', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={fatherGivenNA}
+                placeholder='Enter given names'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -95,6 +97,7 @@ export default function Step9({ formData, onChange }: StepProps) {
                 onChange={(e) => set('family_info.father_date_of_birth', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={fatherDobNA}
+                placeholder='Enter date of birth'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -121,7 +124,7 @@ export default function Step9({ formData, onChange }: StepProps) {
               {yesNo.map(opt => (
                 <label key={opt} className="inline-flex items-center">
                   <input type="radio" name="father_in_us" className="mr-2" checked={get('family_info.father_in_us') === opt} onChange={() => set('family_info.father_in_us', opt)} />
-                  <span>{opt}</span>
+                  <span className='text-black'>{opt}</span>
                 </label>
               ))}
             </div>
@@ -155,6 +158,7 @@ export default function Step9({ formData, onChange }: StepProps) {
                 onChange={(e) => set('family_info.mother_surnames', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={motherSurnameNA}
+                placeholder='Enter surnames'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -184,6 +188,7 @@ export default function Step9({ formData, onChange }: StepProps) {
                 onChange={(e) => set('family_info.mother_given_names', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={motherGivenNA}
+                placeholder='Enter given names'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -215,6 +220,7 @@ export default function Step9({ formData, onChange }: StepProps) {
                 onChange={(e) => set('family_info.mother_date_of_birth', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={motherDobNA}
+                placeholder='Enter date of birth'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -241,7 +247,7 @@ export default function Step9({ formData, onChange }: StepProps) {
               {yesNo.map(opt => (
                 <label key={opt} className="inline-flex items-center">
                   <input type="radio" name="mother_in_us" className="mr-2" checked={get('family_info.mother_in_us') === opt} onChange={() => set('family_info.mother_in_us', opt)} />
-                  <span>{opt}</span>
+                  <span className='text-black'>{opt}</span>
                 </label>
               ))}
             </div>
@@ -269,7 +275,7 @@ export default function Step9({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="immediate_relatives_us" className="mr-2" checked={get('family_info.immediate_relatives_us') === opt} onChange={() => set('family_info.immediate_relatives_us', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -282,6 +288,7 @@ export default function Step9({ formData, onChange }: StepProps) {
                 value={get('family_info.relative_surnames')}
                 onChange={(e) => set('family_info.relative_surnames', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter surnames'
               />
             </div>
             <div>
@@ -291,7 +298,8 @@ export default function Step9({ formData, onChange }: StepProps) {
                 value={get('family_info.relative_given_names')}
                 onChange={(e) => set('family_info.relative_given_names', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+                placeholder='Enter given names'
+                />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Relationship To You</label>
@@ -323,7 +331,7 @@ export default function Step9({ formData, onChange }: StepProps) {
               {yesNo.map(opt => (
                 <label key={opt} className="inline-flex items-center">
                   <input type="radio" name="other_relatives_us" className="mr-2" checked={get('family_info.other_relatives_us') === opt} onChange={() => set('family_info.other_relatives_us', opt)} />
-                  <span>{opt}</span>
+                  <span className='text-black'>{opt}</span>
                 </label>
               ))}
             </div>

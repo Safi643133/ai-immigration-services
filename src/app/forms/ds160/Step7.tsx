@@ -37,6 +37,7 @@ export default function Step7({ formData, onChange }: StepProps) {
               value={get('passport_info.passport_number')}
               onChange={(e) => set('passport_info.passport_number', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter passport number'
             />
           </div>
         </div>
@@ -50,6 +51,7 @@ export default function Step7({ formData, onChange }: StepProps) {
               onChange={(e) => set('passport_info.passport_book_number', e.target.value)}
               className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
               disabled={bookNumberNA}
+              placeholder='Enter passport book number'
             />
             <label className="inline-flex items-center text-sm text-gray-700">
               <input
@@ -94,6 +96,7 @@ export default function Step7({ formData, onChange }: StepProps) {
               value={get('passport_info.passport_issued_city')}
               onChange={(e) => set('passport_info.passport_issued_city', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter city'
             />
           </div>
           <div>
@@ -103,6 +106,7 @@ export default function Step7({ formData, onChange }: StepProps) {
               value={get('passport_info.passport_issued_state')}
               onChange={(e) => set('passport_info.passport_issued_state', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter state/province'
             />
           </div>
           <div>
@@ -125,6 +129,7 @@ export default function Step7({ formData, onChange }: StepProps) {
               value={get('passport_info.passport_issue_date')}
               onChange={(e) => set('passport_info.passport_issue_date', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter issuance date'
             />
           </div>
           <div>
@@ -136,6 +141,7 @@ export default function Step7({ formData, onChange }: StepProps) {
                 onChange={(e) => set('passport_info.passport_expiry_date', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={expiryNA}
+                placeholder='Enter expiration date'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -165,7 +171,7 @@ export default function Step7({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="passport_lost_stolen" className="mr-2" checked={get('passport_info.passport_lost_stolen') === opt} onChange={() => set('passport_info.passport_lost_stolen', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -181,6 +187,7 @@ export default function Step7({ formData, onChange }: StepProps) {
                     onChange={(e) => set('passport_info.lost_passport_number', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={lostNumberNA}
+                    placeholder='Enter passport number'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -220,6 +227,7 @@ export default function Step7({ formData, onChange }: StepProps) {
                 value={get('passport_info.lost_passport_explanation')}
                 onChange={(e) => set('passport_info.lost_passport_explanation', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter explanation'
               />
             </div>
           </div>

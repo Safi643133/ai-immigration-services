@@ -29,14 +29,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="espionage_or_illegal_activity" className="mr-2" checked={get('security_background3.espionage_or_illegal_activity') === opt} onChange={() => set('security_background3.espionage_or_illegal_activity', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q1 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.espionage_or_illegal_activity_explain')} onChange={(e) => set('security_background3.espionage_or_illegal_activity_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.espionage_or_illegal_activity_explain')} onChange={(e) => set('security_background3.espionage_or_illegal_activity_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -50,14 +50,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="terrorist_activities" className="mr-2" checked={get('security_background3.terrorist_activities') === opt} onChange={() => set('security_background3.terrorist_activities', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q2 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.terrorist_activities_explain')} onChange={(e) => set('security_background3.terrorist_activities_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.terrorist_activities_explain')} onChange={(e) => set('security_background3.terrorist_activities_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -71,14 +71,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="support_to_terrorists" className="mr-2" checked={get('security_background3.support_to_terrorists') === opt} onChange={() => set('security_background3.support_to_terrorists', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q3 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.support_to_terrorists_explain')} onChange={(e) => set('security_background3.support_to_terrorists_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.support_to_terrorists_explain')} onChange={(e) => set('security_background3.support_to_terrorists_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -92,14 +92,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="member_of_terrorist_org" className="mr-2" checked={get('security_background3.member_of_terrorist_org') === opt} onChange={() => set('security_background3.member_of_terrorist_org', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q4 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.member_of_terrorist_org_explain')} onChange={(e) => set('security_background3.member_of_terrorist_org_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.member_of_terrorist_org_explain')} onChange={(e) => set('security_background3.member_of_terrorist_org_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -113,14 +113,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="family_engaged_in_terrorism_last_five_years" className="mr-2" checked={get('security_background3.family_engaged_in_terrorism_last_five_years') === opt} onChange={() => set('security_background3.family_engaged_in_terrorism_last_five_years', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q5 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.family_engaged_in_terrorism_last_five_years_explain')} onChange={(e) => set('security_background3.family_engaged_in_terrorism_last_five_years_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.family_engaged_in_terrorism_last_five_years_explain')} onChange={(e) => set('security_background3.family_engaged_in_terrorism_last_five_years_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -134,14 +134,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="genocide_involvement" className="mr-2" checked={get('security_background3.genocide_involvement') === opt} onChange={() => set('security_background3.genocide_involvement', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q6 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.genocide_involvement_explain')} onChange={(e) => set('security_background3.genocide_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.genocide_involvement_explain')} onChange={(e) => set('security_background3.genocide_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -155,14 +155,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="torture_involvement" className="mr-2" checked={get('security_background3.torture_involvement') === opt} onChange={() => set('security_background3.torture_involvement', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q7 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.torture_involvement_explain')} onChange={(e) => set('security_background3.torture_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.torture_involvement_explain')} onChange={(e) => set('security_background3.torture_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -176,14 +176,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="violence_killings_involvement" className="mr-2" checked={get('security_background3.violence_killings_involvement') === opt} onChange={() => set('security_background3.violence_killings_involvement', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q8 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.violence_killings_involvement_explain')} onChange={(e) => set('security_background3.violence_killings_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.violence_killings_involvement_explain')} onChange={(e) => set('security_background3.violence_killings_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -197,14 +197,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="child_soldiers_involvement" className="mr-2" checked={get('security_background3.child_soldiers_involvement') === opt} onChange={() => set('security_background3.child_soldiers_involvement', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q9 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.child_soldiers_involvement_explain')} onChange={(e) => set('security_background3.child_soldiers_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.child_soldiers_involvement_explain')} onChange={(e) => set('security_background3.child_soldiers_involvement_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -218,14 +218,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="religious_freedom_violations" className="mr-2" checked={get('security_background3.religious_freedom_violations') === opt} onChange={() => set('security_background3.religious_freedom_violations', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q10 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.religious_freedom_violations_explain')} onChange={(e) => set('security_background3.religious_freedom_violations_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.religious_freedom_violations_explain')} onChange={(e) => set('security_background3.religious_freedom_violations_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -239,14 +239,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="population_control_forced_abortion_sterilization" className="mr-2" checked={get('security_background3.population_control_forced_abortion_sterilization') === opt} onChange={() => set('security_background3.population_control_forced_abortion_sterilization', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q11 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.population_control_forced_abortion_sterilization_explain')} onChange={(e) => set('security_background3.population_control_forced_abortion_sterilization_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.population_control_forced_abortion_sterilization_explain')} onChange={(e) => set('security_background3.population_control_forced_abortion_sterilization_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -260,14 +260,14 @@ export default function Step15({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="coercive_transplantation" className="mr-2" checked={get('security_background3.coercive_transplantation') === opt} onChange={() => set('security_background3.coercive_transplantation', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q12 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background3.coercive_transplantation_explain')} onChange={(e) => set('security_background3.coercive_transplantation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background3.coercive_transplantation_explain')} onChange={(e) => set('security_background3.coercive_transplantation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>

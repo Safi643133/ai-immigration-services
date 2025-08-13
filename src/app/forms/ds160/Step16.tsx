@@ -22,14 +22,14 @@ export default function Step16({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="subject_of_removal_or_deportation_hearing" className="mr-2" checked={get('security_background4.subject_of_removal_or_deportation_hearing') === opt} onChange={() => set('security_background4.subject_of_removal_or_deportation_hearing', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q1 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background4.subject_of_removal_or_deportation_hearing_explain')} onChange={(e) => set('security_background4.subject_of_removal_or_deportation_hearing_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background4.subject_of_removal_or_deportation_hearing_explain')} onChange={(e) => set('security_background4.subject_of_removal_or_deportation_hearing_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -43,14 +43,14 @@ export default function Step16({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="immigration_benefit_by_fraud_or_misrepresentation" className="mr-2" checked={get('security_background4.immigration_benefit_by_fraud_or_misrepresentation') === opt} onChange={() => set('security_background4.immigration_benefit_by_fraud_or_misrepresentation', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q2 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background4.immigration_benefit_by_fraud_or_misrepresentation_explain')} onChange={(e) => set('security_background4.immigration_benefit_by_fraud_or_misrepresentation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background4.immigration_benefit_by_fraud_or_misrepresentation_explain')} onChange={(e) => set('security_background4.immigration_benefit_by_fraud_or_misrepresentation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -64,14 +64,14 @@ export default function Step16({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="failed_to_attend_hearing_last_five_years" className="mr-2" checked={get('security_background4.failed_to_attend_hearing_last_five_years') === opt} onChange={() => set('security_background4.failed_to_attend_hearing_last_five_years', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q3 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background4.failed_to_attend_hearing_last_five_years_explain')} onChange={(e) => set('security_background4.failed_to_attend_hearing_last_five_years_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background4.failed_to_attend_hearing_last_five_years_explain')} onChange={(e) => set('security_background4.failed_to_attend_hearing_last_five_years_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -85,14 +85,14 @@ export default function Step16({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="unlawfully_present_or_visa_violation" className="mr-2" checked={get('security_background4.unlawfully_present_or_visa_violation') === opt} onChange={() => set('security_background4.unlawfully_present_or_visa_violation', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q4 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background4.unlawfully_present_or_visa_violation_explain')} onChange={(e) => set('security_background4.unlawfully_present_or_visa_violation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background4.unlawfully_present_or_visa_violation_explain')} onChange={(e) => set('security_background4.unlawfully_present_or_visa_violation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -106,14 +106,14 @@ export default function Step16({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="removed_or_deported_from_any_country" className="mr-2" checked={get('security_background4.removed_or_deported_from_any_country') === opt} onChange={() => set('security_background4.removed_or_deported_from_any_country', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q5 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background4.removed_or_deported_from_any_country_explain')} onChange={(e) => set('security_background4.removed_or_deported_from_any_country_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background4.removed_or_deported_from_any_country_explain')} onChange={(e) => set('security_background4.removed_or_deported_from_any_country_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation'/>
           </div>
         )}
       </div>

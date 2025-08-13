@@ -46,6 +46,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               value={get('contact_info.home_address_line1')}
               onChange={(e) => set('contact_info.home_address_line1', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter address line 1'
             />
           </div>
           <div>
@@ -55,6 +56,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               value={get('contact_info.home_address_line2')}
               onChange={(e) => set('contact_info.home_address_line2', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter address line 2'
             />
           </div>
         </div>
@@ -66,6 +68,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               value={get('contact_info.home_city')}
               onChange={(e) => set('contact_info.home_city', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter city'
             />
           </div>
           <div>
@@ -77,6 +80,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                 onChange={(e) => set('contact_info.home_state', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={homeStateNA}
+                placeholder='Enter state/province'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -106,6 +110,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                 onChange={(e) => set('contact_info.home_postal_code', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={homePostalNA}
+                placeholder='Enter zip code'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -149,7 +154,7 @@ export default function Step6({ formData, onChange }: StepProps) {
             {yesNo.map(opt => (
               <label key={opt} className="inline-flex items-center">
                 <input type="radio" name="mailing_same_as_home" className="mr-2" checked={get('contact_info.mailing_same_as_home') === opt} onChange={() => set('contact_info.mailing_same_as_home', opt)} />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -165,6 +170,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                   value={get('contact_info.mailing_address_line1')}
                   onChange={(e) => set('contact_info.mailing_address_line1', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter address line 1'
                 />
               </div>
               <div>
@@ -174,6 +180,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                   value={get('contact_info.mailing_address_line2')}
                   onChange={(e) => set('contact_info.mailing_address_line2', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter address line 2'
                 />
               </div>
             </div>
@@ -185,6 +192,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                   value={get('contact_info.mailing_city')}
                   onChange={(e) => set('contact_info.mailing_city', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter city'
                 />
               </div>
               <div>
@@ -196,6 +204,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                     onChange={(e) => set('contact_info.mailing_state', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={mailingStateNA}
+                    placeholder='Enter state/province'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -225,6 +234,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                     onChange={(e) => set('contact_info.mailing_postal_code', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={mailingPostalNA}
+                    placeholder='Enter zip code'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -272,6 +282,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               value={get('contact_info.primary_phone')}
               onChange={(e) => set('contact_info.primary_phone', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter phone number'
             />
           </div>
           <div>
@@ -283,7 +294,8 @@ export default function Step6({ formData, onChange }: StepProps) {
                 onChange={(e) => set('contact_info.secondary_phone', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={secondaryPhoneNA}
-              />
+                placeholder='Enter phone number'
+                />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
                   type="checkbox"
@@ -314,6 +326,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                 onChange={(e) => set('contact_info.work_phone', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={workPhoneNA}
+                placeholder='Enter phone number'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -340,7 +353,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               {yesNo.map(opt => (
                 <label key={opt} className="inline-flex items-center">
                   <input type="radio" name="other_phone_numbers" className="mr-2" checked={get('contact_info.other_phone_numbers') === opt} onChange={() => set('contact_info.other_phone_numbers', opt)} />
-                  <span>{opt}</span>
+                  <span className='text-black'>{opt}</span>
                 </label>
               ))}
             </div>
@@ -354,6 +367,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               value={get('contact_info.additional_phone')}
               onChange={(e) => set('contact_info.additional_phone', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter phone number'
             />
           </div>
         )}
@@ -378,7 +392,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               {yesNo.map(opt => (
                 <label key={opt} className="inline-flex items-center">
                   <input type="radio" name="other_email_addresses" className="mr-2" checked={get('contact_info.other_email_addresses') === opt} onChange={() => set('contact_info.other_email_addresses', opt)} />
-                  <span>{opt}</span>
+                  <span className='text-black'>{opt}</span>
                 </label>
               ))}
             </div>
@@ -392,6 +406,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               value={get('contact_info.additional_email')}
               onChange={(e) => set('contact_info.additional_email', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter email address'
             />
           </div>
         )}
@@ -419,6 +434,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               value={get('contact_info.social_media_identifier')}
               onChange={(e) => set('contact_info.social_media_identifier', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter identifier'
             />
           </div>
         </div>
@@ -428,7 +444,7 @@ export default function Step6({ formData, onChange }: StepProps) {
             {yesNo.map(opt => (
               <label key={opt} className="inline-flex items-center">
                 <input type="radio" name="other_websites" className="mr-2" checked={get('contact_info.other_websites') === opt} onChange={() => set('contact_info.other_websites', opt)} />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -439,6 +455,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               <label className="block text-sm font-medium text-gray-700">Additional Social Media Platform</label>
               <input
                 type="text"
+                placeholder='Enter platform'
                 value={get('contact_info.additional_social_platform')}
                 onChange={(e) => set('contact_info.additional_social_platform', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -451,6 +468,7 @@ export default function Step6({ formData, onChange }: StepProps) {
                 value={get('contact_info.additional_social_handle')}
                 onChange={(e) => set('contact_info.additional_social_handle', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter handle'
               />
             </div>
           </div>

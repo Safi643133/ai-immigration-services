@@ -26,7 +26,7 @@ export default function Step11({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="previously_employed" className="mr-2" checked={get('previous_work_education.previously_employed') === opt} onChange={() => set('previous_work_education.previously_employed', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -40,6 +40,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                 value={get('previous_work_education.previous_employer_name')}
                 onChange={(e) => set('previous_work_education.previous_employer_name', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter employer name'
               />
             </div>
 
@@ -52,6 +53,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.previous_employer_address_line1')}
                   onChange={(e) => set('previous_work_education.previous_employer_address_line1', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter address line 1'
                 />
               </div>
               <div>
@@ -61,6 +63,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.previous_employer_address_line2')}
                   onChange={(e) => set('previous_work_education.previous_employer_address_line2', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter address line 2'
                 />
               </div>
             </div>
@@ -72,6 +75,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.previous_employer_city')}
                   onChange={(e) => set('previous_work_education.previous_employer_city', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter city'
                 />
               </div>
               <div>
@@ -83,6 +87,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                     onChange={(e) => set('previous_work_education.previous_employer_state', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={prevStateNA}
+                    placeholder='Enter state/province'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -112,6 +117,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                     onChange={(e) => set('previous_work_education.previous_employer_postal_code', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={prevPostalNA}
+                    placeholder='Enter zip code'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -152,6 +158,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.previous_employer_phone')}
                   onChange={(e) => set('previous_work_education.previous_employer_phone', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter phone number'
                 />
               </div>
               <div>
@@ -161,6 +168,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.previous_job_title')}
                   onChange={(e) => set('previous_work_education.previous_job_title', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter job title'
                 />
               </div>
               <div>
@@ -172,6 +180,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                     onChange={(e) => set('previous_work_education.previous_supervisor_surname', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={supSurnameNA}
+                    placeholder='Enter surname'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -203,6 +212,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                     onChange={(e) => set('previous_work_education.previous_supervisor_given_names', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={supGivenNA}
+                    placeholder='Enter given names'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -230,6 +240,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.previous_employment_from')}
                   onChange={(e) => set('previous_work_education.previous_employment_from', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter date of birth'
                 />
               </div>
               <div>
@@ -239,6 +250,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.previous_employment_to')}
                   onChange={(e) => set('previous_work_education.previous_employment_to', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter date of birth'
                 />
               </div>
             </div>
@@ -249,6 +261,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                 value={get('previous_work_education.previous_job_duties')}
                 onChange={(e) => set('previous_work_education.previous_job_duties', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter duties'
               />
             </div>
           </div>
@@ -262,7 +275,7 @@ export default function Step11({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="attended_educational_institutions" className="mr-2" checked={get('previous_work_education.attended_educational_institutions') === opt} onChange={() => set('previous_work_education.attended_educational_institutions', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -276,6 +289,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                 value={get('previous_work_education.educational_institution_name')}
                 onChange={(e) => set('previous_work_education.educational_institution_name', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter institution name'
               />
             </div>
             <h6 className="text-sm font-medium text-gray-900">Address</h6>
@@ -287,6 +301,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.educational_address_line1')}
                   onChange={(e) => set('previous_work_education.educational_address_line1', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter address line 1'
                 />
               </div>
               <div>
@@ -296,6 +311,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.educational_address_line2')}
                   onChange={(e) => set('previous_work_education.educational_address_line2', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter address line 2'
                 />
               </div>
             </div>
@@ -307,6 +323,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.educational_city')}
                   onChange={(e) => set('previous_work_education.educational_city', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter city'
                 />
               </div>
               <div>
@@ -318,6 +335,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                     onChange={(e) => set('previous_work_education.educational_state', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={eduStateNA}
+                    placeholder='Enter state/province'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -347,6 +365,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                     onChange={(e) => set('previous_work_education.educational_postal_code', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={eduPostalNA}
+                    placeholder='Enter zip code'
                   />
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input
@@ -387,6 +406,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.course_of_study')}
                   onChange={(e) => set('previous_work_education.course_of_study', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter course of study'
                 />
               </div>
               <div>
@@ -396,6 +416,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.educational_attendance_from')}
                   onChange={(e) => set('previous_work_education.educational_attendance_from', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter date of birth'
                 />
               </div>
               <div>
@@ -405,6 +426,7 @@ export default function Step11({ formData, onChange }: StepProps) {
                   value={get('previous_work_education.educational_attendance_to')}
                   onChange={(e) => set('previous_work_education.educational_attendance_to', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter date of birth'
                 />
               </div>
             </div>

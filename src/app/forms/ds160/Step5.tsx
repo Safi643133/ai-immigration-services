@@ -35,7 +35,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 checked={get('us_history.been_in_us') === opt}
                 onChange={() => set('us_history.been_in_us', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -95,7 +95,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                   checked={get('us_history.us_driver_license') === opt}
                   onChange={() => set('us_history.us_driver_license', opt)}
                 />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -162,7 +162,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 checked={get('us_history.previous_us_visa') === opt}
                 onChange={() => set('us_history.previous_us_visa', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -220,7 +220,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                   {yesNo.map(opt => (
                     <label key={opt} className="inline-flex items-center">
                       <input type="radio" name="same_visa_type" className="mr-2" checked={get('us_history.same_visa_type') === opt} onChange={() => set('us_history.same_visa_type', opt)} />
-                      <span>{opt}</span>
+                      <span className='text-black'>{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -231,7 +231,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                   {yesNo.map(opt => (
                     <label key={opt} className="inline-flex items-center">
                       <input type="radio" name="same_country_application" className="mr-2" checked={get('us_history.same_country_application') === opt} onChange={() => set('us_history.same_country_application', opt)} />
-                      <span>{opt}</span>
+                      <span className='text-black'>{opt}</span>
                     </label>
                   ))}
                 </div>
@@ -244,7 +244,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 {yesNo.map(opt => (
                   <label key={opt} className="inline-flex items-center">
                     <input type="radio" name="ten_printed" className="mr-2" checked={get('us_history.ten_printed') === opt} onChange={() => set('us_history.ten_printed', opt)} />
-                    <span>{opt}</span>
+                    <span className='text-black'>{opt}</span>
                   </label>
                 ))}
               </div>
@@ -256,7 +256,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 {yesNo.map(opt => (
                   <label key={opt} className="inline-flex items-center">
                     <input type="radio" name="visa_lost_stolen" className="mr-2" checked={get('us_history.visa_lost_stolen') === opt} onChange={() => set('us_history.visa_lost_stolen', opt)} />
-                    <span>{opt}</span>
+                    <span className='text-black'>{opt}</span>
                   </label>
                 ))}
               </div>
@@ -269,6 +269,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                       value={get('us_history.visa_lost_year')}
                       onChange={(e) => set('us_history.visa_lost_year', e.target.value)}
                       className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      placeholder='Enter year'
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -277,6 +278,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                       rows={3}
                       value={get('us_history.visa_lost_explanation')}
                       onChange={(e) => set('us_history.visa_lost_explanation', e.target.value)}
+                      placeholder='Enter explanation'
                       className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -290,7 +292,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 {yesNo.map(opt => (
                   <label key={opt} className="inline-flex items-center">
                     <input type="radio" name="visa_cancelled" className="mr-2" checked={get('us_history.visa_cancelled') === opt} onChange={() => set('us_history.visa_cancelled', opt)} />
-                    <span>{opt}</span>
+                    <span className='text-black'>{opt}</span>
                   </label>
                 ))}
               </div>
@@ -301,6 +303,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                     rows={3}
                     value={get('us_history.visa_cancelled_explanation')}
                     onChange={(e) => set('us_history.visa_cancelled_explanation', e.target.value)}
+                    placeholder='Enter explanation'
                     className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   />
                 </div>
@@ -318,7 +321,7 @@ export default function Step5({ formData, onChange }: StepProps) {
             {yesNo.map(opt => (
               <label key={opt} className="inline-flex items-center">
                 <input type="radio" name="visa_refused" className="mr-2" checked={get('us_history.visa_refused') === opt} onChange={() => set('us_history.visa_refused', opt)} />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -329,7 +332,8 @@ export default function Step5({ formData, onChange }: StepProps) {
                 rows={3}
                 value={get('us_history.visa_refused_explanation')}
                 onChange={(e) => set('us_history.visa_refused_explanation', e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter explanation'
+                className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm placeholder:text-gray-400"
               />
             </div>
           )}
@@ -341,7 +345,7 @@ export default function Step5({ formData, onChange }: StepProps) {
             {yesNo.map(opt => (
               <label key={opt} className="inline-flex items-center">
                 <input type="radio" name="esta_denied" className="mr-2" checked={get('us_history.esta_denied') === opt} onChange={() => set('us_history.esta_denied', opt)} />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -352,6 +356,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 rows={3}
                 value={get('us_history.esta_denied_explanation')}
                 onChange={(e) => set('us_history.esta_denied_explanation', e.target.value)}
+                placeholder='Enter explanation'
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
@@ -364,7 +369,7 @@ export default function Step5({ formData, onChange }: StepProps) {
             {yesNo.map(opt => (
               <label key={opt} className="inline-flex items-center">
                 <input type="radio" name="immigrant_petition" className="mr-2" checked={get('us_history.immigrant_petition') === opt} onChange={() => set('us_history.immigrant_petition', opt)} />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -375,6 +380,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 rows={3}
                 value={get('us_history.immigrant_petition_explanation')}
                 onChange={(e) => set('us_history.immigrant_petition_explanation', e.target.value)}
+                placeholder='Enter explanation'
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>

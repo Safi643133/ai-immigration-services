@@ -22,14 +22,14 @@ export default function Step17({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="withheld_child_custody" className="mr-2" checked={get('security_background5.withheld_child_custody') === opt} onChange={() => set('security_background5.withheld_child_custody', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q1 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background5.withheld_child_custody_explain')} onChange={(e) => set('security_background5.withheld_child_custody_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background5.withheld_child_custody_explain')} onChange={(e) => set('security_background5.withheld_child_custody_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -43,14 +43,14 @@ export default function Step17({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="voted_in_us_violation" className="mr-2" checked={get('security_background5.voted_in_us_violation') === opt} onChange={() => set('security_background5.voted_in_us_violation', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q2 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background5.voted_in_us_violation_explain')} onChange={(e) => set('security_background5.voted_in_us_violation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background5.voted_in_us_violation_explain')} onChange={(e) => set('security_background5.voted_in_us_violation_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -64,14 +64,14 @@ export default function Step17({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="renounced_citizenship_to_avoid_tax" className="mr-2" checked={get('security_background5.renounced_citizenship_to_avoid_tax') === opt} onChange={() => set('security_background5.renounced_citizenship_to_avoid_tax', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q3 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background5.renounced_citizenship_to_avoid_tax_explain')} onChange={(e) => set('security_background5.renounced_citizenship_to_avoid_tax_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background5.renounced_citizenship_to_avoid_tax_explain')} onChange={(e) => set('security_background5.renounced_citizenship_to_avoid_tax_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -85,14 +85,14 @@ export default function Step17({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="former_j_visitor_not_fulfilled_2yr" className="mr-2" checked={get('security_background5.former_j_visitor_not_fulfilled_2yr') === opt} onChange={() => set('security_background5.former_j_visitor_not_fulfilled_2yr', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q4 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background5.former_j_visitor_not_fulfilled_2yr_explain')} onChange={(e) => set('security_background5.former_j_visitor_not_fulfilled_2yr_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background5.former_j_visitor_not_fulfilled_2yr_explain')} onChange={(e) => set('security_background5.former_j_visitor_not_fulfilled_2yr_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>
@@ -106,14 +106,14 @@ export default function Step17({ formData, onChange }: StepProps) {
           {yesNo.map(opt => (
             <label key={opt} className="inline-flex items-center">
               <input type="radio" name="public_school_f_status_without_reimbursing" className="mr-2" checked={get('security_background5.public_school_f_status_without_reimbursing') === opt} onChange={() => set('security_background5.public_school_f_status_without_reimbursing', opt)} />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
         {q5 && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Explain</label>
-            <textarea rows={3} value={get('security_background5.public_school_f_status_without_reimbursing_explain')} onChange={(e) => set('security_background5.public_school_f_status_without_reimbursing_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+            <textarea rows={3} value={get('security_background5.public_school_f_status_without_reimbursing_explain')} onChange={(e) => set('security_background5.public_school_f_status_without_reimbursing_explain', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder='Enter explanation' />
           </div>
         )}
       </div>

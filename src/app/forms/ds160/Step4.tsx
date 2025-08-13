@@ -27,7 +27,7 @@ export default function Step4({ formData, onChange }: StepProps) {
                 checked={get('traveling_companions.traveling_with_others') === opt}
                 onChange={() => set('traveling_companions.traveling_with_others', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -47,7 +47,7 @@ export default function Step4({ formData, onChange }: StepProps) {
                     checked={get('traveling_companions.traveling_as_group') === opt}
                     onChange={() => set('traveling_companions.traveling_as_group', opt)}
                   />
-                  <span>{opt}</span>
+                  <span className='text-black'>{opt}</span>
                 </label>
               ))}
             </div>
@@ -61,6 +61,7 @@ export default function Step4({ formData, onChange }: StepProps) {
                 value={get('traveling_companions.group_name')}
                 onChange={(e) => set('traveling_companions.group_name', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter group name'
               />
             </div>
           ) : (
@@ -72,6 +73,7 @@ export default function Step4({ formData, onChange }: StepProps) {
                   value={get('traveling_companions.companion_surnames')}
                   onChange={(e) => setUpper('traveling_companions.companion_surnames', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
+                  placeholder='Enter surnames'
                 />
               </div>
               <div>
@@ -81,6 +83,7 @@ export default function Step4({ formData, onChange }: StepProps) {
                   value={get('traveling_companions.companion_given_names')}
                   onChange={(e) => setUpper('traveling_companions.companion_given_names', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
+                  placeholder='Enter given names'
                 />
               </div>
               <div className="md:col-span-2">

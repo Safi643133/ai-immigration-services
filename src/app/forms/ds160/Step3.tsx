@@ -62,7 +62,7 @@ export default function Step3({ formData, onChange }: StepProps) {
                 checked={get('travel_info.specific_travel_plans') === opt}
                 onChange={() => set('travel_info.specific_travel_plans', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -98,6 +98,7 @@ export default function Step3({ formData, onChange }: StepProps) {
                 value={get('travel_info.arrival_city')}
                 onChange={(e) => set('travel_info.arrival_city', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter arrival city'
               />
             </div>
           </div>
@@ -128,6 +129,7 @@ export default function Step3({ formData, onChange }: StepProps) {
                 value={get('travel_info.departure_city')}
                 onChange={(e) => set('travel_info.departure_city', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder='Enter departure city'
               />
             </div>
           </div>
@@ -138,6 +140,7 @@ export default function Step3({ formData, onChange }: StepProps) {
               value={get('travel_info.location')}
               onChange={(e) => set('travel_info.location', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter location'
             />
           </div>
         </div>
@@ -163,6 +166,7 @@ export default function Step3({ formData, onChange }: StepProps) {
                   value={get('travel_info.length_of_stay_value')}
                   onChange={(e) => set('travel_info.length_of_stay_value', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter length of stay'
                 />
               </div>
               <div className="col-span-2">
@@ -191,6 +195,7 @@ export default function Step3({ formData, onChange }: StepProps) {
               value={get('travel_info.us_stay_address_line1')}
               onChange={(e) => set('travel_info.us_stay_address_line1', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter address line 1'
             />
           </div>
           <div>
@@ -200,6 +205,7 @@ export default function Step3({ formData, onChange }: StepProps) {
               value={get('travel_info.us_stay_address_line2')}
               onChange={(e) => set('travel_info.us_stay_address_line2', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter address line 2'
             />
           </div>
         </div>
@@ -211,6 +217,7 @@ export default function Step3({ formData, onChange }: StepProps) {
               value={get('travel_info.us_stay_city')}
               onChange={(e) => set('travel_info.us_stay_city', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter city'
             />
           </div>
           <div>
@@ -231,6 +238,7 @@ export default function Step3({ formData, onChange }: StepProps) {
               value={get('travel_info.us_stay_zip')}
               onChange={(e) => set('travel_info.us_stay_zip', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter zip code'
             />
           </div>
         </div>

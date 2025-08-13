@@ -28,7 +28,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                 checked={get('additional_occupation.belong_clan_tribe') === opt}
                 onChange={() => set('additional_occupation.belong_clan_tribe', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -41,6 +41,7 @@ export default function Step12({ formData, onChange }: StepProps) {
               value={get('additional_occupation.clan_tribe_name')}
               onChange={(e) => set('additional_occupation.clan_tribe_name', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter clan or tribe name'
             />
           </div>
         )}
@@ -54,6 +55,7 @@ export default function Step12({ formData, onChange }: StepProps) {
           value={get('additional_occupation.language_name')}
           onChange={(e) => set('additional_occupation.language_name', e.target.value)}
           className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder='Enter language name'
         />
       </div>
 
@@ -70,7 +72,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                 checked={get('additional_occupation.traveled_last_five_years') === opt}
                 onChange={() => set('additional_occupation.traveled_last_five_years', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -105,7 +107,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                 checked={get('additional_occupation.belonged_professional_org') === opt}
                 onChange={() => set('additional_occupation.belonged_professional_org', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -118,6 +120,7 @@ export default function Step12({ formData, onChange }: StepProps) {
               value={get('additional_occupation.professional_org_name')}
               onChange={(e) => set('additional_occupation.professional_org_name', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter organization name'
             />
           </div>
         )}
@@ -136,7 +139,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                 checked={get('additional_occupation.specialized_skills_training') === opt}
                 onChange={() => set('additional_occupation.specialized_skills_training', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -149,6 +152,7 @@ export default function Step12({ formData, onChange }: StepProps) {
               value={get('additional_occupation.specialized_skills_explain')}
               onChange={(e) => set('additional_occupation.specialized_skills_explain', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter duties'
             />
           </div>
         )}
@@ -167,7 +171,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                 checked={get('additional_occupation.served_military') === opt}
                 onChange={() => set('additional_occupation.served_military', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -195,6 +199,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                   value={get('additional_occupation.military_branch')}
                   onChange={(e) => set('additional_occupation.military_branch', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter branch of service'
                 />
               </div>
               <div>
@@ -204,6 +209,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                   value={get('additional_occupation.military_rank_position')}
                   onChange={(e) => set('additional_occupation.military_rank_position', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter rank/position'
                 />
               </div>
               <div>
@@ -213,6 +219,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                   value={get('additional_occupation.military_specialty')}
                   onChange={(e) => set('additional_occupation.military_specialty', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder='Enter military specialty'
                 />
               </div>
             </div>
@@ -224,7 +231,8 @@ export default function Step12({ formData, onChange }: StepProps) {
                   value={get('additional_occupation.military_service_from')}
                   onChange={(e) => set('additional_occupation.military_service_from', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                />
+                  placeholder='Enter date of service from'
+                  />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Date of Service To</label>
@@ -233,7 +241,8 @@ export default function Step12({ formData, onChange }: StepProps) {
                   value={get('additional_occupation.military_service_to')}
                   onChange={(e) => set('additional_occupation.military_service_to', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                />
+                  placeholder='Enter date of service to'
+                  />
               </div>
             </div>
           </div>
@@ -253,7 +262,7 @@ export default function Step12({ formData, onChange }: StepProps) {
                 checked={get('additional_occupation.involved_paramilitary') === opt}
                 onChange={() => set('additional_occupation.involved_paramilitary', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -266,6 +275,7 @@ export default function Step12({ formData, onChange }: StepProps) {
               value={get('additional_occupation.involved_paramilitary_explain')}
               onChange={(e) => set('additional_occupation.involved_paramilitary_explain', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter duties'
             />
           </div>
         )}

@@ -9,6 +9,7 @@ export default function Step1({ formData, onChange }: StepProps) {
   const otherNamesUsed = (get('personal_info.other_names_used') || '').toString().toLowerCase() === 'yes'
   const telecodeName = (get('personal_info.telecode_name') || '').toString().toLowerCase() === 'yes'
   const fullNameNativeNA = get('personal_info.full_name_native_na') === true || get('personal_info.full_name_native_alphabet') === 'N/A'
+  const pobStateNA = get('personal_info.place_of_birth_state_na') === true || get('personal_info.place_of_birth_state') === 'N/A'
   const setUpper = (key: string, val: string) => set(key, (val || '').toUpperCase())
 
   return (
@@ -78,11 +79,11 @@ export default function Step1({ formData, onChange }: StepProps) {
                 <input
                   type="radio"
                   name="other_names_used"
-                  className="mr-2"
+                  className="mr-2 text-black"
                   checked={get('personal_info.other_names_used') === opt}
                   onChange={() => set('personal_info.other_names_used', opt)}
                 />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -99,7 +100,7 @@ export default function Step1({ formData, onChange }: StepProps) {
                   checked={get('personal_info.telecode_name') === opt}
                   onChange={() => set('personal_info.telecode_name', opt)}
                 />
-                <span>{opt}</span>
+                <span className='text-black'>{opt}</span>
               </label>
             ))}
           </div>
@@ -167,6 +168,25 @@ export default function Step1({ formData, onChange }: StepProps) {
           </select>
         </div>
         <div>
+          <label className="block text-sm font-medium text-gray-700">Marital Status <span className="text-red-500">*</span></label>
+          <select
+            value={get('personal_info.marital_status')}
+            onChange={(e) => set('personal_info.marital_status', e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            required
+          >
+            <option value="">Select</option>
+            <option value="MARRIED">MARRIED</option>
+            <option value="COMMON LAW MARRIAGE">COMMON LAW MARRIAGE</option>
+            <option value="CIVIL UNION / DOMESTIC PARTNERSHIP">CIVIL UNION / DOMESTIC PARTNERSHIP</option>
+            <option value="SINGLE">SINGLE</option>
+            <option value="WIDOWED">WIDOWED</option>
+            <option value="DIVORCED">DIVORCED</option>
+            <option value="LEGALLY SEPARATED">LEGALLY SEPARATED</option>
+            <option value="OTHER">OTHER</option>
+          </select>
+        </div>
+        <div>
           <label className="block text-sm font-medium text-gray-700">Date of Birth <span className="text-red-500">*</span></label>
           <input
             type="date"
@@ -191,12 +211,35 @@ export default function Step1({ formData, onChange }: StepProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">State/Province of Birth</label>
-          <input
-            type="text"
-            value={get('personal_info.place_of_birth_state')}
-            onChange={(e) => set('personal_info.place_of_birth_state', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
+          <div className="flex items-center space-x-3 mt-1">
+            <input
+              type="text"
+              value={pobStateNA ? 'N/A' : get('personal_info.place_of_birth_state')}
+              onChange={(e) => set('personal_info.place_of_birth_state', e.target.value)}
+              placeholder='Enter state/province'
+              className="flex-1 rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              disabled={pobStateNA}
+            />
+            <label className="inline-flex items-center text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="mr-2"
+                checked={pobStateNA}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    set('personal_info.place_of_birth_state_na', true)
+                    set('personal_info.place_of_birth_state', 'N/A')
+                  } else {
+                    set('personal_info.place_of_birth_state_na', false)
+                    if (get('personal_info.place_of_birth_state') === 'N/A') {
+                      set('personal_info.place_of_birth_state', '')
+                    }
+                  }
+                }}
+              />
+              NA (Does Not Apply)
+            </label>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Country/Region of Birth <span className="text-red-500">*</span></label>

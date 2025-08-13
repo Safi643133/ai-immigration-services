@@ -26,7 +26,7 @@ export default function Step13({ formData, onChange }: StepProps) {
                 checked={get('security_background1.communicable_disease') === opt}
                 onChange={() => set('security_background1.communicable_disease', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -38,6 +38,7 @@ export default function Step13({ formData, onChange }: StepProps) {
               value={get('security_background1.communicable_disease_explain')}
               onChange={(e) => set('security_background1.communicable_disease_explain', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter explanation'
             />
           </div>
         )}
@@ -58,7 +59,7 @@ export default function Step13({ formData, onChange }: StepProps) {
                 checked={get('security_background1.mental_or_physical_disorder') === opt}
                 onChange={() => set('security_background1.mental_or_physical_disorder', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -70,6 +71,7 @@ export default function Step13({ formData, onChange }: StepProps) {
               value={get('security_background1.mental_or_physical_disorder_explain')}
               onChange={(e) => set('security_background1.mental_or_physical_disorder_explain', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter explanation'
             />
           </div>
         )}
@@ -90,7 +92,7 @@ export default function Step13({ formData, onChange }: StepProps) {
                 checked={get('security_background1.drug_abuser_or_addict') === opt}
                 onChange={() => set('security_background1.drug_abuser_or_addict', opt)}
               />
-              <span>{opt}</span>
+              <span className='text-black'>{opt}</span>
             </label>
           ))}
         </div>
@@ -102,6 +104,7 @@ export default function Step13({ formData, onChange }: StepProps) {
               value={get('security_background1.drug_abuser_or_addict_explain')}
               onChange={(e) => set('security_background1.drug_abuser_or_addict_explain', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter explanation'
             />
           </div>
         )}

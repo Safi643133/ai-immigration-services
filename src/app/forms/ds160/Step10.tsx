@@ -50,6 +50,7 @@ export default function Step10({ formData, onChange }: StepProps) {
               value={get('present_work_education.employer_address_line1')}
               onChange={(e) => set('present_work_education.employer_address_line1', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter address line 1'
             />
           </div>
           <div>
@@ -59,6 +60,7 @@ export default function Step10({ formData, onChange }: StepProps) {
               value={get('present_work_education.employer_address_line2')}
               onChange={(e) => set('present_work_education.employer_address_line2', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter address line 2'
             />
           </div>
         </div>
@@ -70,6 +72,7 @@ export default function Step10({ formData, onChange }: StepProps) {
               value={get('present_work_education.employer_city')}
               onChange={(e) => set('present_work_education.employer_city', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter city'
             />
           </div>
           <div>
@@ -81,6 +84,7 @@ export default function Step10({ formData, onChange }: StepProps) {
                 onChange={(e) => set('present_work_education.employer_state', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={stateNA}
+                placeholder='Enter state/province'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -110,6 +114,7 @@ export default function Step10({ formData, onChange }: StepProps) {
                 onChange={(e) => set('present_work_education.employer_postal_code', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={postalNA}
+                placeholder='Enter zip code'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -150,6 +155,7 @@ export default function Step10({ formData, onChange }: StepProps) {
               value={get('present_work_education.employer_phone')}
               onChange={(e) => set('present_work_education.employer_phone', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter phone number'
             />
           </div>
           <div>
@@ -159,6 +165,7 @@ export default function Step10({ formData, onChange }: StepProps) {
               value={get('present_work_education.start_date')}
               onChange={(e) => set('present_work_education.start_date', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              placeholder='Enter start date'
             />
           </div>
           <div>
@@ -170,6 +177,7 @@ export default function Step10({ formData, onChange }: StepProps) {
                 onChange={(e) => set('present_work_education.monthly_income', e.target.value)}
                 className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 disabled={incomeNA}
+                placeholder='Enter monthly income'
               />
               <label className="inline-flex items-center text-sm text-gray-700">
                 <input
@@ -198,6 +206,7 @@ export default function Step10({ formData, onChange }: StepProps) {
             value={get('present_work_education.job_duties')}
             onChange={(e) => set('present_work_education.job_duties', e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            placeholder='Enter duties'
           />
         </div>
       </div>
