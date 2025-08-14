@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { validateDS160Form, performPreSubmissionChecks } from '@/lib/form-validation'
+import type { DS160FormData } from '@/lib/types/ceac'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +38,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse request body
-    const { form_template_id, form_data, extracted_data_summary } = await request.json()
+    const { 
+      form_template_id, 
+      form_data, 
+      extracted_data_summary,
+      auto_validate = true,
+      submission_reference 
+    } = await request.json()
 
     if (!form_template_id || !form_data) {
       return NextResponse.json(
@@ -72,16 +80,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Perform form validation if enabled
+    let validationResult = null
+    let preSubmissionChecks = null
+    let formValidationStatus = 'pending'
+
+    if (auto_validate && template.form_type === 'ds160') {
+      try {
+        validationResult = validateDS160Form(form_data as DS160FormData)
+        preSubmissionChecks = performPreSubmissionChecks(form_data as DS160FormData)
+        formValidationStatus = validationResult.isComplete ? 'validated' : 'flagged'
+      } catch (validationError) {
+        console.warn('Form validation failed:', validationError)
+        // Continue without validation if it fails
+      }
+    }
+
+    // Prepare submission data
+    const submissionData = {
+      user_id: user.id,
+      form_template_id,
+      form_data,
+      extracted_data_summary,
+      status: 'draft' as const,
+      submission_reference: submission_reference || undefined,
+      form_validation_status: formValidationStatus as any,
+      pre_submission_checks: preSubmissionChecks,
+      submission_attempt_count: 0
+    }
+
     // Create form submission
     const { data: submission, error: submissionError } = await supabaseAdmin
       .from('form_submissions')
-      .insert({
-        user_id: user.id,
-        form_template_id,
-        form_data,
-        extracted_data_summary,
-        status: 'draft'
-      })
+      .insert(submissionData)
       .select()
       .single()
 
@@ -96,6 +127,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       submission_id: submission.id,
+      submission_reference: submission.submission_reference,
+      validation_result: validationResult,
+      pre_submission_checks: preSubmissionChecks,
       message: 'Form saved successfully'
     })
 

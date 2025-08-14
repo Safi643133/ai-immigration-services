@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "worker": "NODE_ENV=development tsx src/workers/ceac-worker.ts",
+    "worker:dev": "NODE_ENV=development tsx watch src/workers/ceac-worker.ts"
   },
   "dependencies": {
     "@aws-sdk/client-textract": "^3.844.0",
@@ -24,17 +26,21 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.5",
+    "bullmq": "^5.57.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "ioredis": "^5.7.0",
     "langchain": "^0.3.29",
     "lucide-react": "^0.525.0",
     "next": "15.3.5",
     "pdf-lib": "^1.17.1",
     "pdf2pic": "^3.2.0",
+    "playwright": "^1.54.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.60.0",
     "tailwind-merge": "^3.3.1",
+    "tsx": "^4.20.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {
