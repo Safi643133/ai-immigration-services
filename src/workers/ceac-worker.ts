@@ -25,6 +25,7 @@ import { redis } from '../lib/redis'
 import { QUEUE_NAMES, type CeacSubmissionJobData, type StatusCheckJobData, type ArtifactCleanupJobData } from '../lib/queues'
 import { createClient } from '@supabase/supabase-js'
 import { CeacAutomationService } from './services/ceac-automation'
+import { ProgressService } from '../lib/progress/progress-service'
 import { getArtifactStorage } from '../lib/artifact-storage'
 
 /**
@@ -65,8 +66,9 @@ const supabase = createClient(
   }
 )
 
-// Initialize automation service
+// Initialize services
 const ceacService = new CeacAutomationService()
+const progressService = new ProgressService()
 
 /**
  * Process CEAC submission jobs

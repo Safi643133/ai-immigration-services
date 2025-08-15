@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { FileText, Download, Eye, Calendar, User, Send, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import type { FormSubmission, FormTemplate } from '@/lib/supabase'
+import { ProgressTracker } from '@/components'
 
 interface SubmissionWithTemplate extends FormSubmission {
   form_templates: FormTemplate
@@ -27,6 +28,7 @@ export default function SubmissionsPage() {
   const [ceacJobs, setCeacJobs] = useState<Record<string, CeacJob[]>>({})
   const [loading, setLoading] = useState(true)
   const [submittingTo, setSubmittingTo] = useState<Record<string, boolean>>({})
+  const [trackingJob, setTrackingJob] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -131,18 +133,32 @@ export default function SubmissionsPage() {
 
       if (response.ok) {
         const data = await response.json()
-        const newJob: CeacJob = {
+        const job: CeacJob = {
           id: data.job.id,
-          status: 'queued',
+          status: data.job.status || 'queued',
           createdAt: data.job.created_at,
           embassy: data.job.embassy_location
         }
         
-        setCeacJobs(prev => ({
-          ...prev,
-          [submissionId]: [newJob, ...(prev[submissionId] || [])]
-        }))
-        alert('DS-160 form submitted to CEAC! You can track the progress below.')
+        // Check if job already exists in the list
+        const existingJobs = ceacJobs[submissionId] || []
+        const jobExists = existingJobs.some(existingJob => existingJob.id === job.id)
+        
+        if (!jobExists) {
+          setCeacJobs(prev => ({
+            ...prev,
+            [submissionId]: [job, ...(prev[submissionId] || [])]
+          }))
+        }
+        
+        // Start tracking the job with ProgressTracker
+        setTrackingJob(data.job.id)
+        
+        if (data.message === 'Using existing job') {
+          alert('Resuming existing CEAC automation job...')
+        } else {
+          alert('DS-160 form submitted to CEAC! Tracking progress...')
+        }
       } else {
         const error = await response.json()
         alert(`Failed to submit to CEAC: ${error.error}`)
@@ -154,6 +170,8 @@ export default function SubmissionsPage() {
       setSubmittingTo(prev => ({ ...prev, [submissionId]: false }))
     }
   }
+
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -247,6 +265,35 @@ export default function SubmissionsPage() {
             </p>
           </div>
 
+          {/* Progress Tracker */}
+          {trackingJob && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">CEAC Automation Progress</h3>
+                <button
+                  onClick={() => {
+                    setTrackingJob(null)
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Close
+                </button>
+              </div>
+              <ProgressTracker
+                jobId={trackingJob}
+                onComplete={(summary) => {
+                  console.log('Job completed:', summary)
+                  setTrackingJob(null)
+                  loadCeacJobs() // Refresh jobs list
+                }}
+                onError={(error) => {
+                  console.error('Job error:', error)
+                  alert(`Job failed: ${error}`)
+                }}
+              />
+            </div>
+          )}
+
           {submissions.length === 0 ? (
             <div className="bg-white shadow rounded-lg p-12 text-center">
               <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -335,7 +382,7 @@ export default function SubmissionsPage() {
                                   {ceacJobs[submission.id].slice(0, 3).map((job, index) => (
                                     <div key={job.id} className="flex items-center space-x-2 px-2 py-1 rounded-md bg-gray-50 text-xs">
                                       {getCeacStatusIcon(job.status)}
-                                      <span className="font-medium">{getCeacStatusText(job.status)}</span>
+                                      <span className="font-medium text-black">{getCeacStatusText(job.status)}</span>
                                       {job.embassy && (
                                         <span className="text-gray-600">• {job.embassy}</span>
                                       )}
@@ -354,6 +401,7 @@ export default function SubmissionsPage() {
                                 </div>
                               )}
                             </div>
+                            
                           </>
                         )}
                       </div>

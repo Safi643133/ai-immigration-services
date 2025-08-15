@@ -1,6 +1,7 @@
 import { chromium, Browser, Page, BrowserContext } from 'playwright'
 import { createClient } from '@supabase/supabase-js'
 import { getArtifactStorage } from '../../lib/artifact-storage'
+import { ProgressService } from '../../lib/progress/progress-service'
 import type { DS160FormData } from '../../lib/types/ceac'
 
 /**
@@ -41,6 +42,7 @@ export interface StatusResult {
 
 export class CeacAutomationService {
   private supabase
+  private progressService: ProgressService
   private browser: Browser | null = null
   private baseUrl = 'https://ceac.state.gov/GenNIV/Default.aspx'
 
@@ -55,6 +57,7 @@ export class CeacAutomationService {
         }
       }
     )
+    this.progressService = new ProgressService()
   }
 
   /**
@@ -67,7 +70,11 @@ export class CeacAutomationService {
     let page: Page | null = null
 
     try {
+      // Initialize progress tracking
+      await this.progressService.initializeJobProgress(params.jobId, params.userId)
+      
       // Initialize browser
+      await this.progressService.updateStepProgress(params.jobId, 'browser_initialized', 'initializing', 'Initializing browser...', 5)
       await this.initializeBrowser()
       if (!this.browser) {
         throw new Error('Failed to initialize browser')
@@ -95,6 +102,7 @@ export class CeacAutomationService {
       await this.setupPageMonitoring(page, params.jobId)
 
       // Navigate to CEAC website
+      await this.progressService.updateStepProgress(params.jobId, 'navigating_to_ceac', 'running', 'Navigating to CEAC website...', 10)
       console.log('📍 Navigating to CEAC website...')
       await page.goto(this.baseUrl, { 
         waitUntil: 'domcontentloaded',
@@ -113,17 +121,21 @@ export class CeacAutomationService {
       await this.takeScreenshot(page, params.jobId, 'initial-page')
 
       // Start the DS-160 application process
+      await this.progressService.updateStepProgress(params.jobId, 'embassy_selected', 'running', 'Selecting embassy location...', 15)
       console.log('🔄 Starting DS-160 application...')
       await this.startNewApplication(page, params)
 
       // Fill out the form step by step
+      await this.progressService.updateStepProgress(params.jobId, 'form_filling_started', 'running', 'Starting form filling process...', 20)
       console.log('📝 Filling DS-160 form...')
       const applicationId = await this.fillDS160Form(page, params)
 
       // Review and submit
+      await this.progressService.updateStepProgress(params.jobId, 'form_review', 'running', 'Reviewing form before submission...', 85)
       console.log('👀 Reviewing form...')
       await this.reviewForm(page, params)
 
+      await this.progressService.updateStepProgress(params.jobId, 'form_submitted', 'running', 'Submitting form to CEAC...', 90)
       console.log('📤 Submitting form...')
       const confirmationId = await this.submitForm(page, params)
 
@@ -132,6 +144,15 @@ export class CeacAutomationService {
 
       // Save session artifacts
       await this.saveSessionArtifacts(context, params.jobId)
+
+      // Mark job as completed
+      await this.progressService.markJobCompleted(params.jobId, {
+        user_id: params.userId,
+        applicationId,
+        confirmationId,
+        screenshots: [`${params.jobId}/initial-page.png`, `${params.jobId}/final-confirmation.png`],
+        artifacts: [`${params.jobId}/session.har`]
+      })
 
       console.log(`✅ DS-160 submission completed successfully`)
       console.log(`📋 Application ID: ${applicationId}`)
@@ -147,6 +168,9 @@ export class CeacAutomationService {
 
     } catch (error) {
       console.error('❌ DS-160 submission failed:', error)
+      
+      // Mark job as failed
+      await this.progressService.markJobFailed(params.jobId, error instanceof Error ? error.message : 'Unknown error occurred')
       
       // Take error screenshot if page is available
       if (page) {
@@ -324,6 +348,15 @@ export class CeacAutomationService {
 
   /**
    * Select embassy/consulate location from the main page dropdown
+   * 
+   * CEAC HTML Structure:
+   * <select name="ctl00$SiteContentPlaceHolder$ucLocation$ddlLocation" 
+   *         id="ctl00_SiteContentPlaceHolder_ucLocation_ddlLocation"
+   *         aria-label="Select a Language">
+   *   <option value=""> - SELECT ONE - </option>
+   *   <option value="ISL">PAKISTAN, ISLAMABAD</option>
+   *   <!-- other country options -->
+   * </select>
    */
   private async selectEmbassyLocation(page: Page, embassy: string, jobId: string): Promise<void> {
     console.log(`🌍 Selecting embassy location: ${embassy}`)
@@ -340,21 +373,20 @@ export class CeacAutomationService {
       { timeout: 10000 }
     )
     
-    // Look for the main location dropdown with more comprehensive selectors
+    // Look for the main location dropdown with specific CEAC selectors
     console.log('🔍 Searching for location dropdown...')
     const possibleSelectors = [
-      // Most likely selectors based on CEAC structure
-      'select[name$="Post"]',
-      'select[name*="Post"]', 
-      'select[name*="Location"]',
-      'select[name*="Embassy"]',
-      'select[id*="Post"]',
-      'select[id*="Location"]', 
-      'select[id*="Embassy"]',
-      // Generic selectors
+      // Exact selector from CEAC website
+      'select[name="ctl00$SiteContentPlaceHolder$ucLocation$ddlLocation"]',
+      'select[id="ctl00_SiteContentPlaceHolder_ucLocation_ddlLocation"]',
+      // Fallback selectors
+      'select[name*="ddlLocation"]',
+      'select[id*="ddlLocation"]',
+      'select[aria-label="Select a Language"]',
+      // Generic selectors as backup
       'select:has(option:text("PAKISTAN, ISLAMABAD"))',
       'select:has(option:text("- SELECT ONE -"))',
-      'select:has(option[value*="PAKISTAN"])',
+      'select:has(option[value="ISL"])',
       // Last resort - any select with many options (embassy list)
       'select:has(option:nth-child(20))'
     ]
@@ -380,7 +412,7 @@ export class CeacAutomationService {
             break
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log(`❌ Selector ${selector} failed: ${error.message}`)
         continue
       }
@@ -406,7 +438,7 @@ export class CeacAutomationService {
             console.log(`📋 Sample options: ${options.slice(0, 3).join(', ')}...`)
             break
           }
-        } catch (error) {
+        } catch (error: any) {
           console.log(`❌ Error checking select ${i}: ${error.message}`)
           continue
         }
@@ -451,9 +483,18 @@ export class CeacAutomationService {
       const targetOption = pakistanOptions[0]
       console.log(`🎯 Target option found: "${targetOption}"`)
       
-      // Method 1: Select by exact text
-      await locationDropdown.selectOption({ label: targetOption })
-      console.log(`✅ Selected embassy location: ${targetOption}`)
+      // Try multiple selection methods for reliability
+      try {
+        // Method 1: Select by exact text label
+        await locationDropdown.selectOption({ label: targetOption })
+        console.log(`✅ Selected embassy location by label: ${targetOption}`)
+      } catch (error) {
+        console.log(`⚠️ Label selection failed, trying value selection...`)
+        
+        // Method 2: Select by value (ISL for Pakistan, Islamabad)
+        await locationDropdown.selectOption({ value: 'ISL' })
+        console.log(`✅ Selected embassy location by value: ISL`)
+      }
       
       // Wait for any dynamic loading
       await page.waitForTimeout(2000)
@@ -465,7 +506,7 @@ export class CeacAutomationService {
       // Take screenshot after selection
       await this.takeScreenshot(page, jobId, 'embassy-location-selected')
       
-    } catch (error) {
+    } catch (error: any) {
       console.error(`❌ Failed to select embassy location: ${error.message}`)
       
       // Take screenshot of error state
@@ -478,39 +519,106 @@ export class CeacAutomationService {
   /**
    * Handle CAPTCHA if present
    */
-  private async handleCaptcha(page: Page, jobId: string): Promise<void> {
+  private async handleCaptcha(page: Page, jobId: string): Promise<string | null> {
     console.log('🔐 Checking for CAPTCHA...')
     
-    // Look for CAPTCHA elements
-    const captchaImage = page.locator('img[src*="captcha"]').first()
-    const captchaInput = page.locator('input[name*="captcha"], input[id*="captcha"]').first()
+    // Look for CAPTCHA elements using the specific IDs from CEAC
+    const captchaImage = page.locator('#c_default_ctl00_sitecontentplaceholder_uclocation_identifycaptcha1_defaultcaptcha_CaptchaImage')
+    const captchaInput = page.locator('#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_txtCodeTextBox')
     
     if (await captchaImage.isVisible({ timeout: 5000 })) {
-      console.log('🤖 CAPTCHA detected - manual intervention required')
+      console.log('🤖 CAPTCHA detected - capturing image')
+      
+      // Get CAPTCHA image source
+      const captchaImageSrc = await captchaImage.getAttribute('src')
+      console.log('📸 CAPTCHA image URL:', captchaImageSrc)
+      
+      // Convert relative URL to absolute URL
+      const fullCaptchaUrl = captchaImageSrc?.startsWith('http') 
+        ? captchaImageSrc 
+        : `https://ceac.state.gov${captchaImageSrc}`
+      
+      console.log('📸 Full CAPTCHA image URL:', fullCaptchaUrl)
       
       // Take screenshot of CAPTCHA
       await this.takeScreenshot(page, jobId, 'captcha-challenge')
       
-      // For now, we'll pause and wait for manual CAPTCHA solving
-      // In production, you might integrate with a CAPTCHA solving service
-      console.log('⏸️ Pausing for manual CAPTCHA solving...')
-      console.log('👤 Please solve the CAPTCHA manually in the browser window')
-      console.log('⏳ Waiting 30 seconds for manual intervention...')
+      // Update progress to indicate CAPTCHA is detected
+      await this.progressService.handleCaptchaDetection(jobId, fullCaptchaUrl)
       
-      // Wait for user to solve CAPTCHA manually
-      await page.waitForTimeout(30000)
+      // Wait for CAPTCHA solution from user
+      const solution = await this.waitForCaptchaSolution(jobId)
       
-      // Check if CAPTCHA was solved by looking for the input to be filled
-      if (await captchaInput.isVisible()) {
-        const captchaValue = await captchaInput.inputValue()
-        if (!captchaValue) {
-          console.log('⚠️ CAPTCHA not solved - automation may fail')
-        } else {
-          console.log('✅ CAPTCHA appears to be solved')
+      if (solution) {
+        // Fill the CAPTCHA solution
+        const success = await this.fillCaptcha(page, solution)
+        
+        if (success) {
+          // Update progress to indicate CAPTCHA is solved
+          await this.progressService.handleCaptchaSolution(jobId, solution)
+          return solution
         }
       }
+      
+      return null
     } else {
       console.log('✅ No CAPTCHA detected')
+      return null
+    }
+  }
+
+  /**
+   * Wait for CAPTCHA solution from user
+   */
+  private async waitForCaptchaSolution(jobId: string): Promise<string | null> {
+    console.log('⏳ Waiting for CAPTCHA solution from user...')
+    
+    const maxWaitTime = 5 * 60 * 1000 // 5 minutes
+    const checkInterval = 2000 // 2 seconds
+    const startTime = Date.now()
+    
+    while (Date.now() - startTime < maxWaitTime) {
+      try {
+        // Check if CAPTCHA has been solved
+        const challenge = await this.progressService.getCaptchaChallenge(jobId)
+        
+        if (challenge && challenge.solved && challenge.solution) {
+          console.log('✅ CAPTCHA solution received from user')
+          return challenge.solution
+        }
+        
+        // Wait before checking again
+        await new Promise(resolve => setTimeout(resolve, checkInterval))
+      } catch (error) {
+        console.warn('Error checking CAPTCHA solution:', error)
+        await new Promise(resolve => setTimeout(resolve, checkInterval))
+      }
+    }
+    
+    console.log('⏰ CAPTCHA solution timeout - no solution received within 5 minutes')
+    return null
+  }
+
+  /**
+   * Fill CAPTCHA solution
+   */
+  private async fillCaptcha(page: Page, solution: string): Promise<boolean> {
+    try {
+      console.log('🔐 Filling CAPTCHA solution:', solution)
+      
+      const captchaInput = page.locator('#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_txtCodeTextBox')
+      
+      if (await captchaInput.isVisible()) {
+        await captchaInput.fill(solution)
+        console.log('✅ CAPTCHA solution filled')
+        return true
+      } else {
+        console.log('❌ CAPTCHA input not found')
+        return false
+      }
+    } catch (error) {
+      console.error('❌ Error filling CAPTCHA:', error)
+      return false
     }
   }
 

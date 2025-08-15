@@ -85,6 +85,59 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Check for existing running job for this submission
+    const { data: existingJob, error: existingJobError } = await supabaseAdmin
+      .from('ceac_automation_jobs')
+      .select('id, status, created_at, embassy_location')
+      .eq('submission_id', submissionId)
+      .eq('user_id', user.id)
+      .in('status', ['queued', 'running'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (existingJobError && existingJobError.code !== 'PGRST116') {
+      console.error('Error checking existing job:', existingJobError)
+    }
+
+    // If there's an existing running job, return it instead of creating a new one
+    if (existingJob) {
+      console.log(`Found existing job ${existingJob.id} for submission ${submissionId}`)
+      return NextResponse.json({
+        job: existingJob,
+        message: 'Using existing job'
+      })
+    }
+
+    // Check for existing active jobs for this submission
+    const { data: existingJobs, error: existingJobsError } = await supabaseAdmin
+      .from('ceac_automation_jobs')
+      .select('id, status, created_at, embassy_location')
+      .eq('submission_id', submissionId)
+      .eq('user_id', user.id)
+      .in('status', ['queued', 'running'])
+      .order('created_at', { ascending: false })
+
+    if (existingJobsError) {
+      console.error('Error checking existing jobs:', existingJobsError)
+      return NextResponse.json(
+        { error: 'Failed to check existing jobs' },
+        { status: 500 }
+      )
+    }
+
+    // If there's an active job, return it instead of creating a new one
+    if (existingJobs && existingJobs.length > 0) {
+      const existingJob = existingJobs[0]
+      console.log(`🔄 Found existing active job ${existingJob.id} for submission ${submissionId}`)
+      
+      return NextResponse.json({
+        job: existingJob,
+        message: 'Using existing active job',
+        isExisting: true
+      })
+    }
+
     // Perform validation if requested
     let validationResult = null
     let preSubmissionChecks = null
