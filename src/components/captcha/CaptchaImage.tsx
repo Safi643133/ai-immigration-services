@@ -114,3 +114,4 @@ export default function CaptchaImage({
     </div>
   )
 }
+

@@ -54,3 +54,4 @@ CREATE POLICY "Users can insert their own progress updates"
 CREATE POLICY "Users can update their own progress updates"
   ON ceac_progress_updates FOR UPDATE
   USING (auth.role() = 'service_role' OR auth.uid() = user_id);
+

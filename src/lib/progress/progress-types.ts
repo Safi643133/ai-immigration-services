@@ -191,3 +191,4 @@ export interface ProgressMetrics {
   average_completion_time: number
   captcha_success_rate: number
 }
+

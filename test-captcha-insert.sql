@@ -24,3 +24,4 @@ SELECT * FROM ceac_captcha_challenges WHERE job_id = '00e3c351-ec02-4dda-996a-1a
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual 
 FROM pg_policies 
 WHERE tablename = 'ceac_captcha_challenges';
+

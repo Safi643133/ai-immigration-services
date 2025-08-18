@@ -32,3 +32,4 @@ BEGIN
   RAISE NOTICE 'Added filename column to ceac_artifacts';
   RAISE NOTICE 'Updated existing records with default values';
 END $$;
+

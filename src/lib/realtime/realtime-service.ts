@@ -356,3 +356,4 @@ if (typeof window !== 'undefined') {
     realtimeService.cleanup()
   })
 }
+

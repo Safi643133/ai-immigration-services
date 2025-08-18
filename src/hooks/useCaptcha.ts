@@ -295,3 +295,4 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
     lastEvent
   }
 }
+

@@ -261,3 +261,4 @@ export function useProgress(options: UseProgressOptions = {}): UseProgressReturn
     lastEvent
   }
 }
+
