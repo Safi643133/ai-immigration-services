@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { FileText, Download, Eye, Calendar, User, Send, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import type { FormSubmission, FormTemplate } from '@/lib/supabase'
 import { ProgressTracker } from '@/components'
+import CaptchaDebug from '@/components/debug/CaptchaDebug'
 
 interface SubmissionWithTemplate extends FormSubmission {
   form_templates: FormTemplate
@@ -279,6 +280,7 @@ export default function SubmissionsPage() {
                   Close
                 </button>
               </div>
+              <CaptchaDebug jobId={trackingJob} />
               <ProgressTracker
                 jobId={trackingJob}
                 onComplete={(summary) => {

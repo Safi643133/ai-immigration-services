@@ -198,7 +198,7 @@ export class ProgressStorage {
   }
 
   /**
-   * Get the current CAPTCHA challenge for a job
+   * Get the current CAPTCHA challenge for a job (unsolved)
    */
   async getCaptchaChallenge(jobId: string): Promise<CaptchaChallenge | null> {
     try {
@@ -223,6 +223,37 @@ export class ProgressStorage {
       return data as CaptchaChallenge
     } catch (error) {
       console.error('ProgressStorage.getCaptchaChallenge error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get the solved CAPTCHA challenge for a job
+   */
+  async getSolvedCaptchaChallenge(jobId: string): Promise<CaptchaChallenge | null> {
+    try {
+      const { data, error } = await this.supabase
+        .from('ceac_captcha_challenges')
+        .select('*')
+        .eq('job_id', jobId)
+        .eq('solved', true)
+        .not('solution', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned
+          return null
+        }
+        console.error('Error fetching solved CAPTCHA challenge:', error)
+        throw new Error(`Failed to fetch solved CAPTCHA challenge: ${error.message}`)
+      }
+
+      return data as CaptchaChallenge
+    } catch (error) {
+      console.error('ProgressStorage.getSolvedCaptchaChallenge error:', error)
       throw error
     }
   }

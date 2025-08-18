@@ -72,14 +72,14 @@ export default function ProgressTracker({
     }
   }, [captchaError, onError])
 
-  // Show CAPTCHA input when challenge is available
+  // Show CAPTCHA input when challenge is available or progress indicates CAPTCHA is needed
   useEffect(() => {
-    if (challenge && !challenge.solved) {
+    if ((challenge && !challenge.solved) || (summary?.needs_captcha && summary?.captcha_image)) {
       setShowCaptchaInput(true)
     } else {
       setShowCaptchaInput(false)
     }
-  }, [challenge])
+  }, [challenge, summary])
 
   // Handle CAPTCHA solution submission
   const handleCaptchaSubmit = async (solution: string): Promise<boolean> => {
@@ -194,11 +194,20 @@ export default function ProgressTracker({
       />
 
       {/* CAPTCHA Section */}
-      {challenge && !challenge.solved && (
+      {(challenge && !challenge.solved) || (summary.needs_captcha && summary.captcha_image) ? (
         <div className="space-y-4">
+          {/* Debug Info */}
+          <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+            <div>Challenge ID: {challenge?.id || 'None'}</div>
+            <div>Challenge Image URL: {challenge?.image_url || 'None'}</div>
+            <div>Challenge Solved: {challenge?.solved ? 'Yes' : 'No'}</div>
+            <div>Summary Needs CAPTCHA: {summary.needs_captcha ? 'Yes' : 'No'}</div>
+            <div>Summary CAPTCHA Image: {summary.captcha_image || 'None'}</div>
+          </div>
+          
           {/* CAPTCHA Image */}
           <CaptchaImage
-            imageUrl={challenge.image_url}
+            imageUrl={challenge?.image_url || summary.captcha_image || ''}
             onRefresh={handleCaptchaRefresh}
             loading={captchaLoading}
           />
@@ -212,7 +221,7 @@ export default function ProgressTracker({
             />
           )}
         </div>
-      )}
+      ) : null}
 
       {/* Progress History (Optional) */}
       {history.length > 0 && (

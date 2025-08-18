@@ -71,25 +71,63 @@ export class ArtifactStorage {
         storagePath = await this.storeLocally(data, metadata)
       }
 
-      // Create database record
+      // Create database record - handle missing metadata column gracefully
+      const insertData: any = {
+        job_id: metadata.jobId,
+        type: metadata.type,
+        filename: metadata.filename,
+        storage_path: storagePath,
+        public_url: publicUrl,
+        mime_type: metadata.mimeType,
+        file_size: metadata.size,
+        checksum: metadata.checksum
+      }
+      
+      // Only add metadata if the column exists (to avoid schema cache issues)
+      try {
+        insertData.metadata = metadata.metadata || {}
+      } catch (e) {
+        console.log('Metadata column not available, skipping...')
+      }
+
       const { data: artifact, error } = await this.supabase
         .from('ceac_artifacts')
-        .insert({
-          job_id: metadata.jobId,
-          type: metadata.type,
-          filename: metadata.filename,
-          storage_path: storagePath,
-          public_url: publicUrl,
-          mime_type: metadata.mimeType,
-          file_size: metadata.size,
-          checksum: metadata.checksum,
-          metadata: metadata.metadata || {}
-        })
+        .insert(insertData)
         .select()
         .single()
 
       if (error) {
-        throw new Error(`Failed to create artifact record: ${error.message}`)
+        // If it's a schema error, try without metadata
+        if (error.message.includes('metadata') && error.message.includes('column')) {
+          console.log('Retrying without metadata column...')
+          delete insertData.metadata
+          
+          const { data: artifact2, error: error2 } = await this.supabase
+            .from('ceac_artifacts')
+            .insert(insertData)
+            .select()
+            .single()
+            
+          if (error2) {
+            throw new Error(`Failed to create artifact record: ${error2.message}`)
+          }
+          
+          return {
+            id: artifact2.id,
+            jobId: artifact2.job_id,
+            type: artifact2.type as ArtifactType,
+            filename: artifact2.filename,
+            storagePath: artifact2.storage_path,
+            publicUrl: artifact2.public_url,
+            mimeType: artifact2.mime_type,
+            size: artifact2.file_size,
+            checksum: artifact2.checksum,
+            metadata: {},
+            createdAt: artifact2.created_at
+          }
+        } else {
+          throw new Error(`Failed to create artifact record: ${error.message}`)
+        }
       }
 
       return {

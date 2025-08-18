@@ -216,7 +216,7 @@ export function useProgress(options: UseProgressOptions = {}): UseProgressReturn
     if (jobId) {
       fetchProgress()
     }
-  }, [jobId, fetchProgress])
+  }, [jobId]) // Remove fetchProgress from dependencies to prevent infinite loop
 
   // Setup realtime or polling
   useEffect(() => {

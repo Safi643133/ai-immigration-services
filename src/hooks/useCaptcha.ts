@@ -222,7 +222,7 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
     }, pollInterval)
 
     console.log(`🔄 Started CAPTCHA polling for job ${jobId} every ${pollInterval}ms`)
-  }, [jobId, enableRealtime, pollInterval, fetchChallenge])
+  }, [jobId, enableRealtime, pollInterval]) // Remove fetchChallenge from dependencies
 
   const stopPolling = useCallback(() => {
     if (pollIntervalRef.current) {
@@ -241,7 +241,7 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
     if (jobId) {
       fetchChallenge()
     }
-  }, [jobId, fetchChallenge])
+  }, [jobId]) // Remove fetchChallenge from dependencies to prevent infinite loop
 
   // Setup realtime or polling
   useEffect(() => {

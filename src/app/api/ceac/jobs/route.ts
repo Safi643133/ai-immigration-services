@@ -103,9 +103,22 @@ export async function POST(request: NextRequest) {
     // If there's an existing running job, return it instead of creating a new one
     if (existingJob) {
       console.log(`Found existing job ${existingJob.id} for submission ${submissionId}`)
+      
+      // Force restart by updating job status to queued
+      await supabaseAdmin
+        .from('ceac_automation_jobs')
+        .update({
+          status: 'queued',
+          started_at: null,
+          finished_at: null,
+          error_code: null,
+          error_message: null
+        })
+        .eq('id', existingJob.id)
+      
       return NextResponse.json({
-        job: existingJob,
-        message: 'Using existing job'
+        job: { ...existingJob, status: 'queued' },
+        message: 'Restarted existing job'
       })
     }
 

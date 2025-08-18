@@ -330,19 +330,98 @@ export class CeacAutomationService {
     // First select the embassy location from the main page dropdown
     await this.selectEmbassyLocation(page, params.embassy, params.jobId)
     
-    // Handle CAPTCHA if present
-    await this.handleCaptcha(page, params.jobId)
+    // Handle CAPTCHA if present - wait for solution before continuing
+    const captchaSolution = await this.handleCaptcha(page, params.jobId)
+    
+    // If CAPTCHA was detected but not solved, stop the automation
+    if (captchaSolution === null) {
+      console.log('❌ CAPTCHA was detected but not solved - stopping automation')
+      throw new Error('CAPTCHA solution required but not provided within timeout')
+    }
+    
+    // If no CAPTCHA was detected, continue normally
+    if (captchaSolution === 'no_captcha') {
+      console.log('✅ No CAPTCHA detected - continuing normally')
+    } else {
+      console.log('✅ CAPTCHA solved successfully - continuing')
+    }
     
     // Click "START AN APPLICATION" button
     console.log('🚀 Clicking START AN APPLICATION...')
-    const startButton = page.locator('text=START AN APPLICATION').first()
     
-    if (await startButton.isVisible()) {
+    // Update progress to show we're starting the application
+    await this.progressService.updateStepProgress(
+      params.jobId,
+      'form_filling_started',
+      'running',
+      'Clicking START AN APPLICATION button...',
+      20
+    )
+    
+    // Try multiple selectors for the START AN APPLICATION button
+    const startButtonSelectors = [
+      // Specific ID selector from CEAC
+      '#ctl00_SiteContentPlaceHolder_lnkNew',
+      // Text-based selector as fallback
+      'text=START AN APPLICATION',
+      // Role-based selector
+      '[role="Button"]:has-text("START AN APPLICATION")',
+      // Generic link with text
+      'a:has-text("START AN APPLICATION")'
+    ]
+    
+    let startButton = null
+    
+    for (const selector of startButtonSelectors) {
+      try {
+        console.log(`🔍 Trying START AN APPLICATION button selector: ${selector}`)
+        const button = page.locator(selector).first()
+        
+        if (await button.isVisible({ timeout: 3000 })) {
+          startButton = button
+          console.log(`✅ Found START AN APPLICATION button with selector: ${selector}`)
+          break
+        }
+      } catch (error: any) {
+        console.log(`❌ Selector ${selector} failed: ${error.message}`)
+        continue
+      }
+    }
+    
+    if (startButton) {
+      // Take screenshot before clicking
+      await this.takeScreenshot(page, params.jobId, 'before-start-application')
+      
+      // Click the button
       await startButton.click()
+      
+      // Wait for navigation to the DS-160 form page
       await page.waitForLoadState('networkidle')
-      console.log('✅ Application started successfully')
+      
+      // Verify we're on the correct page
+      const currentUrl = page.url()
+      console.log(`📍 Current URL after clicking START AN APPLICATION: ${currentUrl}`)
+      
+      if (currentUrl.includes('ConfirmApplicationID.aspx') || currentUrl.includes('SecureQuestion')) {
+        console.log('✅ Successfully navigated to DS-160 form page')
+        
+        // Update progress to show successful navigation
+        await this.progressService.updateStepProgress(
+          params.jobId,
+          'form_filling_started',
+          'running',
+          'Successfully navigated to DS-160 form page',
+          25
+        )
+      } else {
+        console.log('⚠️ Navigation may not have worked as expected')
+      }
+      
+      // Take screenshot after navigation
+      await this.takeScreenshot(page, params.jobId, 'after-start-application')
+      
     } else {
-      throw new Error('START AN APPLICATION button not found')
+      throw new Error('START AN APPLICATION button not found with any selector')
     }
   }
 
@@ -550,20 +629,32 @@ export class CeacAutomationService {
       const solution = await this.waitForCaptchaSolution(jobId)
       
       if (solution) {
+        console.log('🔐 CAPTCHA solution received, filling input field...')
+        
         // Fill the CAPTCHA solution
         const success = await this.fillCaptcha(page, solution)
         
         if (success) {
+          console.log('✅ CAPTCHA solution filled successfully')
+          
           // Update progress to indicate CAPTCHA is solved
           await this.progressService.handleCaptchaSolution(jobId, solution)
+          
+          // Take a screenshot after filling CAPTCHA
+          await this.takeScreenshot(page, jobId, 'captcha-filled')
+          
           return solution
+        } else {
+          console.log('❌ Failed to fill CAPTCHA solution')
+          return null
         }
+      } else {
+        console.log('❌ No CAPTCHA solution received within timeout')
+        return null
       }
-      
-      return null
     } else {
       console.log('✅ No CAPTCHA detected')
-      return null
+      return 'no_captcha' // Return a special value to indicate no CAPTCHA was present
     }
   }
 
@@ -575,16 +666,37 @@ export class CeacAutomationService {
     
     const maxWaitTime = 5 * 60 * 1000 // 5 minutes
     const checkInterval = 2000 // 2 seconds
-    const startTime = Date.now()
+    let startTime = Date.now()
+    let lastChallengeId = null
     
     while (Date.now() - startTime < maxWaitTime) {
       try {
-        // Check if CAPTCHA has been solved
-        const challenge = await this.progressService.getCaptchaChallenge(jobId)
+        console.log(`🔍 Polling cycle ${Math.floor((Date.now() - startTime) / checkInterval) + 1}...`)
         
-        if (challenge && challenge.solved && challenge.solution) {
-          console.log('✅ CAPTCHA solution received from user')
-          return challenge.solution
+        // First check if there's an unsolved CAPTCHA challenge
+        const unsolvedChallenge = await this.progressService.getCaptchaChallenge(jobId)
+        
+        if (!unsolvedChallenge) {
+          console.log('📝 No unsolved challenge found, checking for solved challenge...')
+          
+          // No unsolved challenge, check if there's a solved one
+          const solvedChallenge = await this.progressService.getSolvedCaptchaChallenge(jobId)
+          
+          if (solvedChallenge && solvedChallenge.solution) {
+            console.log(`✅ CAPTCHA solution received from user: "${solvedChallenge.solution}"`)
+            return solvedChallenge.solution
+          } else {
+            console.log('📝 No solved challenge found either')
+          }
+        } else {
+          // Check if this is a new challenge (user refreshed CAPTCHA)
+          if (lastChallengeId && lastChallengeId !== unsolvedChallenge.id) {
+            console.log('🔄 New CAPTCHA challenge detected (user refreshed), resetting timer...')
+            // Reset the timer when user refreshes CAPTCHA
+            startTime = Date.now()
+          }
+          lastChallengeId = unsolvedChallenge.id
+          console.log('📝 Unsolved challenge still exists, waiting...')
         }
         
         // Wait before checking again
@@ -606,14 +718,52 @@ export class CeacAutomationService {
     try {
       console.log('🔐 Filling CAPTCHA solution:', solution)
       
-      const captchaInput = page.locator('#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_txtCodeTextBox')
+      // Try multiple selectors for the CAPTCHA input field
+      const captchaInputSelectors = [
+        '#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_txtCodeTextBox',
+        'input[name="ctl00$SiteContentPlaceHolder$ucLocation$IdentifyCaptcha1$txtCodeTextBox"]',
+        'input[aria-label="Enter the Captcha"]',
+        'input[type="text"][maxlength="10"]'
+      ]
       
-      if (await captchaInput.isVisible()) {
+      let captchaInput = null
+      
+      for (const selector of captchaInputSelectors) {
+        try {
+          console.log(`🔍 Trying CAPTCHA input selector: ${selector}`)
+          const input = page.locator(selector).first()
+          
+          if (await input.isVisible({ timeout: 3000 })) {
+            captchaInput = input
+            console.log(`✅ Found CAPTCHA input with selector: ${selector}`)
+            break
+          }
+        } catch (error: any) {
+          console.log(`❌ Selector ${selector} failed: ${error.message}`)
+          continue
+        }
+      }
+      
+      if (captchaInput) {
+        // Clear the input first
+        await captchaInput.clear()
+        
+        // Fill the solution
         await captchaInput.fill(solution)
-        console.log('✅ CAPTCHA solution filled')
-        return true
+        
+        // Verify the value was set
+        const filledValue = await captchaInput.inputValue()
+        console.log(`📝 CAPTCHA input value after filling: "${filledValue}"`)
+        
+        if (filledValue === solution) {
+          console.log('✅ CAPTCHA solution filled successfully')
+          return true
+        } else {
+          console.log('❌ CAPTCHA input value verification failed')
+          return false
+        }
       } else {
-        console.log('❌ CAPTCHA input not found')
+        console.log('❌ CAPTCHA input not found with any selector')
         return false
       }
     } catch (error) {

@@ -14,6 +14,19 @@ const nextConfig: NextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@aws-sdk/client-textract'],
   },
+  // Configure image domains to allow external images
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ceac.state.gov',
+        port: '',
+        pathname: '/GenNIV/**',
+      },
+    ],
+    // Allow unoptimized images for external sources
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;

@@ -8,6 +8,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 
 interface CaptchaImageProps {
   imageUrl: string
@@ -22,15 +23,31 @@ export default function CaptchaImage({
   loading = false,
   className = ''
 }: CaptchaImageProps) {
-  const [imageLoading, setImageLoading] = useState(true)
+  const [imageLoading, setImageLoading] = useState(false)
   const [imageError, setImageError] = useState(false)
+  
+  // Convert CEAC URL to our proxy URL
+  const getProxyUrl = (url: string) => {
+    if (url.includes('ceac.state.gov')) {
+      return `/api/captcha-proxy?url=${encodeURIComponent(url)}`
+    }
+    return url
+  }
+  
+  const proxyImageUrl = getProxyUrl(imageUrl)
+  console.log('🖼️ CaptchaImage render - Original URL:', imageUrl)
+  console.log('🖼️ CaptchaImage render - Proxy URL:', proxyImageUrl)
+  console.log('🖼️ CaptchaImage render - Loading state:', loading || imageLoading)
+  console.log('🖼️ CaptchaImage render - Error state:', imageError)
 
   const handleImageLoad = () => {
+    console.log('✅ CAPTCHA image loaded successfully:', proxyImageUrl)
     setImageLoading(false)
     setImageError(false)
   }
 
   const handleImageError = () => {
+    console.log('❌ CAPTCHA image failed to load:', proxyImageUrl)
     setImageLoading(false)
     setImageError(true)
   }
@@ -89,13 +106,17 @@ export default function CaptchaImage({
         ) : (
           // Image Display
           <div className="flex justify-center">
-            <img
-              src={imageUrl}
+            <Image
+              key={proxyImageUrl} // Force re-render when URL changes
+              src={proxyImageUrl}
               alt="CAPTCHA Challenge"
+              width={200}
+              height={80}
               className="max-h-32 max-w-full rounded border border-gray-200"
               onLoad={handleImageLoad}
               onError={handleImageError}
               style={{ imageRendering: 'crisp-edges' }} // Better for CAPTCHA images
+              unoptimized={true} // Skip Next.js image optimization for external images
             />
           </div>
         )}

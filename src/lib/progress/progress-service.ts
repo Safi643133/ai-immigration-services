@@ -231,7 +231,7 @@ export class ProgressService implements ProgressServiceInterface, CaptchaService
   }
 
   /**
-   * Get current CAPTCHA challenge
+   * Get current CAPTCHA challenge (unsolved)
    */
   async getCaptchaChallenge(jobId: string): Promise<CaptchaChallenge | null> {
     try {
@@ -253,6 +253,28 @@ export class ProgressService implements ProgressServiceInterface, CaptchaService
   }
 
   /**
+   * Get solved CAPTCHA challenge
+   */
+  async getSolvedCaptchaChallenge(jobId: string): Promise<CaptchaChallenge | null> {
+    try {
+      console.log(`🔍 Getting solved CAPTCHA challenge for job ${jobId}`)
+      
+      const challenge = await this.storage.getSolvedCaptchaChallenge(jobId)
+      
+      if (challenge) {
+        console.log(`✅ Solved CAPTCHA challenge found: ${challenge.id}`)
+      } else {
+        console.log(`ℹ️ No solved CAPTCHA challenge found for job ${jobId}`)
+      }
+      
+      return challenge
+    } catch (error) {
+      console.error('ProgressService.getSolvedCaptchaChallenge error:', error)
+      throw error
+    }
+  }
+
+  /**
    * Refresh CAPTCHA (create new challenge)
    */
   async refreshCaptcha(jobId: string): Promise<CaptchaChallenge> {
@@ -265,8 +287,15 @@ export class ProgressService implements ProgressServiceInterface, CaptchaService
         throw new Error('No current CAPTCHA challenge to refresh')
       }
 
-      // Create a new challenge with the same image URL
-      const newChallenge = await this.createCaptchaChallenge(jobId, currentChallenge.image_url)
+      // Instead of generating a new URL, add a cache-busting parameter to the existing URL
+      const originalUrl = new URL(currentChallenge.image_url)
+      originalUrl.searchParams.set('_cb', Date.now().toString()) // Cache buster
+      
+      const freshImageUrl = originalUrl.toString()
+      console.log(`🆕 Refreshed CAPTCHA URL: ${freshImageUrl}`)
+
+      // Create a new challenge with the refreshed image URL
+      const newChallenge = await this.createCaptchaChallenge(jobId, freshImageUrl)
       
       console.log(`✅ CAPTCHA refreshed: ${newChallenge.id}`)
       return newChallenge

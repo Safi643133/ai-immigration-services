@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CAPTCHA Test</title>
+</head>
+<body>
+    <h1>CAPTCHA Image Test</h1>
+    <p>Testing CAPTCHA URL: https://ceac.state.gov/GenNIV/BotDetectCaptcha.ashx?get=image&c=c_default_ctl00_sitecontentplaceholder_uclocation_identifycaptcha1_defaultcaptcha&t=20494b2c5cf648e6a298e8c86d0cdb24</p>
+    
+    <div>
+        <h2>Direct Image:</h2>
+        <img src="https://ceac.state.gov/GenNIV/BotDetectCaptcha.ashx?get=image&c=c_default_ctl00_sitecontentplaceholder_uclocation_identifycaptcha1_defaultcaptcha&t=20494b2c5cf648e6a298e8c86d0cdb24" 
+             alt="CAPTCHA Test" 
+             style="border: 1px solid black; max-width: 300px;"
+             onload="console.log('Image loaded successfully')"
+             onerror="console.log('Image failed to load')" />
+    </div>
+    
+    <div>
+        <h2>With CORS:</h2>
+        <img src="https://ceac.state.gov/GenNIV/BotDetectCaptcha.ashx?get=image&c=c_default_ctl00_sitecontentplaceholder_uclocation_identifycaptcha1_defaultcaptcha&t=20494b2c5cf648e6a298e8c86d0cdb24" 
+             alt="CAPTCHA Test" 
+             style="border: 1px solid black; max-width: 300px;"
+             crossorigin="anonymous"
+             onload="console.log('CORS Image loaded successfully')"
+             onerror="console.log('CORS Image failed to load')" />
+    </div>
+    
+    <script>
+        console.log('CAPTCHA test page loaded');
+    </script>
+</body>
+</html>
