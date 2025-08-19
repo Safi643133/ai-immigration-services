@@ -275,7 +275,7 @@ export class ProgressService implements ProgressServiceInterface, CaptchaService
   }
 
   /**
-   * Refresh CAPTCHA (create new challenge)
+   * Refresh CAPTCHA challenge with a new image URL
    */
   async refreshCaptcha(jobId: string): Promise<CaptchaChallenge> {
     try {
@@ -287,9 +287,16 @@ export class ProgressService implements ProgressServiceInterface, CaptchaService
         throw new Error('No current CAPTCHA challenge to refresh')
       }
 
-      // Instead of generating a new URL, add a cache-busting parameter to the existing URL
+      // Create a new challenge with a fresh timestamp to ensure cache busting
+      // This will force the automation to capture a new CAPTCHA image from CEAC
       const originalUrl = new URL(currentChallenge.image_url)
-      originalUrl.searchParams.set('_cb', Date.now().toString()) // Cache buster
+      
+      // Remove any existing cache buster parameters
+      originalUrl.searchParams.delete('_cb')
+      originalUrl.searchParams.delete('t')
+      
+      // Add a fresh cache buster with current timestamp
+      originalUrl.searchParams.set('_cb', Date.now().toString())
       
       const freshImageUrl = originalUrl.toString()
       console.log(`🆕 Refreshed CAPTCHA URL: ${freshImageUrl}`)
@@ -301,6 +308,31 @@ export class ProgressService implements ProgressServiceInterface, CaptchaService
       return newChallenge
     } catch (error) {
       console.error('ProgressService.refreshCaptcha error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update the image URL of an existing CAPTCHA challenge
+   */
+  async updateCaptchaImageUrl(jobId: string, newImageUrl: string): Promise<void> {
+    try {
+      console.log(`🔄 Updating CAPTCHA image URL for job ${jobId}`)
+      
+      // Get the current challenge
+      const currentChallenge = await this.storage.getCaptchaChallenge(jobId)
+      if (!currentChallenge) {
+        throw new Error('No current CAPTCHA challenge to update')
+      }
+
+      // Update the challenge with the new image URL
+      await this.storage.updateCaptchaChallenge(currentChallenge.id, {
+        image_url: newImageUrl
+      })
+      
+      console.log(`✅ CAPTCHA image URL updated: ${newImageUrl}`)
+    } catch (error) {
+      console.error('ProgressService.updateCaptchaImageUrl error:', error)
       throw error
     }
   }

@@ -12,6 +12,7 @@ import Image from 'next/image'
 
 interface CaptchaImageProps {
   imageUrl: string
+  jobId?: string
   onRefresh?: () => void
   loading?: boolean
   className?: string
@@ -19,6 +20,7 @@ interface CaptchaImageProps {
 
 export default function CaptchaImage({
   imageUrl,
+  jobId,
   onRefresh,
   loading = false,
   className = ''
@@ -26,28 +28,46 @@ export default function CaptchaImage({
   const [imageLoading, setImageLoading] = useState(false)
   const [imageError, setImageError] = useState(false)
   
-  // Convert CEAC URL to our proxy URL
-  const getProxyUrl = (url: string) => {
+  // Determine the correct image URL
+  const getImageUrl = (url: string) => {
+    // If it's a Supabase Storage URL, use it directly
+    if (url.includes('supabase.co') && url.includes('storage')) {
+      return url
+    }
+    
+    // If it's a local screenshot path (starts with artifacts/)
+    if (url.startsWith('artifacts/') && jobId) {
+      return `/api/captcha-screenshot/${jobId}`
+    }
+    
+    // If it's a CEAC URL, use our proxy (fallback)
     if (url.includes('ceac.state.gov')) {
       return `/api/captcha-proxy?url=${encodeURIComponent(url)}`
     }
+    
+    // If it's already a full URL, use it as is
+    if (url.startsWith('http')) {
+      return url
+    }
+    
+    // Default fallback
     return url
   }
   
-  const proxyImageUrl = getProxyUrl(imageUrl)
+  const displayImageUrl = getImageUrl(imageUrl)
   console.log('🖼️ CaptchaImage render - Original URL:', imageUrl)
-  console.log('🖼️ CaptchaImage render - Proxy URL:', proxyImageUrl)
+  console.log('🖼️ CaptchaImage render - Display URL:', displayImageUrl)
   console.log('🖼️ CaptchaImage render - Loading state:', loading || imageLoading)
   console.log('🖼️ CaptchaImage render - Error state:', imageError)
 
   const handleImageLoad = () => {
-    console.log('✅ CAPTCHA image loaded successfully:', proxyImageUrl)
+    console.log('✅ CAPTCHA image loaded successfully:', displayImageUrl)
     setImageLoading(false)
     setImageError(false)
   }
 
   const handleImageError = () => {
-    console.log('❌ CAPTCHA image failed to load:', proxyImageUrl)
+    console.log('❌ CAPTCHA image failed to load:', displayImageUrl)
     setImageLoading(false)
     setImageError(true)
   }
@@ -107,8 +127,8 @@ export default function CaptchaImage({
           // Image Display
           <div className="flex justify-center">
             <Image
-              key={proxyImageUrl} // Force re-render when URL changes
-              src={proxyImageUrl}
+              key={displayImageUrl} // Force re-render when URL changes
+              src={displayImageUrl}
               alt="CAPTCHA Challenge"
               width={200}
               height={80}

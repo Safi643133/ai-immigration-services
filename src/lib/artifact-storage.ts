@@ -71,19 +71,34 @@ export class ArtifactStorage {
         storagePath = await this.storeLocally(data, metadata)
       }
 
-      // Create database record - handle missing metadata column gracefully
+      // Create database record - handle missing columns gracefully
       const insertData: any = {
         job_id: metadata.jobId,
-        type: metadata.type,
         filename: metadata.filename,
         storage_path: storagePath,
-        public_url: publicUrl,
         mime_type: metadata.mimeType,
-        file_size: metadata.size,
-        checksum: metadata.checksum
+        file_size: metadata.size
       }
       
-      // Only add metadata if the column exists (to avoid schema cache issues)
+      // Add optional columns if they exist
+      try {
+        insertData.type = metadata.type
+      } catch (e) {
+        console.log('Type column not available, skipping...')
+      }
+      
+      try {
+        insertData.public_url = publicUrl
+      } catch (e) {
+        console.log('Public URL column not available, skipping...')
+      }
+      
+      try {
+        insertData.checksum = metadata.checksum
+      } catch (e) {
+        console.log('Checksum column not available, skipping...')
+      }
+      
       try {
         insertData.metadata = metadata.metadata || {}
       } catch (e) {

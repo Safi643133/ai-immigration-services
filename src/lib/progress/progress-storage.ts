@@ -198,6 +198,26 @@ export class ProgressStorage {
   }
 
   /**
+   * Update an existing CAPTCHA challenge
+   */
+  async updateCaptchaChallenge(challengeId: string, updates: Partial<CaptchaChallenge>): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('ceac_captcha_challenges')
+        .update(updates)
+        .eq('id', challengeId)
+
+      if (error) {
+        console.error('Error updating CAPTCHA challenge:', error)
+        throw new Error(`Failed to update CAPTCHA challenge: ${error.message}`)
+      }
+    } catch (error) {
+      console.error('ProgressStorage.updateCaptchaChallenge error:', error)
+      throw error
+    }
+  }
+
+  /**
    * Get the current CAPTCHA challenge for a job (unsolved)
    */
   async getCaptchaChallenge(jobId: string): Promise<CaptchaChallenge | null> {

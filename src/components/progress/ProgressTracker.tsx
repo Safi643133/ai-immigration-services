@@ -208,6 +208,7 @@ export default function ProgressTracker({
           {/* CAPTCHA Image */}
           <CaptchaImage
             imageUrl={challenge?.image_url || summary.captcha_image || ''}
+            jobId={jobId}
             onRefresh={handleCaptchaRefresh}
             loading={captchaLoading}
           />

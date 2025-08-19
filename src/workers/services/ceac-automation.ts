@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import { getArtifactStorage } from '../../lib/artifact-storage'
 import { ProgressService } from '../../lib/progress/progress-service'
 import type { DS160FormData } from '../../lib/types/ceac'
+import { readFileSync, existsSync, mkdirSync } from 'fs'
+import { join, dirname, basename } from 'path'
+import { createHash } from 'crypto'
 
 /**
  * CEAC Automation Service
@@ -398,23 +401,62 @@ export class CeacAutomationService {
       // Wait for navigation to the DS-160 form page
       await page.waitForLoadState('networkidle')
       
-      // Verify we're on the correct page
-      const currentUrl = page.url()
+      // Wait a bit more for potential redirects
+      await page.waitForTimeout(2000)
+      
+      // Check if we're on the Application ID Confirmation page
+      let currentUrl = page.url()
       console.log(`📍 Current URL after clicking START AN APPLICATION: ${currentUrl}`)
       
-      if (currentUrl.includes('ConfirmApplicationID.aspx') || currentUrl.includes('SecureQuestion')) {
-        console.log('✅ Successfully navigated to DS-160 form page')
+      // If we're still on the main page, wait for navigation to complete
+      if (currentUrl.includes('Default.aspx') && !currentUrl.includes('ConfirmApplicationID')) {
+        console.log('⏳ Waiting for navigation to Application ID Confirmation page...')
+        
+        // Wait for URL to change to the confirmation page
+        try {
+          await page.waitForURL(url => 
+            url.toString().includes('ConfirmApplicationID.aspx') || url.toString().includes('SecureQuestion'),
+            { timeout: 10000 }
+          )
+          currentUrl = page.url()
+          console.log(`📍 URL changed to: ${currentUrl}`)
+        } catch (error) {
+          console.log('⚠️ URL did not change as expected, checking current page content...')
+        }
+      }
+      
+      // Check if we're on the Application ID Confirmation page by URL or content
+      const isConfirmationPage = currentUrl.includes('ConfirmApplicationID.aspx') || 
+                                currentUrl.includes('SecureQuestion') ||
+                                await page.locator('#ctl00_SiteContentPlaceHolder_lblBarcode').isVisible({ timeout: 2000 }).catch(() => false)
+      
+      if (isConfirmationPage) {
+        console.log('✅ Successfully navigated to Application ID Confirmation page')
         
         // Update progress to show successful navigation
         await this.progressService.updateStepProgress(
           params.jobId,
-          'form_filling_started',
+          'application_id_confirmation',
           'running',
-          'Successfully navigated to DS-160 form page',
+          'Navigated to Application ID Confirmation page',
           25
         )
+        
+        // Handle Application ID Confirmation step
+        await this.handleApplicationIdConfirmation(page, params.jobId)
+        
       } else {
         console.log('⚠️ Navigation may not have worked as expected')
+        console.log('🔍 Checking if we need to handle Application ID Confirmation manually...')
+        
+        // Try to detect if we're on the confirmation page by looking for the Application ID element
+        const appIdElement = page.locator('#ctl00_SiteContentPlaceHolder_lblBarcode')
+        if (await appIdElement.isVisible({ timeout: 3000 })) {
+          console.log('✅ Found Application ID element - we are on the confirmation page')
+          await this.handleApplicationIdConfirmation(page, params.jobId)
+        } else {
+          console.log('❌ Could not detect Application ID Confirmation page')
+        }
       }
       
       // Take screenshot after navigation
@@ -606,55 +648,180 @@ export class CeacAutomationService {
     const captchaInput = page.locator('#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_txtCodeTextBox')
     
     if (await captchaImage.isVisible({ timeout: 5000 })) {
-      console.log('🤖 CAPTCHA detected - capturing image')
+      console.log('�� CAPTCHA detected - taking screenshot')
       
-      // Get CAPTCHA image source
-      const captchaImageSrc = await captchaImage.getAttribute('src')
-      console.log('📸 CAPTCHA image URL:', captchaImageSrc)
+      // Take a screenshot of the CAPTCHA area
+      const captchaScreenshotPath = await this.takeCaptchaScreenshot(page, jobId)
       
-      // Convert relative URL to absolute URL
-      const fullCaptchaUrl = captchaImageSrc?.startsWith('http') 
-        ? captchaImageSrc 
-        : `https://ceac.state.gov${captchaImageSrc}`
-      
-      console.log('📸 Full CAPTCHA image URL:', fullCaptchaUrl)
-      
-      // Take screenshot of CAPTCHA
-      await this.takeScreenshot(page, jobId, 'captcha-challenge')
-      
-      // Update progress to indicate CAPTCHA is detected
-      await this.progressService.handleCaptchaDetection(jobId, fullCaptchaUrl)
-      
-      // Wait for CAPTCHA solution from user
-      const solution = await this.waitForCaptchaSolution(jobId)
-      
-      if (solution) {
-        console.log('🔐 CAPTCHA solution received, filling input field...')
+      if (captchaScreenshotPath) {
+        console.log('📸 CAPTCHA screenshot saved:', captchaScreenshotPath)
         
-        // Fill the CAPTCHA solution
-        const success = await this.fillCaptcha(page, solution)
+        // Update progress to indicate CAPTCHA is detected with screenshot
+        await this.progressService.handleCaptchaDetection(jobId, captchaScreenshotPath)
         
-        if (success) {
-          console.log('✅ CAPTCHA solution filled successfully')
+        // Wait for CAPTCHA solution from user
+        const solution = await this.waitForCaptchaSolution(jobId)
+        
+        if (solution) {
+          console.log('🔐 CAPTCHA solution received, filling input field...')
           
-          // Update progress to indicate CAPTCHA is solved
-          await this.progressService.handleCaptchaSolution(jobId, solution)
+          // Fill the CAPTCHA solution
+          const success = await this.fillCaptcha(page, solution)
           
-          // Take a screenshot after filling CAPTCHA
-          await this.takeScreenshot(page, jobId, 'captcha-filled')
-          
-          return solution
+          if (success) {
+            console.log('✅ CAPTCHA solution filled successfully')
+            
+            // Update progress to indicate CAPTCHA is solved
+            await this.progressService.handleCaptchaSolution(jobId, solution)
+            
+            // Take a screenshot after filling CAPTCHA
+            await this.takeScreenshot(page, jobId, 'captcha-filled')
+            
+            return solution
+          } else {
+            console.log('❌ Failed to fill CAPTCHA solution')
+            return null
+          }
         } else {
-          console.log('❌ Failed to fill CAPTCHA solution')
+          console.log('❌ No CAPTCHA solution received within timeout')
           return null
         }
       } else {
-        console.log('❌ No CAPTCHA solution received within timeout')
+        console.log('❌ Failed to take CAPTCHA screenshot')
         return null
       }
     } else {
       console.log('✅ No CAPTCHA detected')
       return 'no_captcha' // Return a special value to indicate no CAPTCHA was present
+    }
+  }
+
+  /**
+   * Take a screenshot of the CAPTCHA area
+   */
+  private async takeCaptchaScreenshot(page: Page, jobId: string): Promise<string | null> {
+    try {
+      console.log('📸 Taking CAPTCHA screenshot...')
+      
+      // Locate the CAPTCHA image element
+      const captchaImage = page.locator('#c_default_ctl00_sitecontentplaceholder_uclocation_identifycaptcha1_defaultcaptcha_CaptchaImage')
+      
+      if (await captchaImage.isVisible({ timeout: 5000 })) {
+        // Take screenshot directly to buffer (no local file)
+        const screenshotBuffer = await captchaImage.screenshot({ 
+          type: 'png'
+        })
+        
+        console.log('✅ CAPTCHA screenshot captured to buffer')
+        
+        // Store the screenshot as an artifact in Supabase Storage
+        try {
+          const artifactStorage = getArtifactStorage()
+          const filename = `captcha-${Date.now()}.png`
+          
+          const storedArtifact = await artifactStorage.storeArtifact(
+            screenshotBuffer,
+            {
+              jobId,
+              type: 'screenshot',
+              filename: filename,
+              mimeType: 'image/png',
+              size: screenshotBuffer.length,
+              checksum: createHash('md5').update(screenshotBuffer).digest('hex'),
+              metadata: {
+                captured_at: new Date().toISOString(),
+                captcha_type: 'ceac_ds160'
+              }
+            }
+          )
+          
+          console.log('✅ CAPTCHA screenshot stored as artifact:', storedArtifact.id)
+          
+          // Return the public URL for the frontend to access
+          return storedArtifact.publicUrl || `artifacts/${jobId}/${filename}`
+        } catch (artifactError) {
+          console.warn('Failed to store CAPTCHA screenshot as artifact:', artifactError)
+          return null
+        }
+      } else {
+        console.log('❌ CAPTCHA image not visible for screenshot')
+        return null
+      }
+    } catch (error) {
+      console.error('❌ Error taking CAPTCHA screenshot:', error)
+      return null
+    }
+  }
+
+  /**
+   * Refresh CAPTCHA on the CEAC website
+   */
+  private async refreshCaptchaOnCeac(page: Page): Promise<void> {
+    try {
+      console.log('🔄 Refreshing CAPTCHA on CEAC website...')
+      
+      // Look for the CAPTCHA refresh button/link
+      const refreshSelectors = [
+        // Common CAPTCHA refresh button selectors
+        'img[alt="Refresh"]',
+        'img[title="Refresh"]',
+        'a[title="Refresh"]',
+        'button[title="Refresh"]',
+        // CEAC specific selectors
+        '#c_default_ctl00_sitecontentplaceholder_uclocation_identifycaptcha1_defaultcaptcha_RefreshButton',
+        'input[type="image"][alt*="Refresh"]',
+        // Generic refresh button
+        'input[type="image"]',
+        'img[src*="refresh"]',
+        'img[src*="reload"]'
+      ]
+      
+      let refreshButton = null
+      
+      for (const selector of refreshSelectors) {
+        try {
+          console.log(`🔍 Trying CAPTCHA refresh selector: ${selector}`)
+          const button = page.locator(selector).first()
+          
+          if (await button.isVisible({ timeout: 2000 })) {
+            refreshButton = button
+            console.log(`✅ Found CAPTCHA refresh button with selector: ${selector}`)
+            break
+          }
+        } catch (error: any) {
+          console.log(`❌ Selector ${selector} failed: ${error.message}`)
+          continue
+        }
+      }
+      
+      if (refreshButton) {
+        // Click the refresh button
+        await refreshButton.click()
+        console.log('✅ CAPTCHA refresh button clicked')
+        
+        // Wait for the new CAPTCHA image to load
+        await page.waitForTimeout(3000)
+        
+        // Verify the CAPTCHA image has changed
+        const captchaImage = page.locator('#c_default_ctl00_sitecontentplaceholder_uclocation_identifycaptcha1_defaultcaptcha_CaptchaImage')
+        if (await captchaImage.isVisible()) {
+          console.log('✅ CAPTCHA refreshed successfully on CEAC website')
+        } else {
+          console.log('⚠️ CAPTCHA refresh may not have worked as expected')
+        }
+      } else {
+        console.log('⚠️ Could not find CAPTCHA refresh button - trying page refresh')
+        
+        // Fallback: refresh the entire page
+        await page.reload()
+        await page.waitForLoadState('domcontentloaded')
+        
+        // Re-select embassy location after page refresh
+        // This will be handled by the calling method
+      }
+    } catch (error) {
+      console.error('❌ Error refreshing CAPTCHA on CEAC website:', error)
+      // Don't throw error, just log it and continue
     }
   }
 
@@ -672,6 +839,38 @@ export class CeacAutomationService {
     while (Date.now() - startTime < maxWaitTime) {
       try {
         console.log(`🔍 Polling cycle ${Math.floor((Date.now() - startTime) / checkInterval) + 1}...`)
+        
+        // Check for CAPTCHA refresh request first
+        const refreshRequest = await this.checkForCaptchaRefreshRequest(jobId)
+        if (refreshRequest) {
+          console.log('🔄 CAPTCHA refresh requested by user - taking new screenshot')
+          
+          // Get the current page from the browser context
+          const pages = this.browser?.contexts()[0]?.pages()
+          if (pages && pages.length > 0) {
+            const page = pages[0]
+            
+            // Take a new CAPTCHA screenshot
+            const newCaptchaScreenshotPath = await this.takeCaptchaScreenshot(page, jobId)
+            
+            if (newCaptchaScreenshotPath) {
+              console.log('📸 New CAPTCHA screenshot taken:', newCaptchaScreenshotPath)
+              
+              // Update the current challenge with the new screenshot path
+              const currentChallenge = await this.progressService.getCaptchaChallenge(jobId)
+              if (currentChallenge) {
+                await this.progressService.updateCaptchaImageUrl(jobId, newCaptchaScreenshotPath)
+                console.log('✅ Updated CAPTCHA challenge with new screenshot')
+              }
+            } else {
+              console.log('❌ Failed to take new CAPTCHA screenshot')
+            }
+          }
+          
+          // Reset timer after refresh
+          startTime = Date.now()
+          continue
+        }
         
         // First check if there's an unsolved CAPTCHA challenge
         const unsolvedChallenge = await this.progressService.getCaptchaChallenge(jobId)
@@ -692,11 +891,12 @@ export class CeacAutomationService {
           // Check if this is a new challenge (user refreshed CAPTCHA)
           if (lastChallengeId && lastChallengeId !== unsolvedChallenge.id) {
             console.log('🔄 New CAPTCHA challenge detected (user refreshed), resetting timer...')
+            console.log(`🆕 New challenge ID: ${unsolvedChallenge.id}`)
             // Reset the timer when user refreshes CAPTCHA
             startTime = Date.now()
           }
           lastChallengeId = unsolvedChallenge.id
-          console.log('📝 Unsolved challenge still exists, waiting...')
+          console.log(`📝 Unsolved challenge still exists (ID: ${unsolvedChallenge.id}), waiting...`)
         }
         
         // Wait before checking again
@@ -709,6 +909,28 @@ export class CeacAutomationService {
     
     console.log('⏰ CAPTCHA solution timeout - no solution received within 5 minutes')
     return null
+  }
+
+  /**
+   * Check if a CAPTCHA refresh has been requested
+   */
+  private async checkForCaptchaRefreshRequest(jobId: string): Promise<boolean> {
+    try {
+      // Get the latest progress updates
+      const progressHistory = await this.progressService.getProgressHistory(jobId)
+      
+      // Look for recent CAPTCHA refresh request
+      const refreshRequest = progressHistory.find(update => 
+        update.step_name === 'captcha_refresh_requested' &&
+        update.status === 'pending' &&
+        new Date(update.created_at) > new Date(Date.now() - 30000) // Within last 30 seconds
+      )
+      
+      return !!refreshRequest
+    } catch (error) {
+      console.warn('Error checking for CAPTCHA refresh request:', error)
+      return false
+    }
   }
 
   /**
@@ -1005,7 +1227,7 @@ export class CeacAutomationService {
       })
 
       const artifactStorage = getArtifactStorage()
-    await artifactStorage.storeArtifact(screenshot, {
+      await artifactStorage.storeArtifact(screenshot, {
         jobId,
         type: 'screenshot',
         filename: `${name}.png`,
@@ -1038,7 +1260,7 @@ export class CeacAutomationService {
         const html = await pages[0].content()
         
         const artifactStorage = getArtifactStorage()
-    await artifactStorage.storeArtifact(html, {
+        await artifactStorage.storeArtifact(html, {
           jobId,
           type: 'html',
           filename: 'final-page.html',
@@ -1082,6 +1304,237 @@ export class CeacAutomationService {
     return path.split('.').reduce((current, key) => {
       return current?.[key]
     }, obj)
+  }
+
+  /**
+   * Handle Application ID Confirmation page
+   * 
+   * This page contains:
+   * 1. Privacy Act checkbox that must be checked
+   * 2. Security question answer input
+   * 3. Continue button to proceed
+   */
+  private async handleApplicationIdConfirmation(page: Page, jobId: string): Promise<void> {
+    console.log('🔐 Handling Application ID Confirmation...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'application_id_confirmation',
+      'running',
+      'Processing Application ID Confirmation page',
+      30
+    )
+    
+    // Wait for page to load completely
+    await page.waitForLoadState('networkidle')
+    
+    // Take screenshot before processing
+    await this.takeScreenshot(page, jobId, 'application-id-confirmation-page')
+    
+    // Step 1: Extract Application ID and Date
+    console.log('🆔 Extracting Application ID and Date...')
+    const applicationIdElement = page.locator('#ctl00_SiteContentPlaceHolder_lblBarcode')
+    const dateElement = page.locator('#ctl00_SiteContentPlaceHolder_lblDate')
+    
+    let applicationId = ''
+    let applicationDate = ''
+    
+    if (await applicationIdElement.isVisible({ timeout: 5000 })) {
+      applicationId = await applicationIdElement.textContent() || ''
+      console.log(`✅ Application ID extracted: ${applicationId}`)
+    } else {
+      console.log('⚠️ Application ID element not found')
+    }
+    
+    if (await dateElement.isVisible({ timeout: 5000 })) {
+      applicationDate = await dateElement.textContent() || ''
+      console.log(`✅ Application Date extracted: ${applicationDate}`)
+    } else {
+      console.log('⚠️ Application Date element not found')
+    }
+    
+    // Store Application ID in database
+    if (applicationId) {
+      await this.storeApplicationId(jobId, applicationId, applicationDate)
+      
+      // Update progress for Application ID extraction
+      await this.progressService.updateStepProgress(
+        jobId,
+        'application_id_extracted',
+        'running',
+        `Application ID extracted: ${applicationId}`,
+        32
+      )
+    }
+    
+    // Step 2: Check the Privacy Act checkbox
+    console.log('📋 Checking Privacy Act checkbox...')
+    const privacyCheckbox = page.locator('#ctl00_SiteContentPlaceHolder_chkbxPrivacyAct')
+    
+    if (await privacyCheckbox.isVisible({ timeout: 5000 })) {
+      await privacyCheckbox.check()
+      console.log('✅ Privacy Act checkbox checked')
+      
+      // Wait for the postback to complete
+      await page.waitForLoadState('networkidle')
+    } else {
+      console.log('⚠️ Privacy Act checkbox not found, continuing...')
+    }
+    
+    // Step 2: Generate and fill security question answer
+    console.log('🔒 Generating security question answer...')
+    const securityAnswer = this.generateRandomAnswer()
+    
+    // Store the security answer in Supabase for future retrieval
+    await this.storeSecurityAnswer(jobId, securityAnswer)
+    
+    // Wait for the page to fully load after the postback
+    console.log('⏳ Waiting for page to load after checkbox postback...')
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(5000) // Increased wait for dynamic content
+    
+    // Try multiple selectors for the security answer input
+    const possibleSelectors = [
+      '#ctl00_SiteContentPlaceHolder_txtAnswer',
+      'input[name="ctl00$SiteContentPlaceHolder$txtAnswer"]',
+      'input[type="text"][id*="txtAnswer"]',
+      'input[type="text"][name*="txtAnswer"]',
+      'input[placeholder*="answer" i]',
+      'input[placeholder*="security" i]'
+    ]
+    
+    let answerInput = null
+    let foundSelector = null
+    
+    for (const selector of possibleSelectors) {
+      try {
+        console.log(`🔍 Trying security answer selector: ${selector}`)
+        const input = page.locator(selector)
+        
+        if (await input.isVisible({ timeout: 8000 })) {
+          answerInput = input
+          foundSelector = selector
+          console.log(`✅ Found security answer input with selector: ${selector}`)
+          break
+        }
+      } catch (error) {
+        console.log(`❌ Selector ${selector} not found or not visible`)
+      }
+    }
+    
+    if (answerInput) {
+      await answerInput.fill(securityAnswer)
+      console.log(`✅ Security answer filled: ${securityAnswer}`)
+    } else {
+      // Take a screenshot for debugging
+      await this.takeScreenshot(page, jobId, 'security-answer-input-not-found')
+      console.log('❌ Security answer input not found with any selector')
+      console.log('🔍 Available input fields on page:')
+      
+      // List all input fields for debugging
+      const allInputs = await page.locator('input[type="text"]').all()
+      for (let i = 0; i < allInputs.length; i++) {
+        try {
+          const id = await allInputs[i].getAttribute('id')
+          const name = await allInputs[i].getAttribute('name')
+          const placeholder = await allInputs[i].getAttribute('placeholder')
+          console.log(`  Input ${i + 1}: id="${id}", name="${name}", placeholder="${placeholder}"`)
+        } catch (error) {
+          console.log(`  Input ${i + 1}: Could not get attributes`)
+        }
+      }
+      
+      throw new Error('Security answer input not found with any selector')
+    }
+    
+    // Step 3: Click Continue button
+    console.log('➡️ Clicking Continue button...')
+    const continueButton = page.locator('#ctl00_SiteContentPlaceHolder_btnContinue')
+    
+    if (await continueButton.isVisible({ timeout: 10000 })) {
+      await continueButton.click()
+      console.log('✅ Continue button clicked')
+      
+      // Wait for navigation to the next page
+      await page.waitForLoadState('networkidle')
+      
+      // Update progress
+      await this.progressService.updateStepProgress(
+        jobId,
+        'form_filling_started',
+        'running',
+        'Successfully completed Application ID Confirmation',
+        35
+      )
+      
+      // Take screenshot after completion
+      await this.takeScreenshot(page, jobId, 'after-application-id-confirmation')
+      
+      console.log('✅ Application ID Confirmation completed successfully')
+    } else {
+      throw new Error('Continue button not found')
+    }
+  }
+  
+  /**
+   * Generate a random 6-letter answer for security question
+   */
+  private generateRandomAnswer(): string {
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    let result = ''
+    for (let i = 0; i < 6; i++) {
+      result += letters.charAt(Math.floor(Math.random() * letters.length))
+    }
+    return result
+  }
+  
+  /**
+   * Store Application ID in Supabase for future application retrieval
+   */
+  private async storeApplicationId(jobId: string, applicationId: string, applicationDate: string): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('ceac_application_ids')
+        .insert({
+          job_id: jobId,
+          application_id: applicationId,
+          application_date: applicationDate,
+          created_at: new Date().toISOString()
+        })
+      
+      if (error) {
+        console.warn('Failed to store application ID:', error)
+      } else {
+        console.log('✅ Application ID stored in database')
+      }
+    } catch (error) {
+      console.warn('Failed to store application ID:', error)
+    }
+  }
+
+  /**
+   * Store security answer in Supabase for future application retrieval
+   */
+  private async storeSecurityAnswer(jobId: string, answer: string): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('ceac_security_answers')
+        .insert({
+          job_id: jobId,
+          security_question: 'What is the given name of your mother\'s mother?',
+          security_answer: answer,
+          created_at: new Date().toISOString()
+        })
+      
+      if (error) {
+        console.warn('Failed to store security answer:', error)
+      } else {
+        console.log('✅ Security answer stored in database')
+      }
+    } catch (error) {
+      console.warn('Failed to store security answer:', error)
+    }
   }
 
   /**
