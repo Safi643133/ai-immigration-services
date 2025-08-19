@@ -29,6 +29,8 @@ export type ProgressStep =
   | 'application_id_confirmation'
   | 'application_id_extracted'
   | 'form_filling_started'
+  | 'form_filling_progress'
+  | 'form_filling_completed'
   | 'form_step_1'
   | 'form_step_2'
   | 'form_step_3'

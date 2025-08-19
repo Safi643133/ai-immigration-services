@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getArtifactStorage } from '../../lib/artifact-storage'
 import { ProgressService } from '../../lib/progress/progress-service'
 import type { DS160FormData } from '../../lib/types/ceac'
+import { getFieldMapping, getAllFieldMappings, validateFormData } from '../../lib/form-field-mappings'
 import { readFileSync, existsSync, mkdirSync } from 'fs'
 import { join, dirname, basename } from 'path'
 import { createHash } from 'crypto'
@@ -131,7 +132,7 @@ export class CeacAutomationService {
       // Fill out the form step by step
       await this.progressService.updateStepProgress(params.jobId, 'form_filling_started', 'running', 'Starting form filling process...', 20)
       console.log('📝 Filling DS-160 form...')
-      const applicationId = await this.fillDS160Form(page, params)
+      await this.fillDS160Form(page, params.jobId, params.formData)
 
       // Review and submit
       await this.progressService.updateStepProgress(params.jobId, 'form_review', 'running', 'Reviewing form before submission...', 85)
@@ -151,19 +152,16 @@ export class CeacAutomationService {
       // Mark job as completed
       await this.progressService.markJobCompleted(params.jobId, {
         user_id: params.userId,
-        applicationId,
         confirmationId,
         screenshots: [`${params.jobId}/initial-page.png`, `${params.jobId}/final-confirmation.png`],
         artifacts: [`${params.jobId}/session.har`]
       })
 
       console.log(`✅ DS-160 submission completed successfully`)
-      console.log(`📋 Application ID: ${applicationId}`)
       console.log(`🎫 Confirmation ID: ${confirmationId}`)
 
       return {
         success: true,
-        applicationId,
         confirmationId,
         screenshots: [`${params.jobId}/initial-page.png`, `${params.jobId}/final-confirmation.png`],
         artifacts: [`${params.jobId}/session.har`]
@@ -445,6 +443,9 @@ export class CeacAutomationService {
         // Handle Application ID Confirmation step
         await this.handleApplicationIdConfirmation(page, params.jobId)
         
+        // Fill DS-160 form with extracted data
+        await this.fillDS160Form(page, params.jobId, params.formData)
+        
       } else {
         console.log('⚠️ Navigation may not have worked as expected')
         console.log('🔍 Checking if we need to handle Application ID Confirmation manually...')
@@ -454,6 +455,9 @@ export class CeacAutomationService {
         if (await appIdElement.isVisible({ timeout: 3000 })) {
           console.log('✅ Found Application ID element - we are on the confirmation page')
           await this.handleApplicationIdConfirmation(page, params.jobId)
+          
+          // Fill DS-160 form with extracted data
+          await this.fillDS160Form(page, params.jobId, params.formData)
         } else {
           console.log('❌ Could not detect Application ID Confirmation page')
         }
@@ -995,110 +999,6 @@ export class CeacAutomationService {
   }
 
   /**
-   * Fill DS-160 form with provided data
-   */
-  private async fillDS160Form(page: Page, params: SubmissionParams): Promise<string> {
-    // This is a skeleton implementation
-    // The actual implementation would iterate through all 17 steps
-    // and fill each field based on the form data
-    
-    console.log('📝 Starting form filling process...')
-    
-    // Get field mappings from database
-    const fieldMappings = await this.getFieldMappings(params.ceacVersion)
-    
-    // Fill form step by step
-    for (let step = 1; step <= 17; step++) {
-      console.log(`📝 Filling step ${step}...`)
-      
-      await this.fillFormStep(page, step, params.formData, fieldMappings)
-      
-      // Take screenshot after each step
-      await this.takeScreenshot(page, params.jobId, `step-${step}`)
-      
-      // Navigate to next step
-      if (step < 17) {
-        await this.navigateToNextStep(page)
-      }
-    }
-
-    // Extract application ID from the page
-    const applicationId = await this.extractApplicationId(page)
-    
-    return applicationId
-  }
-
-  /**
-   * Fill a specific form step
-   */
-  private async fillFormStep(
-    page: Page, 
-    step: number, 
-    formData: DS160FormData, 
-    fieldMappings: any[]
-  ): Promise<void> {
-    // Get field mappings for this step
-    const stepMappings = fieldMappings.filter(m => m.step_number === step)
-    
-    for (const mapping of stepMappings) {
-      try {
-        const value = this.getNestedValue(formData, mapping.form_field_path)
-        
-        if (value !== undefined && value !== null && value !== '') {
-          await this.fillField(page, mapping, value)
-        }
-      } catch (error) {
-        console.warn(`⚠️ Failed to fill field ${mapping.form_field_path}:`, error)
-      }
-    }
-  }
-
-  /**
-   * Fill a specific field based on mapping
-   */
-  private async fillField(page: Page, mapping: any, value: any): Promise<void> {
-    const selector = mapping.ceac_selector
-    const element = page.locator(selector)
-
-    if (!(await element.isVisible({ timeout: 5000 }))) {
-      console.warn(`⚠️ Field not visible: ${selector}`)
-      return
-    }
-
-    switch (mapping.field_type) {
-      case 'text':
-      case 'email':
-      case 'tel':
-        await element.fill(String(value))
-        break
-        
-      case 'select':
-        await element.selectOption({ label: String(value) })
-        break
-        
-      case 'radio':
-        await page.locator(`${selector}[value="${value}"]`).check()
-        break
-        
-      case 'checkbox':
-        if (value === true || value === 'true' || value === 'Yes') {
-          await element.check()
-        }
-        break
-        
-      case 'date':
-        await element.fill(String(value))
-        break
-        
-      default:
-        console.warn(`⚠️ Unknown field type: ${mapping.field_type}`)
-    }
-
-    // Wait a bit for any dynamic updates
-    await page.waitForTimeout(100)
-  }
-
-  /**
    * Navigate to next step
    */
   private async navigateToNextStep(page: Page): Promise<void> {
@@ -1394,6 +1294,10 @@ export class CeacAutomationService {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(5000) // Increased wait for dynamic content
     
+    // Wait for the security answer input to become enabled after checkbox
+    console.log('⏳ Waiting for security answer input to become enabled...')
+    await page.waitForTimeout(3000) // Additional wait for the input to become enabled
+    
     // Try multiple selectors for the security answer input
     const possibleSelectors = [
       '#ctl00_SiteContentPlaceHolder_txtAnswer',
@@ -1407,39 +1311,85 @@ export class CeacAutomationService {
     let answerInput = null
     let foundSelector = null
     
+    // First, try to find and wait for the input to become enabled
     for (const selector of possibleSelectors) {
       try {
         console.log(`🔍 Trying security answer selector: ${selector}`)
         const input = page.locator(selector)
         
-        if (await input.isVisible({ timeout: 8000 })) {
+        // Check if element exists first
+        const count = await input.count()
+        if (count === 0) {
+          console.log(`❌ Selector ${selector} not found`)
+          continue
+        }
+        
+        // Wait for the element to become visible and enabled
+        console.log(`⏳ Waiting for element to become visible and enabled...`)
+        await input.waitFor({ state: 'visible', timeout: 10000 })
+        
+        // Check if element is enabled
+        const isEnabled = await input.isEnabled({ timeout: 5000 })
+        console.log(`📊 Element status - Enabled: ${isEnabled}`)
+        
+        if (isEnabled) {
           answerInput = input
           foundSelector = selector
-          console.log(`✅ Found security answer input with selector: ${selector}`)
+          console.log(`✅ Found enabled security answer input with selector: ${selector}`)
           break
+        } else {
+          console.log(`⚠️ Element found but still disabled, waiting longer...`)
+          // Wait a bit more and try again
+          await page.waitForTimeout(2000)
+          const isEnabledAfterWait = await input.isEnabled({ timeout: 5000 })
+          if (isEnabledAfterWait) {
+            answerInput = input
+            foundSelector = selector
+            console.log(`✅ Element became enabled after waiting with selector: ${selector}`)
+            break
+          }
         }
       } catch (error) {
-        console.log(`❌ Selector ${selector} not found or not visible`)
+        console.log(`❌ Error with selector ${selector}: ${error}`)
       }
     }
     
     if (answerInput) {
-      await answerInput.fill(securityAnswer)
-      console.log(`✅ Security answer filled: ${securityAnswer}`)
+      try {
+        // Try to focus the input first
+        await answerInput.focus({ timeout: 5000 })
+        await page.waitForTimeout(500)
+        
+        // Clear any existing value
+        await answerInput.clear({ timeout: 5000 })
+        await page.waitForTimeout(500)
+        
+        // Fill the security answer
+        await answerInput.fill(securityAnswer, { timeout: 10000 })
+        console.log(`✅ Security answer filled: ${securityAnswer}`)
+      } catch (fillError) {
+        console.log(`❌ Error filling security answer: ${fillError}`)
+        throw new Error(`Failed to fill security answer: ${fillError}`)
+      }
     } else {
       // Take a screenshot for debugging
       await this.takeScreenshot(page, jobId, 'security-answer-input-not-found')
       console.log('❌ Security answer input not found with any selector')
       console.log('🔍 Available input fields on page:')
       
-      // List all input fields for debugging
+      // List all input fields for debugging with more details
       const allInputs = await page.locator('input[type="text"]').all()
       for (let i = 0; i < allInputs.length; i++) {
         try {
           const id = await allInputs[i].getAttribute('id')
           const name = await allInputs[i].getAttribute('name')
           const placeholder = await allInputs[i].getAttribute('placeholder')
-          console.log(`  Input ${i + 1}: id="${id}", name="${name}", placeholder="${placeholder}"`)
+          const disabled = await allInputs[i].getAttribute('disabled')
+          const readonly = await allInputs[i].getAttribute('readonly')
+          const style = await allInputs[i].getAttribute('style')
+          const className = await allInputs[i].getAttribute('class')
+          
+          console.log(`  Input ${i + 1}: id="${id}", name="${name}", placeholder="${placeholder}", disabled="${disabled}", readonly="${readonly}", style="${style}", class="${className}"`)
         } catch (error) {
           console.log(`  Input ${i + 1}: Could not get attributes`)
         }
@@ -1477,6 +1427,335 @@ export class CeacAutomationService {
     }
   }
   
+  /**
+   * Fill DS-160 form with extracted data
+   */
+  private async fillDS160Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting DS-160 form filling...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_filling_started',
+      'running',
+      'Filling DS-160 form with extracted data',
+      40
+    )
+    
+    // Wait for page to load completely
+    await page.waitForLoadState('networkidle')
+    
+    // Take screenshot before filling
+    await this.takeScreenshot(page, jobId, 'before-form-filling')
+    
+    // Validate form data
+    const validation = validateFormData(formData)
+    if (!validation.valid) {
+      console.warn('⚠️ Form data validation warnings:', validation.errors)
+    }
+    
+    let filledFields = 0
+    const totalFields = getAllFieldMappings().length
+    
+    // Fill each field based on mapping
+    for (const fieldMapping of getAllFieldMappings()) {
+      try {
+        const fieldValue = formData[fieldMapping.fieldName]
+        
+        if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+          console.log(`⏭️ Skipping empty field: ${fieldMapping.fieldName}`)
+          continue
+        }
+        
+        console.log(`📝 Filling field: ${fieldMapping.fieldName} = ${fieldValue}`)
+        
+        const element = page.locator(fieldMapping.selector)
+        
+        // Wait for element to be visible
+        await element.waitFor({ state: 'visible', timeout: 5000 })
+        
+        // Fill based on field type
+        switch (fieldMapping.type) {
+          case 'text':
+            await element.fill(fieldValue.toString())
+            break
+            
+          case 'select':
+            // Use value mapping if available, otherwise use the original value
+            let selectValue = fieldValue.toString()
+            if (fieldMapping.valueMapping && fieldMapping.valueMapping[selectValue]) {
+              selectValue = fieldMapping.valueMapping[selectValue]
+            }
+            
+            console.log(`🔍 Selecting dropdown: ${fieldMapping.fieldName} with value: ${selectValue}`)
+            
+            // Wait for dropdown to be ready
+            await element.waitFor({ state: 'visible', timeout: 10000 })
+            
+            // Extra wait for country dropdown specifically
+            if (fieldMapping.fieldName === 'personal_info.place_of_birth_country') {
+              console.log(`⏳ Extra wait for country dropdown...`)
+              await page.waitForTimeout(2000)
+              
+              // Check if options are available (don't wait for visibility)
+              const options = element.locator('option')
+              const optionCount = await options.count()
+              console.log(`✅ Country dropdown has ${optionCount} options available`)
+            }
+            
+            // Try to select by value first
+            try {
+              // Focus the dropdown first
+              await element.focus()
+              await page.waitForTimeout(200)
+              await element.selectOption({ value: selectValue })
+              console.log(`✅ Successfully selected by value: ${selectValue}`)
+            } catch (error) {
+              console.log(`⚠️ Direct selection failed, trying keyboard navigation...`)
+              
+              // Try keyboard navigation approach
+              try {
+                // Click to focus the dropdown
+                await element.click()
+                await page.waitForTimeout(500)
+                
+                // Type the full country name to find the exact match
+                const searchText = fieldValue.toString().toUpperCase()
+                console.log(`🔍 Typing full country name: ${searchText}`)
+                await page.keyboard.type(searchText)
+                await page.waitForTimeout(1000) // Longer wait for full text
+                
+                // Press Enter to select the highlighted option
+                await page.keyboard.press('Enter')
+                console.log(`✅ Selected using keyboard navigation: ${fieldValue}`)
+              } catch (keyboardError) {
+                console.log(`⚠️ Keyboard navigation failed, trying manual option selection...`)
+                
+                // Manual option selection as last resort
+                const options = element.locator('option')
+                const optionCount = await options.count()
+                console.log(`🔍 Manually searching through ${optionCount} options...`)
+                
+                let found = false
+                for (let i = 0; i < optionCount; i++) {
+                  const option = options.nth(i)
+                  const optionValue = await option.getAttribute('value')
+                  const optionText = await option.textContent()
+                  
+                  if (optionValue === selectValue) {
+                    console.log(`🔍 Found matching option: ${optionText} (value: ${optionValue})`)
+                    if (optionValue) {
+                      await element.selectOption({ value: optionValue })
+                      console.log(`✅ Manually selected option: ${optionText}`)
+                      found = true
+                      break
+                    }
+                  }
+                }
+                
+                if (!found) {
+                  throw new Error(`Could not find option for value: ${selectValue}`)
+                }
+              }
+            }
+            break
+            
+          case 'radio':
+            // For radio buttons, we need to find the correct option
+            let radioValue = fieldValue.toString()
+            if (fieldMapping.valueMapping && fieldMapping.valueMapping[radioValue]) {
+              radioValue = fieldMapping.valueMapping[radioValue]
+            }
+            
+            const radioOptions = page.locator(`${fieldMapping.selector} input[type="radio"]`)
+            const optionCount = await radioOptions.count()
+            
+            for (let i = 0; i < optionCount; i++) {
+              const option = radioOptions.nth(i)
+              const optionValue = await option.getAttribute('value')
+              
+              if (optionValue === radioValue) {
+                await option.check()
+                
+                // Handle conditional fields for radio buttons
+                if (fieldMapping.conditional && radioValue === fieldMapping.conditional.value) {
+                  console.log(`📝 Filling conditional fields for ${fieldMapping.fieldName}...`)
+                  await this.fillConditionalFields(page, fieldMapping.conditional.showFields, formData)
+                }
+                break
+              }
+            }
+            break
+            
+          case 'checkbox':
+            if (fieldValue === true || fieldValue === 'Yes') {
+              await element.check()
+            } else {
+              await element.uncheck()
+            }
+            break
+            
+          case 'date':
+            // Format date for input
+            const dateValue = new Date(fieldValue.toString()).toISOString().split('T')[0]
+            await element.fill(dateValue)
+            break
+            
+          case 'date_split':
+            // Handle split date fields (day, month, year)
+            if (fieldMapping.dateSelectors) {
+              const date = new Date(fieldValue.toString())
+              const day = date.getDate().toString().padStart(2, '0')
+              const month = date.toLocaleString('en-US', { month: 'short' }).toUpperCase()
+              const year = date.getFullYear().toString()
+              
+              // Fill day
+              const dayElement = page.locator(fieldMapping.dateSelectors.day)
+              await dayElement.selectOption({ value: day })
+              
+              // Fill month
+              const monthElement = page.locator(fieldMapping.dateSelectors.month)
+              await monthElement.selectOption({ value: month })
+              
+              // Fill year
+              const yearElement = page.locator(fieldMapping.dateSelectors.year)
+              await yearElement.fill(year)
+            }
+            break
+            
+          case 'textarea':
+            await element.fill(fieldValue.toString())
+            break
+        }
+        
+        filledFields++
+        
+        // Update progress every 10 fields
+        if (filledFields % 10 === 0) {
+          const progress = 40 + Math.floor((filledFields / totalFields) * 30)
+          await this.progressService.updateStepProgress(
+            jobId,
+            'form_filling_progress',
+            'running',
+            `Filled ${filledFields}/${totalFields} fields`,
+            progress
+          )
+        }
+        
+                          // Small delay between fields to avoid overwhelming the form
+                  await page.waitForTimeout(100)
+                  
+                  // Extra delay for dropdowns to ensure they're fully loaded
+                  if (fieldMapping.type === 'select') {
+                    await page.waitForTimeout(500)
+                  }
+        
+      } catch (error) {
+        console.warn(`⚠️ Failed to fill field ${fieldMapping.fieldName}:`, error)
+        // Continue with other fields
+      }
+    }
+    
+    // Take screenshot after filling
+    await this.takeScreenshot(page, jobId, 'after-form-filling')
+    
+    // Update final progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_filling_completed',
+      'running',
+      `Successfully filled ${filledFields} form fields`,
+      70
+    )
+    
+    console.log(`✅ DS-160 form filling completed. Filled ${filledFields} fields.`)
+    
+    // Click Next button to proceed to next step
+    await this.clickNextButton(page, jobId)
+  }
+
+  /**
+   * Click the Next button to proceed to the next form step
+   */
+  private async clickNextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button to proceed to next step...')
+    
+    // Look for the Next button
+    const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+    
+    if (await nextButton.isVisible({ timeout: 10000 })) {
+      await nextButton.click()
+      console.log('✅ Next button clicked')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle')
+      
+      // Update progress
+      await this.progressService.updateStepProgress(
+        jobId,
+        'form_step_2',
+        'running',
+        'Successfully navigated to next form step',
+        75
+      )
+      
+      // Take screenshot after navigation
+      await this.takeScreenshot(page, jobId, 'after-next-button-click')
+      
+      console.log('✅ Successfully navigated to next form step')
+    } else {
+      throw new Error('Next button not found')
+    }
+  }
+
+  /**
+   * Fill conditional fields that appear based on radio button selections
+   */
+  private async fillConditionalFields(page: Page, conditionalFields: any[], formData: DS160FormData): Promise<void> {
+    for (const field of conditionalFields) {
+      try {
+        const fieldValue = formData[field.fieldName]
+        
+        if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+          console.log(`⏭️ Skipping empty conditional field: ${field.fieldName}`)
+          continue
+        }
+        
+        console.log(`📝 Filling conditional field: ${field.fieldName} = ${fieldValue}`)
+        
+        const element = page.locator(field.selector)
+        
+        // Wait for element to be visible (conditional fields may take time to appear)
+        await element.waitFor({ state: 'visible', timeout: 10000 })
+        
+        // Fill based on field type
+        switch (field.type) {
+          case 'text':
+            await element.fill(fieldValue.toString())
+            break
+            
+          case 'select':
+            await element.selectOption({ label: fieldValue.toString() })
+            break
+            
+          case 'checkbox':
+            if (fieldValue === true || fieldValue === 'Yes') {
+              await element.check()
+            } else {
+              await element.uncheck()
+            }
+            break
+        }
+        
+        // Small delay between conditional fields
+        await page.waitForTimeout(200)
+        
+      } catch (error) {
+        console.warn(`⚠️ Failed to fill conditional field ${field.fieldName}:`, error)
+      }
+    }
+  }
+
   /**
    * Generate a random 6-letter answer for security question
    */
