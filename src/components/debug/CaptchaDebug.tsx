@@ -61,7 +61,7 @@ export default function CaptchaDebug({ jobId }: CaptchaDebugProps) {
         🔍 CAPTCHA Debug Info
       </h3>
       
-      <div className="space-y-2">
+      <div className="space-y-2 text-black">
         <div>
           <strong>Job ID:</strong> {jobId}
         </div>
