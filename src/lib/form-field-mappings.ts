@@ -1522,8 +1522,206 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
          }
        }
      ]
+   },
+   {
+     sectionName: 'Contact Information - Step 6',
+     fields: [
+       // Home Address
+       {
+         fieldName: 'contact_info.home_address_line1',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_ADDR_LN1',
+         type: 'text',
+         required: true
+       },
+       {
+         fieldName: 'contact_info.home_address_line2',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_ADDR_LN2',
+         type: 'text',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.home_city',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_ADDR_CITY',
+         type: 'text',
+         required: true
+       },
+       {
+         fieldName: 'contact_info.home_state',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_ADDR_STATE',
+         type: 'text',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.home_state_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexAPP_ADDR_STATE_NA',
+         type: 'checkbox',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.home_postal_code',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_ADDR_POSTAL_CD',
+         type: 'text',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.home_postal_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexAPP_ADDR_POSTAL_CD_NA',
+         type: 'checkbox',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.home_country',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlCountry',
+         type: 'select',
+         required: true
+       },
+       // Mailing Address
+       {
+         fieldName: 'contact_info.mailing_same_as_home',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblMailingAddrSame',
+         type: 'radio',
+         required: true,
+         valueMapping: {
+           'Yes': 'Y',
+           'No': 'N'
+         },
+         conditional: {
+           value: 'N',
+           showFields: [
+             {
+               fieldName: 'contact_info.mailing_address_line1',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMAILING_ADDR_LN1',
+               type: 'text',
+               required: true
+             },
+             {
+               fieldName: 'contact_info.mailing_address_line2',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMAILING_ADDR_LN2',
+               type: 'text',
+               required: false
+             },
+             {
+               fieldName: 'contact_info.mailing_city',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMAILING_ADDR_CITY',
+               type: 'text',
+               required: true
+             },
+             {
+               fieldName: 'contact_info.mailing_state',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMAILING_ADDR_STATE',
+               type: 'text',
+               required: false
+             },
+             {
+               fieldName: 'contact_info.mailing_state_na',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexMAILING_ADDR_STATE_NA',
+               type: 'checkbox',
+               required: false
+             },
+             {
+               fieldName: 'contact_info.mailing_postal_code',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMAILING_ADDR_POSTAL_CD',
+               type: 'text',
+               required: false
+             },
+             {
+               fieldName: 'contact_info.mailing_postal_na',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexMAILING_ADDR_POSTAL_CD_NA',
+               type: 'checkbox',
+               required: false
+             },
+             {
+               fieldName: 'contact_info.mailing_country',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlMailCountry',
+               type: 'select',
+               required: true
+                          }
+           ]
+         }
+       },
+       // Phone Numbers
+       {
+         fieldName: 'contact_info.primary_phone',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_HOME_TEL',
+         type: 'text',
+         required: true
+       },
+       {
+         fieldName: 'contact_info.secondary_phone',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_MOBILE_TEL',
+         type: 'text',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.secondary_phone_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexAPP_MOBILE_TEL_NA',
+         type: 'checkbox',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.work_phone',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_BUS_TEL',
+         type: 'text',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.work_phone_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexAPP_BUS_TEL_NA',
+         type: 'checkbox',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.other_phone_numbers',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblAddPhone',
+         type: 'radio',
+         required: false,
+         valueMapping: {
+           'Yes': 'Y',
+           'No': 'N'
+         },
+         conditional: {
+           value: 'Y',
+           showFields: [
+             {
+               fieldName: 'contact_info.additional_phone',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlAddPhone_ctl00_tbxAddPhoneInfo',
+               type: 'text',
+               required: false
+             }
+           ]
+         }
+       },
+       // Email Addresses
+       {
+         fieldName: 'contact_info.email_address',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAPP_EMAIL_ADDR',
+         type: 'text',
+         required: true
+       },
+       {
+         fieldName: 'contact_info.other_email_addresses',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblAddEmail',
+         type: 'radio',
+         required: false,
+         valueMapping: {
+           'Yes': 'Y',
+           'No': 'N'
+         },
+         conditional: {
+           value: 'Y',
+           showFields: [
+             {
+               fieldName: 'contact_info.additional_email',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlAddEmail_ctl00_tbxAddEmailInfo',
+               type: 'text',
+               required: false
+             }
+           ]
+         }
+       }
+     ]
    }
-];
+ ];
 
 /**
  * Helper function to get field mapping by field name
@@ -1591,6 +1789,16 @@ export function getStep5FieldMappings(): FormFieldMapping[] {
     section.sectionName === 'Previous U.S. Travel - Step 5'
   );
   return step5Section ? step5Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 6 field mappings
+ */
+export function getStep6FieldMappings(): FormFieldMapping[] {
+  const step6Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Contact Information - Step 6'
+  );
+  return step6Section ? step6Section.fields : [];
 }
 
 /**
