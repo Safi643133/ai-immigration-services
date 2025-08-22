@@ -4,7 +4,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { createBrowserClient } from '@supabase/ssr'
 import Stepper from './ds160/Stepper'
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 import Step1 from './ds160/Step1'
 import Step2 from './ds160/Step2'
 import Step3 from './ds160/Step3'
@@ -53,6 +59,8 @@ export default function FormsPage() {
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [ds160Step, setDs160Step] = useState<number>(1)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -65,6 +73,64 @@ export default function FormsPage() {
       loadExtractedData()
     }
   }, [user, authLoading, router])
+
+  // Separate useEffect to handle edit mode after templates are loaded
+  useEffect(() => {
+    if (formTemplates.length > 0) {
+      checkForEditMode()
+    }
+  }, [formTemplates])
+
+  const checkForEditMode = async () => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const submissionId = urlParams.get('edit')
+    
+    if (submissionId) {
+      setIsEditMode(true)
+      setEditingSubmissionId(submissionId)
+      await loadSubmissionForEdit(submissionId)
+    }
+  }
+
+  const loadSubmissionForEdit = async (submissionId: string) => {
+    try {
+      setLoading(true)
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token || null
+      
+      const response = await fetch(`/api/forms/submissions/${submissionId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const submission = data.submission
+        
+        // Set the form data from the submission
+        setFormData(submission.form_data || {})
+        
+        // Set the selected template
+        if (submission.form_template_id) {
+          const template = formTemplates.find(t => t.id === submission.form_template_id)
+          if (template) {
+            setSelectedTemplate(template)
+          }
+        }
+        
+        console.log('Loaded submission for editing:', submission)
+      } else {
+        console.error('Failed to load submission for editing')
+        alert('Failed to load form for editing')
+      }
+    } catch (error) {
+      console.error('Error loading submission for editing:', error)
+      alert('Error loading form for editing')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadFormTemplates = async () => {
     try {
@@ -244,31 +310,51 @@ export default function FormsPage() {
 
     setProcessing(true)
     try {
-      const response = await fetch('/api/forms/submit', {
-        method: 'POST',
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token || null
+      
+      const requestBody = {
+        form_template_id: selectedTemplate.id,
+        form_data: formData,
+        extracted_data_summary: extractedData.map(item => ({
+          field_name: item.field_name,
+          field_value: item.field_value,
+          confidence_score: item.confidence_score
+        })),
+        embassy: 'Pakistan, Islamabad' // Default embassy
+      }
+
+      const url = isEditMode && editingSubmissionId 
+        ? `/api/forms/submissions/${editingSubmissionId}`
+        : '/api/forms/submissions'
+      
+      const method = isEditMode ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          form_template_id: selectedTemplate.id,
-          form_data: formData,
-          extracted_data_summary: extractedData.map(item => ({
-            field_name: item.field_name,
-            field_value: item.field_value,
-            confidence_score: item.confidence_score
-          }))
-        })
+        body: JSON.stringify(requestBody)
       })
 
       if (response.ok) {
-        alert('Form saved successfully!')
+        const result = await response.json()
+        alert(isEditMode ? 'Form updated successfully!' : 'Form saved successfully!')
+        
+        // If in edit mode, stay on the form page
+        // If in create mode, navigate to submissions page
+        if (!isEditMode) {
+          router.push('/forms/submissions')
+        }
       } else {
         const error = await response.json()
-        alert(error.error || 'Failed to save form')
+        alert(error.error || `Failed to ${isEditMode ? 'update' : 'save'} form`)
       }
     } catch (error) {
       console.error('Error saving form:', error)
-      alert('Failed to save form')
+      alert(`Failed to ${isEditMode ? 'update' : 'save'} form`)
     } finally {
       setProcessing(false)
     }
@@ -503,9 +589,19 @@ export default function FormsPage() {
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">
                         {selectedTemplate.name}
+                        {isEditMode && (
+                          <span className="ml-2 text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md">
+                            Editing
+                          </span>
+                        )}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {selectedTemplate.description}
+                        {isEditMode && (
+                          <span className="block text-sm text-blue-600 mt-1">
+                            Editing submission ID: {editingSubmissionId}
+                          </span>
+                        )}
                       </p>
                     </div>
                     <div className="flex space-x-2">
@@ -519,7 +615,7 @@ export default function FormsPage() {
                         ) : (
                           <CheckCircle className="h-4 w-4" />
                         )}
-                        <span>{processing ? 'Saving...' : 'Save Form'}</span>
+                        <span>{processing ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Update Form' : 'Save Form')}</span>
                       </button>
                       
                       <button

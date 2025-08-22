@@ -1,6 +1,7 @@
 import type { StepProps } from './types'
 import { visaClassOptions, specifyMap } from './visaOptions'
 import { usStates } from './states'
+import { getConditionalFields, getConditionalFieldKeys } from './conditionalFields'
 
 export default function Step3({ formData, onChange }: StepProps) {
   const get = (key: string) => formData[key] || ''
@@ -8,9 +9,85 @@ export default function Step3({ formData, onChange }: StepProps) {
 
   const selectedClass = get('travel_info.purpose_of_trip')
   const specifyOptions = specifyMap[selectedClass] || []
+  const selectedSpecify = get('travel_info.purpose_specify')
   const yesNo = ['Yes', 'No']
   const hasSpecificPlans = (get('travel_info.specific_travel_plans') || '').toString().toLowerCase() === 'yes'
   const lengthUnits = ['Day(s)', 'Week(s)', 'Month(s)', 'Year(s)']
+
+  // Get conditional fields for the selected specify option
+  const conditionalFieldGroup = getConditionalFields(selectedSpecify)
+
+  // Helper function to clear all conditional fields
+  const clearConditionalFields = () => {
+    const conditionalKeys = getConditionalFieldKeys()
+    conditionalKeys.forEach(key => set(key, ''))
+  }
+
+  // Helper function to render a conditional field
+  const renderConditionalField = (field: any) => {
+    const commonClasses = "mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+    
+    switch (field.type) {
+      case 'text':
+      case 'tel':
+      case 'email':
+        return (
+          <input
+            type={field.type}
+            value={get(field.key)}
+            onChange={(e) => set(field.key, e.target.value)}
+            className={commonClasses}
+            placeholder={field.placeholder}
+            required={field.required}
+          />
+        )
+      case 'date':
+        return (
+          <input
+            type="date"
+            value={get(field.key)}
+            onChange={(e) => set(field.key, e.target.value)}
+            className={commonClasses}
+            required={field.required}
+          />
+        )
+      case 'select':
+        return (
+          <select
+            value={get(field.key)}
+            onChange={(e) => set(field.key, e.target.value)}
+            className={commonClasses}
+            required={field.required}
+          >
+            {field.options?.map((option: any) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        )
+      case 'radio':
+        return (
+          <div className="mt-2 flex items-center space-x-6">
+            {field.options?.map((option: any) => (
+              <label key={option.value} className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name={field.key}
+                  className="mr-2"
+                  checked={get(field.key) === option.value}
+                  onChange={() => set(field.key, option.value)}
+                  required={field.required}
+                />
+                <span className='text-black'>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        )
+      default:
+        return null
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -21,6 +98,7 @@ export default function Step3({ formData, onChange }: StepProps) {
           onChange={(e) => {
             set('travel_info.purpose_of_trip', e.target.value)
             set('travel_info.purpose_specify', '')
+            clearConditionalFields()
           }}
           className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           required
@@ -36,11 +114,15 @@ export default function Step3({ formData, onChange }: StepProps) {
         <div>
           <label className="block text-sm font-medium text-gray-700">Specify Visa <span className="text-red-500">*</span></label>
           <select
-            value={get('travel_info.purpose_specify')}
-            onChange={(e) => set('travel_info.purpose_specify', e.target.value)}
+            value={selectedSpecify}
+            onChange={(e) => {
+              set('travel_info.purpose_specify', e.target.value)
+              clearConditionalFields()
+            }}
             className="mt-1 block w-full rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             required
           >
+            <option value="">Select specify option</option>
             {specifyOptions.map((opt) => (
               <option key={opt} value={opt === 'PLEASE SELECT' ? '' : opt}>{opt}</option>
             ))}
@@ -49,6 +131,73 @@ export default function Step3({ formData, onChange }: StepProps) {
       ) : selectedClass ? (
         <div className="text-sm text-gray-600">Specify Visa options for this class will be added next.</div>
       ) : null}
+
+      {/* Conditional fields based on specify selection */}
+      {conditionalFieldGroup && (
+        <div className="space-y-4 border-t pt-6">
+          <h6 className="text-sm font-medium text-gray-900">{conditionalFieldGroup.title}</h6>
+          
+          {conditionalFieldGroup.fields.map((field, index) => (
+            <div key={field.key}>
+              <label className="block text-sm font-medium text-gray-700">
+                {field.label}
+                {field.required && <span className="text-red-500">*</span>}
+                {field.optional && <span className="text-gray-500 text-xs">*Optional</span>}
+              </label>
+              {renderConditionalField(field)}
+            </div>
+          ))}
+
+          {/* Nested conditional fields for E1/E2 executives when "Yes" is selected */}
+          {(selectedSpecify === 'EXECUTIVE/MGR/ESSENTIAL EMP (E1)' || selectedSpecify === 'EXECUTIVE/MGR/ESSENTIAL EMP (E2)') && 
+           get('travel_info.principal_visa_issued') === 'Yes' && (
+            <div className="space-y-4 border-t pt-6">
+              <h6 className="text-sm font-medium text-gray-900">Principal Applicant Information</h6>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Surnames <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={get('travel_info.principal_surnames')}
+                  onChange={(e) => set('travel_info.principal_surnames', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Enter surnames"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Given Names <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={get('travel_info.principal_given_names')}
+                  onChange={(e) => set('travel_info.principal_given_names', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Enter given names"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Principal Applicant Date of Birth <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={get('travel_info.principal_date_of_birth')}
+                  onChange={(e) => set('travel_info.principal_date_of_birth', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  required
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Have you made specific travel plans?</label>

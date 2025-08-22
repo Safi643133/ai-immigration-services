@@ -116,6 +116,30 @@ export default function SubmissionsPage() {
     }
   }
 
+  const handleDelete = async (submissionId: string) => {
+    if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+      return
+    }
+    
+    try {
+      const response = await fetch(`/api/forms/submissions/${submissionId}`, {
+        method: 'DELETE',
+      })
+
+      if (response.ok) {
+        // Remove from local state
+        setSubmissions(prev => prev.filter(s => s.id !== submissionId))
+        alert('Submission deleted successfully')
+      } else {
+        const error = await response.json()
+        alert(`Failed to delete submission: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting submission:', error)
+      alert('Failed to delete submission')
+    }
+  }
+
   const handleSubmitToCeac = async (submissionId: string) => {
     setSubmittingTo(prev => ({ ...prev, [submissionId]: true }))
     
@@ -348,11 +372,27 @@ export default function SubmissionsPage() {
                       
                       <div className="flex items-center space-x-2">
                         <button
+                          onClick={() => router.push(`/forms?edit=${submission.id}`)}
+                          className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700 flex items-center space-x-1 text-sm"
+                        >
+                          <Eye className="h-4 w-4" />
+                          <span>Edit</span>
+                        </button>
+                        
+                        <button
                           onClick={() => handleDownloadPDF(submission.id, submission.form_templates.name)}
                           className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 flex items-center space-x-1 text-sm"
                         >
                           <Download className="h-4 w-4" />
                           <span>Download PDF</span>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDelete(submission.id)}
+                          className="bg-red-600 text-white px-3 py-1 rounded-md hover:bg-red-700 flex items-center space-x-1 text-sm"
+                        >
+                          <XCircle className="h-4 w-4" />
+                          <span>Delete</span>
                         </button>
                         
                         {submission.form_templates.form_type === 'ds160' && (

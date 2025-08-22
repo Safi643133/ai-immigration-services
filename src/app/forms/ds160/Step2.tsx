@@ -229,16 +229,56 @@ export default function Step2({ formData, onChange }: StepProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">U.S. Social Security Number</label>
-          <div className="flex items-center space-x-3 mt-1">
+          <div className="flex items-center space-x-2 mt-1">
             <input
               type="text"
-              value={ssnNAChecked ? 'N/A' : get('personal_info.us_social_security_number')}
-              onChange={(e) => set('personal_info.us_social_security_number', e.target.value)}
-              className="flex-1 rounded-md border-gray-300 p-4 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              maxLength={3}
+              value={ssnNAChecked ? '' : get('personal_info.us_social_security_number_1') || ''}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 3)
+                set('personal_info.us_social_security_number_1', value)
+                // Auto-advance to next field if 3 digits entered
+                if (value.length === 3) {
+                  const nextField = e.target.parentElement?.nextElementSibling?.querySelector('input')
+                  if (nextField) nextField.focus()
+                }
+              }}
+              className="w-16 rounded-md border-gray-300 p-2 text-center text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
               disabled={ssnNAChecked}
-              placeholder="XXX-XX-XXXX"
+              placeholder="XXX"
             />
-            <label className="inline-flex items-center text-sm text-gray-700">
+            <span className="text-gray-500">-</span>
+            <input
+              type="text"
+              maxLength={2}
+              value={ssnNAChecked ? '' : get('personal_info.us_social_security_number_2') || ''}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 2)
+                set('personal_info.us_social_security_number_2', value)
+                // Auto-advance to next field if 2 digits entered
+                if (value.length === 2) {
+                  const nextField = e.target.parentElement?.nextElementSibling?.querySelector('input')
+                  if (nextField) nextField.focus()
+                }
+              }}
+              className="w-12 rounded-md border-gray-300 p-2 text-center text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              disabled={ssnNAChecked}
+              placeholder="XX"
+            />
+            <span className="text-gray-500">-</span>
+            <input
+              type="text"
+              maxLength={4}
+              value={ssnNAChecked ? '' : get('personal_info.us_social_security_number_3') || ''}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 4)
+                set('personal_info.us_social_security_number_3', value)
+              }}
+              className="w-20 rounded-md border-gray-300 p-2 text-center text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              disabled={ssnNAChecked}
+              placeholder="XXXX"
+            />
+            <label className="inline-flex items-center text-sm text-gray-700 ml-2">
               <input
                 type="checkbox"
                 className="mr-2"
@@ -246,16 +286,15 @@ export default function Step2({ formData, onChange }: StepProps) {
                 onChange={(e) => {
                   if (e.target.checked) {
                     set('personal_info.us_ssn_na', true)
-                    set('personal_info.us_social_security_number', 'N/A')
+                    set('personal_info.us_social_security_number_1', '')
+                    set('personal_info.us_social_security_number_2', '')
+                    set('personal_info.us_social_security_number_3', '')
                   } else {
                     set('personal_info.us_ssn_na', false)
-                    if (get('personal_info.us_social_security_number') === 'N/A') {
-                      set('personal_info.us_social_security_number', '')
-                    }
                   }
                 }}
               />
-              NA (Does Not Apply)
+              Does Not Apply
             </label>
           </div>
         </div>

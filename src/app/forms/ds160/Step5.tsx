@@ -8,21 +8,20 @@ export default function Step5({ formData, onChange }: StepProps) {
 
   const beenInUS = (get('us_history.been_in_us') || '').toString().toLowerCase() === 'yes'
   const hasUSDL = (get('us_history.us_driver_license') || '').toString().toLowerCase() === 'yes'
-  const heldUSVisa = (get('us_history.previous_us_visa') || '').toString().toLowerCase() === 'yes'
+  const heldUSVisa = (get('us_history.us_visa_issued') || '').toString().toLowerCase() === 'yes'
   const visaLostStolen = (get('us_history.visa_lost_stolen') || '').toString().toLowerCase() === 'yes'
-  const visaCancelled = (get('us_history.visa_cancelled') || '').toString().toLowerCase() === 'yes'
+  const visaCancelled = (get('us_history.visa_cancelled_revoked') || '').toString().toLowerCase() === 'yes'
   const visaRefused = (get('us_history.visa_refused') || '').toString().toLowerCase() === 'yes'
-  const estaDenied = (get('us_history.esta_denied') || '').toString().toLowerCase() === 'yes'
   const immigrantPetition = (get('us_history.immigrant_petition') || '').toString().toLowerCase() === 'yes'
 
   const dlUnknown = get('us_history.driver_license_unknown') === true || get('us_history.driver_license_number') === 'N/A'
-  const visaNumUnknown = get('us_history.last_visa_number_unknown') === true || get('us_history.last_visa_number') === 'N/A'
+  const visaNumUnknown = get('us_history.visa_number_unknown') === true || get('us_history.visa_number') === 'N/A'
 
   const lengthUnits = ['Less than 24 hours', 'Day(s)', 'Week(s)', 'Month(s)', 'Year(s)']
 
   return (
     <div className="space-y-8">
-      {/* Have you ever been in the U.S.? */}
+      {/* Question 1: Have you ever been in the U.S.? */}
       <div className="space-y-4">
         <label className="block text-sm font-medium text-gray-700">Have you ever been in the U.S.?</label>
         <div className="mt-1 flex items-center space-x-6">
@@ -149,7 +148,7 @@ export default function Step5({ formData, onChange }: StepProps) {
         </div>
       )}
 
-      {/* Previous U.S. Visa */}
+      {/* Question 2: Previous U.S. Visa */}
       <div className="space-y-4">
         <label className="block text-sm font-medium text-gray-700">Have you ever been issued a U.S. Visa?</label>
         <div className="mt-1 flex items-center space-x-6">
@@ -157,10 +156,10 @@ export default function Step5({ formData, onChange }: StepProps) {
             <label key={opt} className="inline-flex items-center">
               <input
                 type="radio"
-                name="previous_us_visa"
+                name="us_visa_issued"
                 className="mr-2"
-                checked={get('us_history.previous_us_visa') === opt}
-                onChange={() => set('us_history.previous_us_visa', opt)}
+                checked={get('us_history.us_visa_issued') === opt}
+                onChange={() => set('us_history.us_visa_issued', opt)}
               />
               <span className='text-black'>{opt}</span>
             </label>
@@ -185,8 +184,8 @@ export default function Step5({ formData, onChange }: StepProps) {
                 <div className="flex items-center space-x-3 mt-1">
                   <input
                     type="text"
-                    value={visaNumUnknown ? 'N/A' : get('us_history.last_visa_number')}
-                    onChange={(e) => set('us_history.last_visa_number', e.target.value)}
+                    value={visaNumUnknown ? 'N/A' : get('us_history.visa_number')}
+                    onChange={(e) => set('us_history.visa_number', e.target.value)}
                     className="flex-1 rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                     disabled={visaNumUnknown}
                   />
@@ -197,12 +196,12 @@ export default function Step5({ formData, onChange }: StepProps) {
                       checked={visaNumUnknown}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          set('us_history.last_visa_number_unknown', true)
-                          set('us_history.last_visa_number', 'N/A')
+                          set('us_history.visa_number_unknown', true)
+                          set('us_history.visa_number', 'N/A')
                         } else {
-                          set('us_history.last_visa_number_unknown', false)
-                          if (get('us_history.last_visa_number') === 'N/A') {
-                            set('us_history.last_visa_number', '')
+                          set('us_history.visa_number_unknown', false)
+                          if (get('us_history.visa_number') === 'N/A') {
+                            set('us_history.visa_number', '')
                           }
                         }
                       }}
@@ -230,7 +229,7 @@ export default function Step5({ formData, onChange }: StepProps) {
                 <div className="mt-1 flex items-center space-x-6">
                   {yesNo.map(opt => (
                     <label key={opt} className="inline-flex items-center">
-                      <input type="radio" name="same_country_application" className="mr-2" checked={get('us_history.same_country_application') === opt} onChange={() => set('us_history.same_country_application', opt)} />
+                      <input type="radio" name="same_country" className="mr-2" checked={get('us_history.same_country') === opt} onChange={() => set('us_history.same_country', opt)} />
                       <span className='text-black'>{opt}</span>
                     </label>
                   ))}
@@ -291,14 +290,14 @@ export default function Step5({ formData, onChange }: StepProps) {
               <div className="mt-1 flex items-center space-x-6">
                 {yesNo.map(opt => (
                   <label key={opt} className="inline-flex items-center">
-                    <input type="radio" name="visa_cancelled" className="mr-2" checked={get('us_history.visa_cancelled') === opt} onChange={() => set('us_history.visa_cancelled', opt)} />
+                    <input type="radio" name="visa_cancelled_revoked" className="mr-2" checked={get('us_history.visa_cancelled_revoked') === opt} onChange={() => set('us_history.visa_cancelled_revoked', opt)} />
                     <span className='text-black'>{opt}</span>
                   </label>
                 ))}
               </div>
               {visaCancelled && (
                 <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700">Explain why</label>
+                  <label className="block text-sm font-medium text-gray-700">Explain</label>
                   <textarea
                     rows={3}
                     value={get('us_history.visa_cancelled_explanation')}
@@ -313,79 +312,54 @@ export default function Step5({ formData, onChange }: StepProps) {
         )}
       </div>
 
-      {/* Refusals / ESTA / Immigrant Petition */}
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Have you ever been refused a U.S. Visa, refused admission to the U.S., or withdrawn your application at the port of entry?</label>
-          <div className="mt-1 flex items-center space-x-6">
-            {yesNo.map(opt => (
-              <label key={opt} className="inline-flex items-center">
-                <input type="radio" name="visa_refused" className="mr-2" checked={get('us_history.visa_refused') === opt} onChange={() => set('us_history.visa_refused', opt)} />
-                <span className='text-black'>{opt}</span>
-              </label>
-            ))}
-          </div>
-          {visaRefused && (
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700">Explain</label>
-              <textarea
-                rows={3}
-                value={get('us_history.visa_refused_explanation')}
-                onChange={(e) => set('us_history.visa_refused_explanation', e.target.value)}
-                placeholder='Enter explanation'
-                className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm placeholder:text-gray-400"
-              />
-            </div>
-          )}
+      {/* Question 3: Visa Refusal */}
+      <div className="space-y-4">
+        <label className="block text-sm font-medium text-gray-700">Have you ever been refused a U.S. Visa, refused admission to the U.S., or withdrawn your application at the port of entry?</label>
+        <div className="mt-1 flex items-center space-x-6">
+          {yesNo.map(opt => (
+            <label key={opt} className="inline-flex items-center">
+              <input type="radio" name="visa_refused" className="mr-2" checked={get('us_history.visa_refused') === opt} onChange={() => set('us_history.visa_refused', opt)} />
+              <span className='text-black'>{opt}</span>
+            </label>
+          ))}
         </div>
+        {visaRefused && (
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700">Explain</label>
+            <textarea
+              rows={3}
+              value={get('us_history.visa_refused_explanation')}
+              onChange={(e) => set('us_history.visa_refused_explanation', e.target.value)}
+              placeholder='Enter explanation'
+              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm placeholder:text-gray-400"
+            />
+          </div>
+        )}
+      </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Have you ever been denied travel authorization through ESTA?</label>
-          <div className="mt-1 flex items-center space-x-6">
-            {yesNo.map(opt => (
-              <label key={opt} className="inline-flex items-center">
-                <input type="radio" name="esta_denied" className="mr-2" checked={get('us_history.esta_denied') === opt} onChange={() => set('us_history.esta_denied', opt)} />
-                <span className='text-black'>{opt}</span>
-              </label>
-            ))}
-          </div>
-          {estaDenied && (
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700">Explain</label>
-              <textarea
-                rows={3}
-                value={get('us_history.esta_denied_explanation')}
-                onChange={(e) => set('us_history.esta_denied_explanation', e.target.value)}
-                placeholder='Enter explanation'
-                className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-          )}
+      {/* Question 4: Immigrant Petition */}
+      <div className="space-y-4">
+        <label className="block text-sm font-medium text-gray-700">Has anyone ever filed an immigrant petition on your behalf with the United States Citizenship and Immigration Services?</label>
+        <div className="mt-1 flex items-center space-x-6">
+          {yesNo.map(opt => (
+            <label key={opt} className="inline-flex items-center">
+              <input type="radio" name="immigrant_petition" className="mr-2" checked={get('us_history.immigrant_petition') === opt} onChange={() => set('us_history.immigrant_petition', opt)} />
+              <span className='text-black'>{opt}</span>
+            </label>
+          ))}
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Has anyone ever filed an immigrant petition on your behalf with USCIS?</label>
-          <div className="mt-1 flex items-center space-x-6">
-            {yesNo.map(opt => (
-              <label key={opt} className="inline-flex items-center">
-                <input type="radio" name="immigrant_petition" className="mr-2" checked={get('us_history.immigrant_petition') === opt} onChange={() => set('us_history.immigrant_petition', opt)} />
-                <span className='text-black'>{opt}</span>
-              </label>
-            ))}
+        {immigrantPetition && (
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700">Explain</label>
+            <textarea
+              rows={3}
+              value={get('us_history.immigrant_petition_explanation')}
+              onChange={(e) => set('us_history.immigrant_petition_explanation', e.target.value)}
+              placeholder='Enter explanation'
+              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
           </div>
-          {immigrantPetition && (
-            <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700">Explain the circumstances of the petition</label>
-              <textarea
-                rows={3}
-                value={get('us_history.immigrant_petition_explanation')}
-                onChange={(e) => set('us_history.immigrant_petition_explanation', e.target.value)}
-                placeholder='Enter explanation'
-                className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   )
