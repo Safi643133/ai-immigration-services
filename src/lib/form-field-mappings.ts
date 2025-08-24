@@ -1720,8 +1720,554 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
          }
        }
      ]
-   }
- ];
+   },
+   {
+     sectionName: 'Passport/Visa Information - Step 7',
+     fields: [
+       // Passport/Travel Document Type
+       {
+         fieldName: 'passport_info.passport_type',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_TYPE',
+         type: 'select',
+         required: true,
+         valueMapping: {
+           'Regular': 'R',
+           'Official': 'O',
+           'Diplomatic': 'D',
+           'Laizzez Passer': 'L',
+           'Other': 'T'
+         },
+         conditional: {
+           value: 'T',
+           showFields: [
+             {
+               fieldName: 'passport_info.passport_other_explanation',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPptOtherExpl',
+               type: 'textarea',
+               required: true
+             }
+           ]
+         }
+       },
+       // Passport/Travel Document Number
+       {
+         fieldName: 'passport_info.passport_number',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPPT_NUM',
+         type: 'text',
+         required: true
+       },
+       // Passport Book Number
+       {
+         fieldName: 'passport_info.passport_book_number',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPPT_BOOK_NUM',
+         type: 'text',
+         required: false
+       },
+       // Passport Book Number "Does Not Apply" Checkbox
+       {
+         fieldName: 'passport_info.passport_book_number_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexPPT_BOOK_NUM_NA',
+         type: 'checkbox',
+         required: false
+       },
+       // Country/Authority that Issued Passport
+       {
+         fieldName: 'passport_info.passport_issuing_country',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_ISSUED_CNTRY',
+         type: 'select',
+         required: true
+       },
+       // City where Passport was Issued
+       {
+         fieldName: 'passport_info.passport_issued_city',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPPT_ISSUED_IN_CITY',
+         type: 'text',
+         required: true
+       },
+       // State/Province where Passport was Issued
+       {
+         fieldName: 'passport_info.passport_issued_state',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPPT_ISSUED_IN_STATE',
+         type: 'text',
+         required: false
+       },
+       // Country/Region where Passport was Issued
+       {
+         fieldName: 'passport_info.passport_issued_country',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_ISSUED_IN_CNTRY',
+         type: 'select',
+         required: true
+       },
+       // Passport Issuance Date (Split Date)
+       {
+         fieldName: 'passport_info.passport_issue_date',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_ISSUED_DTEDay',
+         type: 'date_split',
+         required: true,
+         dateSelectors: {
+           day: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_ISSUED_DTEDay',
+           month: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_ISSUED_DTEMonth',
+           year: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPPT_ISSUEDYear'
+         }
+       },
+       // Passport Expiration Date (Split Date)
+       {
+         fieldName: 'passport_info.passport_expiry_date',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_EXPIRE_DTEDay',
+         type: 'date_split',
+         required: false,
+         dateSelectors: {
+           day: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_EXPIRE_DTEDay',
+           month: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_EXPIRE_DTEMonth',
+           year: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPPT_EXPIREYear'
+         }
+       },
+       // Passport Expiration "No Expiration" Checkbox
+       {
+         fieldName: 'passport_info.passport_expiry_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxPPT_EXPIRE_NA',
+         type: 'checkbox',
+         required: false
+       },
+       // Lost/Stolen Passport Question
+       {
+         fieldName: 'passport_info.passport_lost_stolen',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblLOST_PPT_IND',
+         type: 'radio',
+         required: true,
+         valueMapping: {
+           'Yes': 'Y',
+           'No': 'N'
+         },
+         conditional: {
+           value: 'Y',
+           showFields: [
+             {
+               fieldName: 'passport_info.lost_passport_number',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_tbxLOST_PPT_NUM',
+               type: 'text',
+               required: false
+             },
+             {
+               fieldName: 'passport_info.lost_passport_number_na',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_cbxLOST_PPT_NUM_UNKN_IND',
+               type: 'checkbox',
+               required: false
+             },
+             {
+               fieldName: 'passport_info.lost_passport_country',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_ddlLOST_PPT_NATL',
+               type: 'select',
+               required: false
+             },
+             {
+               fieldName: 'passport_info.lost_passport_explanation',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_tbxLOST_PPT_EXPL',
+               type: 'textarea',
+               required: false
+             }
+           ]
+         }
+       }
+     ]
+   },
+   {
+     sectionName: 'U.S. Contact Information - Step 8',
+     fields: [
+       // Contact Person Surnames
+       {
+         fieldName: 'us_contact.contact_surnames',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_SURNAME',
+         type: 'text',
+         required: false
+       },
+       // Contact Person Given Names
+       {
+         fieldName: 'us_contact.contact_given_names',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_GIVEN_NAME',
+         type: 'text',
+         required: false
+       },
+       // Contact Person "Do Not Know" Checkbox
+       {
+         fieldName: 'us_contact.contact_person_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxUS_POC_NAME_NA',
+         type: 'checkbox',
+         required: false
+       },
+       // Organization Name
+       {
+         fieldName: 'us_contact.contact_organization',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_ORGANIZATION',
+         type: 'text',
+         required: false
+       },
+       // Organization "Do Not Know" Checkbox
+       {
+         fieldName: 'us_contact.contact_organization_na',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxUS_POC_ORG_NA_IND',
+         type: 'checkbox',
+         required: false
+       },
+                // Relationship to You
+         {
+           fieldName: 'us_contact.contact_relationship',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlUS_POC_REL_TO_APP',
+           type: 'select',
+           required: true,
+           valueMapping: {
+             'RELATIVE': 'R',
+             'SPOUSE': 'S',
+             'FRIEND': 'C',
+             'BUSINESS ASSOCIATE': 'B',
+             'EMPLOYER': 'P',
+             'SCHOOL OFFICIAL': 'H',
+             'OTHER': 'O'
+           }
+         },
+         // U.S. Street Address (Line 1)
+         {
+           fieldName: 'us_contact.contact_address_line1',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_ADDR_LN1',
+           type: 'text',
+           required: true
+         },
+         // U.S. Street Address (Line 2)
+         {
+           fieldName: 'us_contact.contact_address_line2',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_ADDR_LN2',
+           type: 'text',
+           required: false
+         },
+         // City
+         {
+           fieldName: 'us_contact.contact_city',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_ADDR_CITY',
+           type: 'text',
+           required: true
+         },
+         // State
+         {
+           fieldName: 'us_contact.contact_state',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlUS_POC_ADDR_STATE',
+           type: 'select',
+           required: true
+         },
+         // ZIP Code
+         {
+           fieldName: 'us_contact.contact_zip',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_ADDR_POSTAL_CD',
+           type: 'text',
+           required: false
+         },
+         // Phone Number
+         {
+           fieldName: 'us_contact.contact_phone',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_HOME_TEL',
+           type: 'text',
+           required: true
+         },
+         // Email Address
+         {
+           fieldName: 'us_contact.contact_email',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_EMAIL_ADDR',
+           type: 'text',
+           required: false
+         },
+                  // Email Address "Does Not Apply" Checkbox
+         {
+           fieldName: 'us_contact.contact_email_na',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbexUS_POC_EMAIL_ADDR_NA',
+           type: 'checkbox',
+           required: false
+         }
+       ]
+     },
+     {
+       sectionName: 'Family Information - Step 9',
+       fields: [
+         // Father's Surnames
+         {
+           fieldName: 'family_info.father_surnames',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxFATHER_SURNAME',
+           type: 'text',
+           required: false
+         },
+         // Father's Surnames "Do Not Know" Checkbox
+         {
+           fieldName: 'family_info.father_surnames_na',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_SURNAME_UNK_IND',
+           type: 'checkbox',
+           required: false
+         },
+         // Father's Given Names
+         {
+           fieldName: 'family_info.father_given_names',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxFATHER_GIVEN_NAME',
+           type: 'text',
+           required: false
+         },
+         // Father's Given Names "Do Not Know" Checkbox
+         {
+           fieldName: 'family_info.father_given_names_na',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_GIVEN_NAME_UNK_IND',
+           type: 'checkbox',
+           required: false
+         },
+         // Father's Date of Birth (Split Date)
+         {
+           fieldName: 'family_info.father_date_of_birth',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlFathersDOBDay',
+           type: 'date_split',
+           required: false,
+           dateSelectors: {
+             day: '#ctl00_SiteContentPlaceHolder_FormView1_ddlFathersDOBDay',
+             month: '#ctl00_SiteContentPlaceHolder_FormView1_ddlFathersDOBMonth',
+             year: '#ctl00_SiteContentPlaceHolder_FormView1_tbxFathersDOBYear'
+           }
+         },
+         // Father's Date of Birth "Do Not Know" Checkbox
+         {
+           fieldName: 'family_info.father_date_of_birth_na',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_DOB_UNK_IND',
+           type: 'checkbox',
+           required: false
+         },
+         // Is your father in the U.S.?
+         {
+           fieldName: 'family_info.father_in_us',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblFATHER_LIVE_IN_US_IND',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'family_info.father_status',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlFATHER_US_STATUS',
+                 type: 'select',
+                 required: true,
+                 valueMapping: {
+                   'U.S. CITIZEN': 'S',
+                   'U.S. LEGAL PERMANENT RESIDENT (LPR)': 'C',
+                   'NONIMMIGRANT': 'P',
+                   "OTHER/I DON'T KNOW": 'O'
+                 }
+               }
+             ]
+           }
+         },
+         // Mother's Surnames
+         {
+           fieldName: 'family_info.mother_surnames',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMOTHER_SURNAME',
+           type: 'text',
+           required: false
+         },
+         // Mother's Surnames "Do Not Know" Checkbox
+         {
+           fieldName: 'family_info.mother_surnames_na',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_SURNAME_UNK_IND',
+           type: 'checkbox',
+           required: false
+         },
+         // Mother's Given Names
+         {
+           fieldName: 'family_info.mother_given_names',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMOTHER_GIVEN_NAME',
+           type: 'text',
+           required: false
+         },
+         // Mother's Given Names "Do Not Know" Checkbox
+         {
+           fieldName: 'family_info.mother_given_names_na',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_GIVEN_NAME_UNK_IND',
+           type: 'checkbox',
+           required: false
+         },
+         // Mother's Date of Birth (Split Date)
+         {
+           fieldName: 'family_info.mother_date_of_birth',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlMothersDOBDay',
+           type: 'date_split',
+           required: false,
+           dateSelectors: {
+             day: '#ctl00_SiteContentPlaceHolder_FormView1_ddlMothersDOBDay',
+             month: '#ctl00_SiteContentPlaceHolder_FormView1_ddlMothersDOBMonth',
+             year: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMothersDOBYear'
+           }
+         },
+         // Mother's Date of Birth "Do Not Know" Checkbox
+         {
+           fieldName: 'family_info.mother_date_of_birth_na',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_DOB_UNK_IND',
+           type: 'checkbox',
+           required: false
+         },
+         // Is your mother in the U.S.?
+         {
+           fieldName: 'family_info.mother_in_us',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblMOTHER_LIVE_IN_US_IND',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'family_info.mother_status',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlMOTHER_US_STATUS',
+                 type: 'select',
+                 required: true,
+                 valueMapping: {
+                   'U.S. CITIZEN': 'S',
+                   'U.S. LEGAL PERMANENT RESIDENT (LPR)': 'C',
+                   'NONIMMIGRANT': 'P',
+                   "OTHER/I DON'T KNOW": 'O'
+                 }
+               }
+             ]
+           }
+         },
+         // Do you have any immediate relatives, not including parents, in the United States?
+         {
+           fieldName: 'family_info.immediate_relatives_us',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblUS_IMMED_RELATIVE_IND',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'family_info.relative_surnames',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_tbxUS_REL_SURNAME',
+                 type: 'text',
+                 required: true
+               },
+               {
+                 fieldName: 'family_info.relative_given_names',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_tbxUS_REL_GIVEN_NAME',
+                 type: 'text',
+                 required: true
+               },
+               {
+                 fieldName: 'family_info.relative_relationship',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_ddlUS_REL_TYPE',
+                 type: 'select',
+                 required: true,
+                 valueMapping: {
+                   'SPOUSE': 'S',
+                   'FIANCÉ/FIANCÉE': 'F',
+                   'CHILD': 'C',
+                   'SIBLING': 'B'
+                 }
+               },
+               {
+                 fieldName: 'family_info.relative_status',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_ddlUS_REL_STATUS',
+                 type: 'select',
+                 required: true,
+                 valueMapping: {
+                   'U.S. CITIZEN': 'S',
+                   'U.S. LEGAL PERMANENT RESIDENT (LPR)': 'C',
+                   'NONIMMIGRANT': 'P',
+                   "OTHER/I DON'T KNOW": 'O'
+                 }
+               }
+             ]
+           }
+         },
+         // Do you have any other relatives in the United States? (shown when immediate relatives = No)
+         {
+           fieldName: 'family_info.other_relatives_us',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblUS_OTHER_RELATIVE_IND',
+           type: 'radio',
+           required: false,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           }
+         }
+       ]
+     },
+     {
+       sectionName: 'Work/Education Information - Step 10',
+       fields: [
+         // Primary Occupation - Only this field is filled in the main form
+         // All other fields are handled in conditional logic after page reload
+         {
+           fieldName: 'present_work_education.primary_occupation',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_ddlPresentOccupation',
+           type: 'select',
+           required: true,
+           valueMapping: {
+             'AGRICULTURE': 'A',
+             'ARTIST/PERFORMER': 'AP',
+             'BUSINESS': 'B',
+             'COMMUNICATIONS': 'CM',
+             'COMPUTER SCIENCE': 'CS',
+             'CULINARY/FOOD SERVICES': 'C',
+             'EDUCATION': 'ED',
+             'ENGINEERING': 'EN',
+             'GOVERNMENT': 'G',
+             'HOMEMAKER': 'H',
+             'LEGAL PROFESSION': 'LP',
+             'MEDICAL/HEALTH': 'MH',
+             'MILITARY': 'M',
+             'NATURAL SCIENCE': 'NS',
+             'NOT EMPLOYED': 'N',
+             'PHYSICAL SCIENCES': 'PS',
+             'RELIGIOUS VOCATION': 'RV',
+             'RESEARCH': 'R',
+             'RETIRED': 'RT',
+             'SOCIAL SCIENCE': 'SS',
+             'STUDENT': 'S',
+             'OTHER': 'O'
+           }
+         }
+       ]
+     },
+     {
+       sectionName: 'Previous Work/Education Information - Step 11',
+       fields: [
+         // Previous Employment Question - Only this field is filled in the main form
+         // All other fields are handled in conditional logic after page reload
+         {
+           fieldName: 'previous_work_education.previously_employed',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblPreviouslyEmployed_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           }
+         },
+         // Educational Institutions Question - Only this field is filled in the main form
+         // All other fields are handled in conditional logic after page reload
+         {
+           fieldName: 'previous_work_education.attended_educational_institutions',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblOtherEduc_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           }
+         }
+       ]
+     }
+   ];
 
 /**
  * Helper function to get field mapping by field name
@@ -1799,6 +2345,56 @@ export function getStep6FieldMappings(): FormFieldMapping[] {
     section.sectionName === 'Contact Information - Step 6'
   );
   return step6Section ? step6Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 7 field mappings
+ */
+export function getStep7FieldMappings(): FormFieldMapping[] {
+  const step7Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Passport/Visa Information - Step 7'
+  );
+  return step7Section ? step7Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 8 field mappings
+ */
+export function getStep8FieldMappings(): FormFieldMapping[] {
+  const step8Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'U.S. Contact Information - Step 8'
+  );
+  return step8Section ? step8Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 9 field mappings
+ */
+export function getStep9FieldMappings(): FormFieldMapping[] {
+  const step9Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Family Information - Step 9'
+  );
+  return step9Section ? step9Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 10 field mappings
+ */
+export function getStep10FieldMappings(): FormFieldMapping[] {
+  const step10Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Work/Education Information - Step 10'
+  );
+  return step10Section ? step10Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 11 field mappings
+ */
+export function getStep11FieldMappings(): FormFieldMapping[] {
+  const step11Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Previous Work/Education Information - Step 11'
+  );
+  return step11Section ? step11Section.fields : [];
 }
 
 /**

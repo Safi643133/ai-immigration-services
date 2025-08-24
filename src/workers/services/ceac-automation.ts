@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { getArtifactStorage } from '../../lib/artifact-storage'
 import { ProgressService } from '../../lib/progress/progress-service'
 import type { DS160FormData } from '../../lib/types/ceac'
-import { getFieldMapping, getStep1FieldMappings, getStep2FieldMappings, getStep3FieldMappings, getStep4FieldMappings, getStep5FieldMappings, getStep6FieldMappings, validateFormData } from '../../lib/form-field-mappings'
+import { getFieldMapping, getStep1FieldMappings, getStep2FieldMappings, getStep3FieldMappings, getStep4FieldMappings, getStep5FieldMappings, getStep6FieldMappings, getStep7FieldMappings, getStep8FieldMappings, getStep9FieldMappings, getStep10FieldMappings, getStep11FieldMappings, validateFormData } from '../../lib/form-field-mappings'
 import { getConditionalFields } from '../../app/forms/ds160/conditionalFields'
 import { getCountryCode } from '../../lib/country-code-mapping'
 import { readFileSync, existsSync, mkdirSync } from 'fs'
@@ -3752,6 +3752,33 @@ export class CeacAutomationService {
     
     // Click Next button to proceed to Step 7
     await this.clickStep6NextButton(page, jobId)
+    
+    // Fill Step 7 form
+    await this.fillStep7Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 8
+    await this.clickStep7NextButton(page, jobId)
+    
+    // Fill Step 8 form
+    await this.fillStep8Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 9
+    await this.clickStep8NextButton(page, jobId)
+    
+    // Fill Step 9 form
+    await this.fillStep9Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 10
+    await this.clickStep9NextButton(page, jobId)
+    
+    // Fill Step 10 form
+    await this.fillStep10Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 11
+    await this.clickStep10NextButton(page, jobId)
+    
+    // Fill Step 11 form
+    await this.fillStep11Form(page, jobId, formData)
   }
 
   /**
@@ -3921,27 +3948,3004 @@ export class CeacAutomationService {
    */
   private async clickStep6NextButton(page: Page, jobId: string): Promise<void> {
     console.log('➡️ Clicking Next button on Step 6 to proceed to Step 7...')
+    
+    // Try up to 3 times to click the Next button
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`🔄 Attempt ${attempt} to click Step 6 Next button...`)
+        
+        const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+        if (await nextButton.isVisible({ timeout: 10000 })) {
+          await nextButton.click()
+          console.log(`✅ Step 6 Next button clicked (attempt ${attempt})`)
+          
+          // Wait for navigation with better error handling
+          try {
+            console.log('⏳ Waiting for page to load after Step 6 Next button click...')
+            await page.waitForLoadState('networkidle', { timeout: 45000 })
+            console.log('✅ Page loaded successfully')
+          } catch (error) {
+            console.log('⚠️ Network idle timeout, trying alternative wait strategy...')
+            
+            // Try waiting for domcontentloaded instead
+            try {
+              await page.waitForLoadState('domcontentloaded', { timeout: 30000 })
+              console.log('✅ DOM content loaded')
+              
+              // Additional wait for any remaining network activity
+              await page.waitForTimeout(5000)
+              console.log('✅ Additional wait completed')
+            } catch (domError) {
+              console.log('⚠️ DOM content loaded also timed out, proceeding anyway...')
+              await page.waitForTimeout(3000)
+            }
+          }
+          
+          // Verify we're on Step 7 by checking for a Step 7 specific element
+          try {
+            const step7Element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_TYPE')
+            await step7Element.waitFor({ state: 'visible', timeout: 15000 })
+            console.log('✅ Confirmed we are on Step 7 (Passport Type dropdown found)')
+            
+            // If we get here, navigation was successful
+            break
+          } catch (error) {
+            console.log(`⚠️ Could not confirm Step 7 navigation on attempt ${attempt}, but proceeding...`)
+            if (attempt === 3) {
+              // Take a screenshot to see what page we're on
+              await this.takeScreenshot(page, jobId, 'step6-next-click-verification')
+            }
+          }
+          
+          // If we get here, navigation was successful
+          break
+        } else {
+          throw new Error('Step 6 Next button not found')
+        }
+             } catch (error) {
+         const errorMessage = error instanceof Error ? error.message : String(error)
+         console.log(`❌ Attempt ${attempt} failed: ${errorMessage}`)
+         if (attempt === 3) {
+           throw new Error(`Failed to navigate from Step 6 to Step 7 after 3 attempts: ${errorMessage}`)
+         }
+        
+        // Wait before retrying
+        console.log('⏳ Waiting 3 seconds before retry...')
+        await page.waitForTimeout(3000)
+      }
+        }
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_7',
+      'running',
+      'Successfully navigated to Step 7',
+      41
+    )
+    
+    // Take screenshot
+    await this.takeScreenshot(page, jobId, 'after-step6-next-click')
+    console.log('✅ Successfully navigated to Step 7')
+  }
+
+  /**
+   * Fill Step 7 form (Passport/Visa Information)
+   */
+  private async fillStep7Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 7 form filling (Passport/Visa Information)...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_7',
+      'running',
+      'Filling Step 7 form fields',
+      41
+    )
+    
+    try {
+      // Verify we're on the correct page before proceeding
+      console.log('🔍 Verifying we are on Step 7 page...')
+      const step7Indicator = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ddlPPT_TYPE')
+      try {
+        await step7Indicator.waitFor({ state: 'visible', timeout: 10000 })
+        console.log('✅ Confirmed we are on Step 7 page')
+      } catch (error) {
+        console.log('⚠️ Could not find Step 7 indicator, taking screenshot for debugging...')
+        await this.takeScreenshot(page, jobId, 'step7-verification-failed')
+        throw new Error('Not on Step 7 page - Passport Type dropdown not found')
+      }
+      
+      // Get Step 7 field mappings
+      const step7Mappings = getStep7FieldMappings()
+      console.log(`📋 Found ${step7Mappings.length} Step 7 field mappings`)
+      
+      // Fill each field
+      for (const fieldMapping of step7Mappings) {
+        try {
+          console.log(`📝 Processing field: ${fieldMapping.fieldName}`)
+          
+          // Get field value from form data
+          const fieldValue = formData[fieldMapping.fieldName]
+          
+          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+            console.log(`⏭️ Skipping empty field: ${fieldMapping.fieldName}`)
+            continue
+          }
+          
+          console.log(`📝 Field value: ${fieldValue}`)
+          
+          // Fill the field based on its type
+          const element = page.locator(fieldMapping.selector)
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          
+          switch (fieldMapping.type) {
+            case 'text':
+              await element.fill(fieldValue.toString())
+              console.log(`✅ Filled text field: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'select':
+              let selectValue = fieldMapping.valueMapping?.[fieldValue.toString()] || fieldValue.toString()
+              
+              // Handle country dropdowns for Step 7
+              if (fieldMapping.fieldName === 'passport_info.passport_issuing_country' || 
+                  fieldMapping.fieldName === 'passport_info.passport_issued_country') {
+                const countryCode = getCountryCode(selectValue)
+                if (countryCode) {
+                  selectValue = countryCode
+                  console.log(`🔍 STEP7 - Country "${fieldValue}" mapped to CEAC code: "${selectValue}"`)
+                } else {
+                  console.log(`⚠️ STEP7 - No country code found for: ${selectValue}`)
+                }
+              }
+              
+              await element.selectOption({ value: selectValue })
+              console.log(`✅ Selected dropdown: ${fieldMapping.fieldName} = ${selectValue}`)
+              
+              // Wait for postback if this is a dropdown that triggers conditional fields
+              if (fieldMapping.conditional) {
+                await this.waitForPostback(page, jobId)
+                console.log('✅ Postback completed after dropdown selection')
+              }
+              break
+              
+            case 'textarea':
+              await element.fill(fieldValue.toString())
+              console.log(`✅ Filled textarea: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'date_split':
+              // Handle split date fields
+              if (fieldMapping.dateSelectors) {
+                const date = new Date(fieldValue.toString())
+                const day = date.getDate().toString().padStart(2, '0')
+                const month = (date.getMonth() + 1).toString().padStart(2, '0') // Use numeric month (01-12)
+                const year = date.getFullYear().toString()
+                
+                console.log(`📝 Splitting date ${fieldValue} into: day=${day}, month=${month}, year=${year}`)
+                
+                // Fill day dropdown
+                const dayElement = page.locator(fieldMapping.dateSelectors.day)
+                await dayElement.waitFor({ state: 'visible', timeout: 15000 })
+                await dayElement.selectOption({ value: day })
+                console.log(`✅ Filled day: ${day}`)
+                
+                // Small delay between date components
+                await page.waitForTimeout(500)
+                
+                // Fill month dropdown
+                const monthElement = page.locator(fieldMapping.dateSelectors.month)
+                await monthElement.waitFor({ state: 'visible', timeout: 15000 })
+                
+                // Get available options for debugging
+                const monthOptions = await monthElement.locator('option').all()
+                const availableMonths = await Promise.all(monthOptions.map(async (opt) => {
+                  const value = await opt.getAttribute('value')
+                  const text = await opt.textContent()
+                  return { value, text }
+                }))
+                console.log(`📝 Available month options:`, availableMonths)
+                
+                await monthElement.selectOption({ value: month })
+                console.log(`✅ Filled month: ${month}`)
+                
+                // Small delay between date components
+                await page.waitForTimeout(500)
+                
+                // Fill year input
+                const yearElement = page.locator(fieldMapping.dateSelectors.year)
+                await yearElement.waitFor({ state: 'visible', timeout: 15000 })
+                await yearElement.fill(year)
+                console.log(`✅ Filled year: ${year}`)
+              }
+              break
+              
+            case 'radio':
+              // For radio buttons, we need to find the correct option
+              let radioValue = fieldValue.toString()
+              if (fieldMapping.valueMapping && fieldMapping.valueMapping[radioValue]) {
+                radioValue = fieldMapping.valueMapping[radioValue]
+              }
+              
+              console.log(`📝 Looking for radio option with value: ${radioValue}`)
+              
+              const radioOptions = page.locator(`${fieldMapping.selector} input[type="radio"]`)
+              const optionCount = await radioOptions.count()
+              console.log(`📝 Found ${optionCount} radio options`)
+              
+              // If no radio options found, try alternative selectors
+              if (optionCount === 0) {
+                console.log('⚠️ No radio options found with standard selector, trying alternative...')
+                const alternativeOptions = page.locator('input[type="radio"]')
+                const altCount = await alternativeOptions.count()
+                console.log(`📝 Found ${altCount} radio options with alternative selector`)
+                
+                // Log all radio buttons on the page for debugging
+                for (let i = 0; i < Math.min(altCount, 10); i++) {
+                  const option = alternativeOptions.nth(i)
+                  const optionValue = await option.getAttribute('value')
+                  const optionId = await option.getAttribute('id')
+                  const optionName = await option.getAttribute('name')
+                  console.log(`📝 Radio option ${i + 1}: value="${optionValue}", id="${optionId}", name="${optionName}"`)
+                }
+              }
+              
+              let found = false
+              for (let i = 0; i < optionCount; i++) {
+                const option = radioOptions.nth(i)
+                const optionValue = await option.getAttribute('value')
+                console.log(`📝 Radio option ${i + 1} has value: ${optionValue}`)
+                
+                if (optionValue === radioValue) {
+                  await option.check()
+                  console.log(`✅ Selected radio option: ${radioValue}`)
+                  found = true
+                  break
+                }
+              }
+              
+              if (!found) {
+                console.warn(`⚠️ Could not find radio option with value: ${radioValue}`)
+                // Try to find by label text as fallback
+                const radioLabels = page.locator(`${fieldMapping.selector} label`)
+                const labelCount = await radioLabels.count()
+                console.log(`📝 Found ${labelCount} radio labels`)
+                
+                for (let i = 0; i < labelCount; i++) {
+                  const label = radioLabels.nth(i)
+                  const labelText = await label.textContent()
+                  console.log(`📝 Radio label ${i + 1}: "${labelText}"`)
+                  
+                  if (labelText && (labelText.trim().toLowerCase() === fieldValue.toString().toLowerCase() || 
+                      labelText.trim().toLowerCase() === radioValue.toLowerCase())) {
+                    const radioInput = label.locator('input[type="radio"]')
+                    await radioInput.check()
+                    console.log(`✅ Selected radio option by label: ${labelText}`)
+                    found = true
+                    break
+                  }
+                }
+              }
+              
+              if (!found) {
+                throw new Error(`Could not find radio option for value: ${radioValue}`)
+              }
+              
+              // Wait for postback if this is a radio button that triggers conditional fields
+              if (fieldMapping.conditional) {
+                await this.waitForPostback(page, jobId)
+                console.log('✅ Postback completed after radio button selection')
+              }
+              break
+              
+            case 'checkbox':
+              if (fieldValue === true || fieldValue === 'Yes') {
+                await element.check()
+                console.log(`✅ Checked checkbox: ${fieldMapping.fieldName}`)
+              } else {
+                await element.uncheck()
+                console.log(`✅ Unchecked checkbox: ${fieldMapping.fieldName}`)
+              }
+              break
+              
+            default:
+              console.log(`⚠️ Unknown field type: ${fieldMapping.type} for field: ${fieldMapping.fieldName}`)
+              break
+          }
+          
+          // Handle conditional fields if this field has them
+          if (fieldMapping.conditional) {
+            console.log(`📝 Field has conditional logic, checking if conditions are met...`)
+            await this.handleStep7ConditionalFields(page, jobId, formData, fieldMapping)
+          }
+          
+          console.log(`✅ Successfully filled field: ${fieldMapping.fieldName}`)
+          
+        } catch (error) {
+          console.error(`❌ Error filling field ${fieldMapping.fieldName}:`, error)
+          throw error
+        }
+      }
+      
+      console.log('✅ Step 7 form filling completed successfully')
+      
+    } catch (error) {
+      console.error('❌ Error in Step 7 form filling:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Handle conditional fields for Step 7
+   */
+  private async handleStep7ConditionalFields(page: Page, jobId: string, formData: DS160FormData, fieldMapping: any): Promise<void> {
+    console.log(`📝 Handling conditional fields for: ${fieldMapping.fieldName}`)
+    
+    if (fieldMapping.fieldName === 'passport_info.passport_type') {
+      const passportType = formData[fieldMapping.fieldName]
+      console.log(`📝 Passport type selected: ${passportType}`)
+      
+      if (passportType === 'Other') {
+        console.log('📝 "Other" passport type selected, waiting for explanation field...')
+        
+        // Wait for the conditional field to appear
+        await page.waitForTimeout(3000)
+        
+        // Check if the conditional field is visible
+        const explanationField = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_passportOther')
+        if (await explanationField.isVisible({ timeout: 10000 })) {
+          console.log('📝 Explanation field is visible, filling it...')
+          
+          const explanationValue = formData['passport_info.passport_other_explanation']
+          if (explanationValue) {
+            const textareaElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxPptOtherExpl')
+            await textareaElement.waitFor({ state: 'visible', timeout: 15000 })
+            await textareaElement.fill(explanationValue.toString())
+            console.log(`✅ Filled passport other explanation: ${explanationValue}`)
+          }
+        } else {
+          console.log('⚠️ Explanation field not visible after waiting')
+        }
+      }
+    }
+    
+    // Handle passport book number "Does Not Apply" checkbox logic
+    if (fieldMapping.fieldName === 'passport_info.passport_book_number_na') {
+      const bookNumberNA = formData[fieldMapping.fieldName]
+      const bookNumber = formData['passport_info.passport_book_number']
+      
+      console.log(`📝 Passport book number NA checkbox: ${bookNumberNA}`)
+      console.log(`📝 Passport book number value: ${bookNumber}`)
+      
+      if (bookNumberNA === true || bookNumber === 'N/A') {
+        console.log('📝 Checking "Does Not Apply" checkbox for passport book number...')
+        
+        // Check the checkbox
+        const checkboxElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbexPPT_BOOK_NUM_NA')
+        await checkboxElement.waitFor({ state: 'visible', timeout: 15000 })
+        await checkboxElement.check()
+        console.log('✅ Checked "Does Not Apply" checkbox for passport book number')
+        
+        // The checkbox should automatically disable the text field via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (bookNumber && bookNumber !== 'N/A') {
+        console.log('📝 Filling passport book number...')
+        
+        // Make sure checkbox is unchecked
+        const checkboxElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbexPPT_BOOK_NUM_NA')
+        await checkboxElement.waitFor({ state: 'visible', timeout: 15000 })
+        await checkboxElement.uncheck()
+        console.log('✅ Unchecked "Does Not Apply" checkbox for passport book number')
+        
+        // Fill the book number field
+        const bookNumberElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxPPT_BOOK_NUM')
+        await bookNumberElement.waitFor({ state: 'visible', timeout: 15000 })
+        await bookNumberElement.fill(bookNumber.toString())
+        console.log(`✅ Filled passport book number: ${bookNumber}`)
+      }
+    }
+    
+    // Handle passport expiration "No Expiration" checkbox logic
+    if (fieldMapping.fieldName === 'passport_info.passport_expiry_na') {
+      const expiryNA = formData[fieldMapping.fieldName]
+      const expiryDate = formData['passport_info.passport_expiry_date']
+      
+      console.log(`📝 Passport expiry NA checkbox: ${expiryNA}`)
+      console.log(`📝 Passport expiry date value: ${expiryDate}`)
+      
+      if (expiryNA === true || expiryDate === 'N/A') {
+        console.log('📝 Checking "No Expiration" checkbox for passport expiry...')
+        
+        // Check the checkbox
+        const checkboxElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxPPT_EXPIRE_NA')
+        await checkboxElement.waitFor({ state: 'visible', timeout: 15000 })
+        await checkboxElement.check()
+        console.log('✅ Checked "No Expiration" checkbox for passport expiry')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after "No Expiration" checkbox selection')
+        
+        // The checkbox should automatically disable the date fields via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (expiryDate && expiryDate !== 'N/A') {
+        console.log('📝 Filling passport expiry date...')
+        
+        // Make sure checkbox is unchecked
+        const checkboxElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxPPT_EXPIRE_NA')
+        await checkboxElement.waitFor({ state: 'visible', timeout: 15000 })
+        await checkboxElement.uncheck()
+        console.log('✅ Unchecked "No Expiration" checkbox for passport expiry')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after "No Expiration" checkbox deselection')
+        
+        // The date fields should now be enabled and can be filled normally
+        await page.waitForTimeout(1000)
+      }
+    }
+    
+    // Handle lost/stolen passport conditional fields
+    if (fieldMapping.fieldName === 'passport_info.passport_lost_stolen') {
+      const lostStolen = formData[fieldMapping.fieldName]
+      console.log(`📝 Lost/stolen passport selection: ${lostStolen}`)
+      
+      if (lostStolen === 'Yes') {
+        console.log('📝 "Yes" selected for lost/stolen passport, waiting for conditional fields...')
+        
+        // Wait for conditional fields to appear
+        await page.waitForTimeout(3000)
+        
+        // Check if the conditional fields are visible
+        const lostPassportSection = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_tbxLOST_PPT_NUM')
+        if (await lostPassportSection.isVisible({ timeout: 10000 })) {
+          console.log('📝 Lost passport conditional fields are visible, filling them...')
+          
+          // Fill lost passport number
+          const lostPassportNumber = formData['passport_info.lost_passport_number']
+          if (lostPassportNumber) {
+            const numberElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_tbxLOST_PPT_NUM')
+            await numberElement.waitFor({ state: 'visible', timeout: 15000 })
+            await numberElement.fill(lostPassportNumber.toString())
+            console.log(`✅ Filled lost passport number: ${lostPassportNumber}`)
+          }
+          
+          // Handle "Do Not Know" checkbox for lost passport number
+          const lostNumberNA = formData['passport_info.lost_passport_number_na']
+          if (lostNumberNA === true || lostPassportNumber === 'N/A') {
+            console.log('📝 Checking "Do Not Know" checkbox for lost passport number...')
+            const lostNumberNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_cbxLOST_PPT_NUM_UNKN_IND')
+            await lostNumberNAElement.waitFor({ state: 'visible', timeout: 15000 })
+            await lostNumberNAElement.check()
+            console.log('✅ Checked "Do Not Know" checkbox for lost passport number')
+          }
+          
+          // Fill lost passport country
+          const lostPassportCountry = formData['passport_info.lost_passport_country']
+          if (lostPassportCountry) {
+            const countryCode = getCountryCode(lostPassportCountry)
+            const selectValue = countryCode || lostPassportCountry
+            
+            const countryElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_ddlLOST_PPT_NATL')
+            await countryElement.waitFor({ state: 'visible', timeout: 15000 })
+            await countryElement.selectOption({ value: selectValue })
+            console.log(`✅ Selected lost passport country: ${lostPassportCountry} (${selectValue})`)
+          }
+          
+          // Fill explanation
+          const explanation = formData['passport_info.lost_passport_explanation']
+          if (explanation) {
+            const explanationElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlLostPPT_ctl00_tbxLOST_PPT_EXPL')
+            await explanationElement.waitFor({ state: 'visible', timeout: 15000 })
+            await explanationElement.fill(explanation.toString())
+            console.log(`✅ Filled lost passport explanation: ${explanation}`)
+          }
+        } else {
+          console.log('⚠️ Lost passport conditional fields not visible after waiting')
+        }
+      }
+    }
+    
+    console.log(`✅ Completed conditional fields for: ${fieldMapping.fieldName}`)
+  }
+
+  /**
+   * Click the Next button on Step 7 to proceed to Step 8
+   */
+  private async clickStep7NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button on Step 7 to proceed to Step 8...')
+    
+    // Try up to 3 times to click the Next button
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`🔄 Attempt ${attempt} to click Step 7 Next button...`)
+        
+        const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+        if (await nextButton.isVisible({ timeout: 10000 })) {
+          await nextButton.click()
+          console.log(`✅ Step 7 Next button clicked (attempt ${attempt})`)
+          
+          // Wait for navigation with better error handling
+          try {
+            console.log('⏳ Waiting for page to load after Step 7 Next button click...')
+            await page.waitForLoadState('networkidle', { timeout: 45000 })
+            console.log('✅ Page loaded successfully')
+          } catch (error) {
+            console.log('⚠️ Network idle timeout, trying alternative wait strategy...')
+            
+            // Try waiting for domcontentloaded instead
+            try {
+              await page.waitForLoadState('domcontentloaded', { timeout: 30000 })
+              console.log('✅ DOM content loaded')
+              
+              // Additional wait for any remaining network activity
+              await page.waitForTimeout(5000)
+              console.log('✅ Additional wait completed')
+            } catch (domError) {
+              console.log('⚠️ DOM content loaded also timed out, proceeding anyway...')
+              await page.waitForTimeout(3000)
+            }
+          }
+          
+          // Verify we're on Step 8 by checking for a Step 8 specific element
+          try {
+            const step8Element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_SURNAME')
+            await step8Element.waitFor({ state: 'visible', timeout: 15000 })
+            console.log('✅ Confirmed we are on Step 8 (U.S. Contact Information)')
+            
+            // If we get here, navigation was successful
+            break
+          } catch (error) {
+            console.log(`⚠️ Could not confirm Step 8 navigation on attempt ${attempt}, but proceeding...`)
+            if (attempt === 3) {
+              // Take a screenshot to see what page we're on
+              await this.takeScreenshot(page, jobId, 'step7-next-click-verification')
+            }
+          }
+          
+          // If we get here, navigation was successful
+          break
+        } else {
+          throw new Error('Step 7 Next button not found')
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        console.log(`❌ Attempt ${attempt} failed: ${errorMessage}`)
+        if (attempt === 3) {
+          throw new Error(`Failed to navigate from Step 7 to Step 8 after 3 attempts: ${errorMessage}`)
+        }
+        
+        // Wait before retrying
+        console.log('⏳ Waiting 3 seconds before retry...')
+        await page.waitForTimeout(3000)
+      }
+    }
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_8',
+      'running',
+      'Successfully navigated to Step 8',
+      44
+    )
+    
+    // Take screenshot
+    await this.takeScreenshot(page, jobId, 'after-step7-next-click')
+    console.log('✅ Successfully navigated to Step 8')
+  }
+
+  /**
+   * Fill Step 8 form (U.S. Contact Information)
+   */
+  private async fillStep8Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 8 form filling (U.S. Contact Information)...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_8',
+      'running',
+      'Filling Step 8 form fields',
+      48
+    )
+    
+    try {
+      // Verify we're on the correct page before proceeding
+      console.log('🔍 Verifying we are on Step 8 page...')
+      const step8Indicator = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_SURNAME')
+      try {
+        await step8Indicator.waitFor({ state: 'visible', timeout: 10000 })
+        console.log('✅ Confirmed we are on Step 8 page')
+      } catch (error) {
+        console.log('⚠️ Could not find Step 8 indicator, taking screenshot for debugging...')
+        await this.takeScreenshot(page, jobId, 'step8-verification-failed')
+        throw new Error('Not on Step 8 page - U.S. Contact Information fields not found')
+      }
+      
+      // Get Step 8 field mappings
+      const step8Mappings = getStep8FieldMappings()
+      console.log(`📋 Found ${step8Mappings.length} Step 8 field mappings`)
+      
+      // Fill each field
+      for (const fieldMapping of step8Mappings) {
+        try {
+          console.log(`📝 Processing field: ${fieldMapping.fieldName}`)
+          
+          // Get field value from form data
+          const fieldValue = formData[fieldMapping.fieldName]
+          
+          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+            console.log(`⏭️ Skipping empty field: ${fieldMapping.fieldName}`)
+            continue
+          }
+          
+          console.log(`📝 Field value: ${fieldValue}`)
+          
+          // Fill the field based on its type
+          const element = page.locator(fieldMapping.selector)
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          
+          switch (fieldMapping.type) {
+            case 'text':
+              await element.fill(fieldValue.toString())
+              console.log(`✅ Filled text field: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'select':
+              let selectValue = fieldMapping.valueMapping?.[fieldValue.toString()] || fieldValue.toString()
+              
+              await element.selectOption({ value: selectValue })
+              console.log(`✅ Selected dropdown: ${fieldMapping.fieldName} = ${selectValue}`)
+              
+              // Wait for postback if this is a dropdown that triggers conditional fields
+              if (fieldMapping.conditional) {
+                await this.waitForPostback(page, jobId)
+                console.log('✅ Postback completed after dropdown selection')
+              }
+              
+              // Special handling for relationship dropdown - wait for address fields to appear
+              if (fieldMapping.fieldName === 'us_contact.contact_relationship') {
+                console.log('📝 Relationship selected, waiting for address fields to appear...')
+                await page.waitForTimeout(3000) // Wait 3 seconds for address fields to load
+                console.log('✅ Waited for address fields to appear')
+              }
+              break
+              
+            case 'checkbox':
+              if (fieldValue === true || fieldValue === 'Yes') {
+                await element.check()
+                console.log(`✅ Checked checkbox: ${fieldMapping.fieldName}`)
+                
+                // Wait for postback if this checkbox triggers conditional fields
+                await this.waitForPostback(page, jobId)
+                console.log('✅ Postback completed after checkbox selection')
+              } else {
+                await element.uncheck()
+                console.log(`✅ Unchecked checkbox: ${fieldMapping.fieldName}`)
+              }
+              break
+              
+            default:
+              console.log(`⚠️ Unknown field type: ${fieldMapping.type} for field: ${fieldMapping.fieldName}`)
+              break
+          }
+          
+          // Handle conditional fields if this field has them
+          if (fieldMapping.conditional) {
+            console.log(`📝 Field has conditional logic, checking if conditions are met...`)
+            await this.handleStep8ConditionalFields(page, jobId, formData, fieldMapping)
+          }
+          
+          console.log(`✅ Successfully filled field: ${fieldMapping.fieldName}`)
+          
+        } catch (error) {
+          console.error(`❌ Error filling field ${fieldMapping.fieldName}:`, error)
+          throw error
+        }
+      }
+      
+      console.log('✅ Step 8 form filling completed successfully')
+      
+    } catch (error) {
+      console.error('❌ Error in Step 8 form filling:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Handle conditional fields for Step 9
+   */
+  private async handleStep9ConditionalFields(page: Page, jobId: string, formData: DS160FormData, fieldMapping: any): Promise<void> {
+    console.log(`📝 Handling conditional fields for: ${fieldMapping.fieldName}`)
+    
+    // Handle father "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'family_info.father_surnames_na') {
+      const fatherSurnamesNA = formData[fieldMapping.fieldName]
+      const fatherSurnames = formData['family_info.father_surnames']
+      
+      console.log(`📝 Father surnames NA checkbox: ${fatherSurnamesNA}`)
+      console.log(`📝 Father surnames: ${fatherSurnames}`)
+      
+      if (fatherSurnamesNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for father surnames...')
+        
+        // Check the father surnames NA checkbox
+        const fatherSurnamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_SURNAME_UNK_IND')
+        await fatherSurnamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await fatherSurnamesNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for father surnames')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after father surnames NA checkbox selection')
+        
+        // The checkbox should automatically disable the surnames field via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (fatherSurnames && fatherSurnames !== 'N/A') {
+        console.log('📝 Filling father surnames...')
+        
+        // Make sure father surnames NA checkbox is unchecked
+        const fatherSurnamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_SURNAME_UNK_IND')
+        await fatherSurnamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await fatherSurnamesNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for father surnames')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after father surnames NA checkbox deselection')
+        
+        // Fill the surnames field
+        const surnamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxFATHER_SURNAME')
+        await surnamesElement.waitFor({ state: 'visible', timeout: 15000 })
+        await surnamesElement.fill(fatherSurnames.toString())
+        console.log(`✅ Filled father surnames: ${fatherSurnames}`)
+      }
+    }
+    
+    // Handle father given names "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'family_info.father_given_names_na') {
+      const fatherGivenNamesNA = formData[fieldMapping.fieldName]
+      const fatherGivenNames = formData['family_info.father_given_names']
+      
+      console.log(`📝 Father given names NA checkbox: ${fatherGivenNamesNA}`)
+      console.log(`📝 Father given names: ${fatherGivenNames}`)
+      
+      if (fatherGivenNamesNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for father given names...')
+        
+        // Check the father given names NA checkbox
+        const fatherGivenNamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_GIVEN_NAME_UNK_IND')
+        await fatherGivenNamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await fatherGivenNamesNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for father given names')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after father given names NA checkbox selection')
+        
+        // The checkbox should automatically disable the given names field via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (fatherGivenNames && fatherGivenNames !== 'N/A') {
+        console.log('📝 Filling father given names...')
+        
+        // Make sure father given names NA checkbox is unchecked
+        const fatherGivenNamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_GIVEN_NAME_UNK_IND')
+        await fatherGivenNamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await fatherGivenNamesNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for father given names')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after father given names NA checkbox deselection')
+        
+        // Fill the given names field
+        const givenNamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxFATHER_GIVEN_NAME')
+        await givenNamesElement.waitFor({ state: 'visible', timeout: 15000 })
+        await givenNamesElement.fill(fatherGivenNames.toString())
+        console.log(`✅ Filled father given names: ${fatherGivenNames}`)
+      }
+    }
+    
+    // Handle father date of birth "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'family_info.father_date_of_birth_na') {
+      const fatherDobNA = formData[fieldMapping.fieldName]
+      const fatherDob = formData['family_info.father_date_of_birth']
+      
+      console.log(`📝 Father DOB NA checkbox: ${fatherDobNA}`)
+      console.log(`📝 Father DOB: ${fatherDob}`)
+      
+      if (fatherDobNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for father date of birth...')
+        
+        // Check the father DOB NA checkbox
+        const fatherDobNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_DOB_UNK_IND')
+        await fatherDobNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await fatherDobNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for father date of birth')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after father DOB NA checkbox selection')
+        
+        // The checkbox should automatically disable the date fields via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (fatherDob && fatherDob !== 'N/A') {
+        console.log('📝 Filling father date of birth...')
+        
+        // Make sure father DOB NA checkbox is unchecked
+        const fatherDobNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxFATHER_DOB_UNK_IND')
+        await fatherDobNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await fatherDobNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for father date of birth')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after father DOB NA checkbox deselection')
+        
+        // The date fields will be filled by the main field processing
+        await page.waitForTimeout(1000)
+      }
+    }
+    
+    // Handle mother "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'family_info.mother_surnames_na') {
+      const motherSurnamesNA = formData[fieldMapping.fieldName]
+      const motherSurnames = formData['family_info.mother_surnames']
+      
+      console.log(`📝 Mother surnames NA checkbox: ${motherSurnamesNA}`)
+      console.log(`📝 Mother surnames: ${motherSurnames}`)
+      
+      if (motherSurnamesNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for mother surnames...')
+        
+        // Check the mother surnames NA checkbox
+        const motherSurnamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_SURNAME_UNK_IND')
+        await motherSurnamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await motherSurnamesNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for mother surnames')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after mother surnames NA checkbox selection')
+        
+        // The checkbox should automatically disable the surnames field via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (motherSurnames && motherSurnames !== 'N/A') {
+        console.log('📝 Filling mother surnames...')
+        
+        // Make sure mother surnames NA checkbox is unchecked
+        const motherSurnamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_SURNAME_UNK_IND')
+        await motherSurnamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await motherSurnamesNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for mother surnames')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after mother surnames NA checkbox deselection')
+        
+        // Fill the surnames field
+        const surnamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxMOTHER_SURNAME')
+        await surnamesElement.waitFor({ state: 'visible', timeout: 15000 })
+        await surnamesElement.fill(motherSurnames.toString())
+        console.log(`✅ Filled mother surnames: ${motherSurnames}`)
+      }
+    }
+    
+    // Handle mother given names "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'family_info.mother_given_names_na') {
+      const motherGivenNamesNA = formData[fieldMapping.fieldName]
+      const motherGivenNames = formData['family_info.mother_given_names']
+      
+      console.log(`📝 Mother given names NA checkbox: ${motherGivenNamesNA}`)
+      console.log(`📝 Mother given names: ${motherGivenNames}`)
+      
+      if (motherGivenNamesNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for mother given names...')
+        
+        // Check the mother given names NA checkbox
+        const motherGivenNamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_GIVEN_NAME_UNK_IND')
+        await motherGivenNamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await motherGivenNamesNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for mother given names')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after mother given names NA checkbox selection')
+        
+        // The checkbox should automatically disable the given names field via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (motherGivenNames && motherGivenNames !== 'N/A') {
+        console.log('📝 Filling mother given names...')
+        
+        // Make sure mother given names NA checkbox is unchecked
+        const motherGivenNamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_GIVEN_NAME_UNK_IND')
+        await motherGivenNamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await motherGivenNamesNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for mother given names')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after mother given names NA checkbox deselection')
+        
+        // Fill the given names field
+        const givenNamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxMOTHER_GIVEN_NAME')
+        await givenNamesElement.waitFor({ state: 'visible', timeout: 15000 })
+        await givenNamesElement.fill(motherGivenNames.toString())
+        console.log(`✅ Filled mother given names: ${motherGivenNames}`)
+      }
+    }
+    
+    // Handle mother date of birth "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'family_info.mother_date_of_birth_na') {
+      const motherDobNA = formData[fieldMapping.fieldName]
+      const motherDob = formData['family_info.mother_date_of_birth']
+      
+      console.log(`📝 Mother DOB NA checkbox: ${motherDobNA}`)
+      console.log(`📝 Mother DOB: ${motherDob}`)
+      
+      if (motherDobNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for mother date of birth...')
+        
+        // Check the mother DOB NA checkbox
+        const motherDobNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_DOB_UNK_IND')
+        await motherDobNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await motherDobNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for mother date of birth')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after mother DOB NA checkbox selection')
+        
+        // The checkbox should automatically disable the date fields via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (motherDob && motherDob !== 'N/A') {
+        console.log('📝 Filling mother date of birth...')
+        
+        // Make sure mother DOB NA checkbox is unchecked
+        const motherDobNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxMOTHER_DOB_UNK_IND')
+        await motherDobNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await motherDobNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for mother date of birth')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after mother DOB NA checkbox deselection')
+        
+        // The date fields will be filled by the main field processing
+        await page.waitForTimeout(1000)
+      }
+    }
+    
+    // Handle father in U.S. conditional fields
+    if (fieldMapping.fieldName === 'family_info.father_in_us') {
+      const fatherInUS = formData[fieldMapping.fieldName]
+      const fatherStatus = formData['family_info.father_status']
+      
+      console.log(`📝 Father in US: ${fatherInUS}`)
+      console.log(`📝 Father status: ${fatherStatus}`)
+      
+      // If father is in U.S., wait for and fill the status dropdown
+      if (fatherInUS === 'Yes' || fatherInUS === 'Y') {
+        console.log('📝 Father is in US, waiting for status dropdown to appear...')
+        
+        // Wait for the status dropdown to appear
+        await page.waitForTimeout(2000)
+        
+        // Check if the father status dropdown is visible
+        const fatherStatusDropdown = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ShowDivFatherStatus')
+        const isFatherStatusVisible = await fatherStatusDropdown.isVisible({ timeout: 5000 })
+        
+        if (isFatherStatusVisible) {
+          console.log('✅ Father status dropdown is visible')
+          
+          // Fill the father status dropdown if we have data
+          if (fatherStatus) {
+            console.log(`📝 Filling father status dropdown with: ${fatherStatus}`)
+            
+            const statusElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ddlFATHER_US_STATUS')
+            await statusElement.waitFor({ state: 'visible', timeout: 10000 })
+            
+            // Map the status value
+            const statusMapping: Record<string, string> = {
+              'U.S. CITIZEN': 'S',
+              'U.S. LEGAL PERMANENT RESIDENT (LPR)': 'C',
+              'NONIMMIGRANT': 'P',
+              "OTHER/I DON'T KNOW": 'O'
+            }
+            
+            const statusValue = statusMapping[fatherStatus as string] || fatherStatus
+            await statusElement.selectOption({ value: statusValue })
+            console.log(`✅ Selected father status: ${statusValue}`)
+          }
+        } else {
+          console.log('⚠️ Father status dropdown is not visible')
+        }
+      }
+    }
+    
+    // Handle mother in U.S. conditional fields
+    if (fieldMapping.fieldName === 'family_info.mother_in_us') {
+      const motherInUS = formData[fieldMapping.fieldName]
+      const motherStatus = formData['family_info.mother_status']
+      
+      console.log(`📝 Mother in US: ${motherInUS}`)
+      console.log(`📝 Mother status: ${motherStatus}`)
+      
+      // If mother is in U.S., wait for and fill the status dropdown
+      if (motherInUS === 'Yes' || motherInUS === 'Y') {
+        console.log('📝 Mother is in US, waiting for status dropdown to appear...')
+        
+        // Wait for the status dropdown to appear
+        await page.waitForTimeout(2000)
+        
+        // Check if the mother status dropdown is visible
+        const motherStatusDropdown = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ShowDivMotherStatus')
+        const isMotherStatusVisible = await motherStatusDropdown.isVisible({ timeout: 5000 })
+        
+        if (isMotherStatusVisible) {
+          console.log('✅ Mother status dropdown is visible')
+          
+          // Fill the mother status dropdown if we have data
+          if (motherStatus) {
+            console.log(`📝 Filling mother status dropdown with: ${motherStatus}`)
+            
+            const statusElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ddlMOTHER_US_STATUS')
+            await statusElement.waitFor({ state: 'visible', timeout: 10000 })
+            
+            // Map the status value
+            const statusMapping: Record<string, string> = {
+              'U.S. CITIZEN': 'S',
+              'U.S. LEGAL PERMANENT RESIDENT (LPR)': 'C',
+              'NONIMMIGRANT': 'P',
+              "OTHER/I DON'T KNOW": 'O'
+            }
+            
+            const statusValue = statusMapping[motherStatus as string] || motherStatus
+            await statusElement.selectOption({ value: statusValue })
+            console.log(`✅ Selected mother status: ${statusValue}`)
+          }
+        } else {
+          console.log('⚠️ Mother status dropdown is not visible')
+        }
+      }
+    }
+    
+    // Handle immediate relatives conditional fields
+    if (fieldMapping.fieldName === 'family_info.immediate_relatives_us') {
+      const immediateRelativesUS = formData[fieldMapping.fieldName]
+      const otherRelativesUS = formData['family_info.other_relatives_us']
+      const relativeSurnames = formData['family_info.relative_surnames']
+      const relativeGivenNames = formData['family_info.relative_given_names']
+      const relativeRelationship = formData['family_info.relative_relationship']
+      const relativeStatus = formData['family_info.relative_status']
+      
+      console.log(`📝 Immediate relatives US: ${immediateRelativesUS}`)
+      console.log(`📝 Other relatives US: ${otherRelativesUS}`)
+      
+      // If immediate relatives is "Yes", wait for and fill the relative details
+      if (immediateRelativesUS === 'Yes' || immediateRelativesUS === 'Y') {
+        console.log('📝 Immediate relatives is Yes, waiting for relative details form to appear...')
+        
+        // Wait for the relative details form to appear
+        await page.waitForTimeout(2000)
+        
+        // Fill relative surnames if we have data
+        if (relativeSurnames) {
+          console.log(`📝 Filling relative surnames: ${relativeSurnames}`)
+          const surnamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_tbxUS_REL_SURNAME')
+          await surnamesElement.waitFor({ state: 'visible', timeout: 10000 })
+          await surnamesElement.fill(relativeSurnames.toString())
+          console.log(`✅ Filled relative surnames: ${relativeSurnames}`)
+        }
+        
+        // Fill relative given names if we have data
+        if (relativeGivenNames) {
+          console.log(`📝 Filling relative given names: ${relativeGivenNames}`)
+          const givenNamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_tbxUS_REL_GIVEN_NAME')
+          await givenNamesElement.waitFor({ state: 'visible', timeout: 10000 })
+          await givenNamesElement.fill(relativeGivenNames.toString())
+          console.log(`✅ Filled relative given names: ${relativeGivenNames}`)
+        }
+        
+        // Fill relative relationship if we have data
+        if (relativeRelationship) {
+          console.log(`📝 Filling relative relationship: ${relativeRelationship}`)
+          console.log(`📝 Relationship value type: ${typeof relativeRelationship}`)
+          console.log(`📝 Relationship value length: ${relativeRelationship.length}`)
+          console.log(`📝 Relationship value char codes: ${Array.from(relativeRelationship as string).map((c: string) => c.charCodeAt(0)).join(', ')}`)
+          const relationshipElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_ddlUS_REL_TYPE')
+          await relationshipElement.waitFor({ state: 'visible', timeout: 10000 })
+          
+          // Wait a bit more for options to be fully loaded
+          await page.waitForTimeout(1000)
+          
+          // Debug: Check what options are available
+          const options = relationshipElement.locator('option')
+          const optionCount = await options.count()
+          console.log(`📝 Found ${optionCount} relationship options`)
+          
+          for (let i = 0; i < optionCount; i++) {
+            const option = options.nth(i)
+            const optionValue = await option.getAttribute('value')
+            const optionText = await option.textContent()
+            console.log(`📝 Option ${i + 1}: value="${optionValue}", text="${optionText}"`)
+          }
+          
+          // Map the relationship value
+          const relationshipMapping: Record<string, string> = {
+            'SPOUSE': 'S',
+            'FIANCÉ/FIANCÉE': 'F',
+            'FIANCÈ/FIANCÈE': 'F', // Handle both É and È versions
+            'CHILD': 'C',
+            'SIBLING': 'B'
+          }
+          
+          const relationshipValue = relationshipMapping[relativeRelationship as string]
+          if (!relationshipValue) {
+            console.error(`❌ No mapping found for relationship: ${relativeRelationship}`)
+            console.log(`📝 Available mappings:`, relationshipMapping)
+            throw new Error(`No mapping found for relationship: ${relativeRelationship}`)
+          }
+          console.log(`📝 Trying to select relationship value: ${relationshipValue}`)
+          
+          try {
+            await relationshipElement.selectOption({ value: relationshipValue })
+            console.log(`✅ Selected relative relationship: ${relationshipValue}`)
+          } catch (error) {
+            console.error(`❌ Failed to select relationship value ${relationshipValue}:`, error)
+            
+            // Try alternative approach - select by text
+            try {
+              const textToSelect = relativeRelationship as string
+              console.log(`📝 Trying to select by text: ${textToSelect}`)
+              await relationshipElement.selectOption({ label: textToSelect })
+              console.log(`✅ Selected relative relationship by text: ${textToSelect}`)
+            } catch (textError) {
+              console.error(`❌ Failed to select by text ${relativeRelationship}:`, textError)
+              throw textError
+            }
+          }
+        }
+        
+        // Fill relative status if we have data
+        if (relativeStatus) {
+          console.log(`📝 Filling relative status: ${relativeStatus}`)
+          const statusElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dlUSRelatives_ctl00_ddlUS_REL_STATUS')
+          await statusElement.waitFor({ state: 'visible', timeout: 10000 })
+          
+          // Wait a bit more for options to be fully loaded
+          await page.waitForTimeout(1000)
+          
+          // Debug: Check what options are available
+          const options = statusElement.locator('option')
+          const optionCount = await options.count()
+          console.log(`📝 Found ${optionCount} status options`)
+          
+          for (let i = 0; i < optionCount; i++) {
+            const option = options.nth(i)
+            const optionValue = await option.getAttribute('value')
+            const optionText = await option.textContent()
+            console.log(`📝 Option ${i + 1}: value="${optionValue}", text="${optionText}"`)
+          }
+          
+          // Map the status value
+          const statusMapping: Record<string, string> = {
+            'U.S. CITIZEN': 'S',
+            'U.S. LEGAL PERMANENT RESIDENT (LPR)': 'C',
+            'NONIMMIGRANT': 'P',
+            "OTHER/I DON'T KNOW": 'O'
+          }
+          
+          const statusValue = statusMapping[relativeStatus as string]
+          if (!statusValue) {
+            console.error(`❌ No mapping found for status: ${relativeStatus}`)
+            console.log(`📝 Available mappings:`, statusMapping)
+            throw new Error(`No mapping found for status: ${relativeStatus}`)
+          }
+          console.log(`📝 Trying to select status value: ${statusValue}`)
+          
+          try {
+            await statusElement.selectOption({ value: statusValue })
+            console.log(`✅ Selected relative status: ${statusValue}`)
+          } catch (error) {
+            console.error(`❌ Failed to select status value ${statusValue}:`, error)
+            
+            // Try alternative approach - select by text
+            try {
+              const textToSelect = relativeStatus as string
+              console.log(`📝 Trying to select by text: ${textToSelect}`)
+              await statusElement.selectOption({ label: textToSelect })
+              console.log(`✅ Selected relative status by text: ${textToSelect}`)
+            } catch (textError) {
+              console.error(`❌ Failed to select by text ${relativeStatus}:`, textError)
+              throw textError
+            }
+          }
+        }
+      }
+      
+      // If immediate relatives is "No", we need to handle the "other relatives" question
+      if (immediateRelativesUS === 'No' || immediateRelativesUS === 'N') {
+        console.log('📝 Immediate relatives is No, checking for other relatives question...')
+        
+        // Wait for the "other relatives" question to appear
+        await page.waitForTimeout(2000)
+        
+        // Check if the other relatives question is visible
+        const otherRelativesQuestion = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ShowDivOtherRelatives')
+        const isOtherRelativesVisible = await otherRelativesQuestion.isVisible({ timeout: 5000 })
+        
+        if (isOtherRelativesVisible) {
+          console.log('✅ Other relatives question is visible')
+          
+          // Fill the other relatives question if we have data
+          if (otherRelativesUS) {
+            console.log(`📝 Filling other relatives question with: ${otherRelativesUS}`)
+            
+            const otherRelativesRadio = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblUS_OTHER_RELATIVE_IND')
+            const radioOptions = otherRelativesRadio.locator('input[type="radio"]')
+            const optionCount = await radioOptions.count()
+            
+            let found = false
+            for (let i = 0; i < optionCount; i++) {
+              const option = radioOptions.nth(i)
+              const optionValue = await option.getAttribute('value')
+              console.log(`📝 Other relatives radio option ${i + 1} has value: ${optionValue}`)
+              
+              if (optionValue === (otherRelativesUS === 'Yes' ? 'Y' : 'N')) {
+                await option.check()
+                console.log(`✅ Selected other relatives option: ${optionValue}`)
+                found = true
+                break
+              }
+            }
+            
+            if (!found) {
+              console.warn(`⚠️ Could not find other relatives radio option for value: ${otherRelativesUS}`)
+            }
+          }
+        } else {
+          console.log('⚠️ Other relatives question is not visible')
+        }
+      }
+    }
+    
+    console.log(`✅ Completed conditional fields for: ${fieldMapping.fieldName}`)
+  }
+
+  /**
+   * Click the Next button on Step 9 to proceed to Step 10
+   */
+  private async clickStep9NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button on Step 9 to proceed to Step 10...')
     const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
     if (await nextButton.isVisible({ timeout: 10000 })) {
       await nextButton.click()
-      console.log('✅ Step 6 Next button clicked')
-      await page.waitForLoadState('networkidle')
+      console.log('✅ Step 9 Next button clicked')
+      
+      // Wait for navigation with better error handling
+      try {
+        console.log('⏳ Waiting for page to load after Step 9 Next button click...')
+        await page.waitForLoadState('networkidle', { timeout: 45000 })
+        console.log('✅ Page loaded successfully')
+      } catch (error) {
+        console.log('⚠️ Network idle timeout, trying alternative wait strategy...')
+        
+        // Try waiting for domcontentloaded instead
+        try {
+          await page.waitForLoadState('domcontentloaded', { timeout: 30000 })
+          console.log('✅ DOM content loaded')
+          
+          // Additional wait for any remaining network activity
+          await page.waitForTimeout(5000)
+          console.log('✅ Additional wait completed')
+        } catch (domError) {
+          console.log('⚠️ DOM content loaded also timed out, proceeding anyway...')
+          await page.waitForTimeout(3000)
+        }
+      }
       
       // Update progress
       await this.progressService.updateStepProgress(
         jobId,
-        'form_step_7',
+        'form_step_10',
         'running',
-        'Successfully navigated to Step 7',
-        41
+        'Successfully navigated to Step 10',
+        62
       )
       
       // Take screenshot
-      await this.takeScreenshot(page, jobId, 'after-step6-next-click')
-      console.log('✅ Successfully navigated to Step 7')
+      await this.takeScreenshot(page, jobId, 'after-step9-next-click')
+      console.log('✅ Successfully navigated to Step 10')
     } else {
-      throw new Error('Step 6 Next button not found')
+      throw new Error('Step 9 Next button not found')
     }
+  }
+
+  /**
+   * Handle conditional fields for Step 8
+   */
+  private async handleStep8ConditionalFields(page: Page, jobId: string, formData: DS160FormData, fieldMapping: any): Promise<void> {
+    console.log(`📝 Handling conditional fields for: ${fieldMapping.fieldName}`)
+    
+    // Handle contact person "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'us_contact.contact_person_na') {
+      const contactPersonNA = formData[fieldMapping.fieldName]
+      const contactSurnames = formData['us_contact.contact_surnames']
+      const contactGivenNames = formData['us_contact.contact_given_names']
+      
+      console.log(`📝 Contact person NA checkbox: ${contactPersonNA}`)
+      console.log(`📝 Contact surnames: ${contactSurnames}`)
+      console.log(`📝 Contact given names: ${contactGivenNames}`)
+      
+      if (contactPersonNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for contact person...')
+        
+        // Check the contact person NA checkbox
+        const contactPersonNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxUS_POC_NAME_NA')
+        await contactPersonNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await contactPersonNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for contact person')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after contact person NA checkbox selection')
+        
+        // The checkbox should automatically disable the contact person fields via JavaScript
+        await page.waitForTimeout(1000)
+      } else if ((contactSurnames && contactSurnames !== 'N/A') || (contactGivenNames && contactGivenNames !== 'N/A')) {
+        console.log('📝 Filling contact person information...')
+        
+        // Make sure contact person NA checkbox is unchecked
+        const contactPersonNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxUS_POC_NAME_NA')
+        await contactPersonNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await contactPersonNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for contact person')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after contact person NA checkbox deselection')
+        
+        // Fill the contact person fields
+        if (contactSurnames && contactSurnames !== 'N/A') {
+          const surnamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_SURNAME')
+          await surnamesElement.waitFor({ state: 'visible', timeout: 15000 })
+          await surnamesElement.fill(contactSurnames.toString())
+          console.log(`✅ Filled contact surnames: ${contactSurnames}`)
+        }
+        
+        if (contactGivenNames && contactGivenNames !== 'N/A') {
+          const givenNamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_GIVEN_NAME')
+          await givenNamesElement.waitFor({ state: 'visible', timeout: 15000 })
+          await givenNamesElement.fill(contactGivenNames.toString())
+          console.log(`✅ Filled contact given names: ${contactGivenNames}`)
+        }
+      }
+    }
+    
+    // Handle organization "Do Not Know" checkbox logic
+    if (fieldMapping.fieldName === 'us_contact.contact_organization_na') {
+      const organizationNA = formData[fieldMapping.fieldName]
+      const organizationName = formData['us_contact.contact_organization']
+      
+      console.log(`📝 Organization NA checkbox: ${organizationNA}`)
+      console.log(`📝 Organization name: ${organizationName}`)
+      
+      if (organizationNA === true) {
+        console.log('📝 Checking "Do Not Know" checkbox for organization...')
+        
+        // Check the organization NA checkbox
+        const organizationNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxUS_POC_ORG_NA_IND')
+        await organizationNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await organizationNAElement.check()
+        console.log('✅ Checked "Do Not Know" checkbox for organization')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after organization NA checkbox selection')
+        
+        // The checkbox should automatically disable the organization field via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (organizationName && organizationName !== 'N/A') {
+        console.log('📝 Filling organization information...')
+        
+        // Make sure organization NA checkbox is unchecked
+        const organizationNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxUS_POC_ORG_NA_IND')
+        await organizationNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await organizationNAElement.uncheck()
+        console.log('✅ Unchecked "Do Not Know" checkbox for organization')
+        
+        // Wait for postback (the checkbox triggers a postback)
+        await this.waitForPostback(page, jobId)
+        console.log('✅ Postback completed after organization NA checkbox deselection')
+        
+        // Fill the organization field
+        const organizationElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_ORGANIZATION')
+        await organizationElement.waitFor({ state: 'visible', timeout: 15000 })
+        await organizationElement.fill(organizationName.toString())
+        console.log(`✅ Filled organization name: ${organizationName}`)
+      }
+    }
+    
+    // Handle email "Does Not Apply" checkbox logic
+    if (fieldMapping.fieldName === 'us_contact.contact_email_na') {
+      const emailNA = formData[fieldMapping.fieldName]
+      const emailAddress = formData['us_contact.contact_email']
+      
+      console.log(`📝 Email NA checkbox: ${emailNA}`)
+      console.log(`📝 Email address: ${emailAddress}`)
+      
+      if (emailNA === true || emailAddress === 'N/A') {
+        console.log('📝 Checking "Does Not Apply" checkbox for email...')
+        
+        // Check the email NA checkbox
+        const emailNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbexUS_POC_EMAIL_ADDR_NA')
+        await emailNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await emailNAElement.check()
+        console.log('✅ Checked "Does Not Apply" checkbox for email')
+        
+        // The checkbox should automatically disable the email field via JavaScript
+        await page.waitForTimeout(1000)
+      } else if (emailAddress && emailAddress !== 'N/A') {
+        console.log('📝 Filling email address...')
+        
+        // Make sure email NA checkbox is unchecked
+        const emailNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbexUS_POC_EMAIL_ADDR_NA')
+        await emailNAElement.waitFor({ state: 'visible', timeout: 15000 })
+        await emailNAElement.uncheck()
+        console.log('✅ Unchecked "Does Not Apply" checkbox for email')
+        
+        // Fill the email field
+        const emailElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxUS_POC_EMAIL_ADDR')
+        await emailElement.waitFor({ state: 'visible', timeout: 15000 })
+        await emailElement.fill(emailAddress.toString())
+        console.log(`✅ Filled email address: ${emailAddress}`)
+      }
+    }
+    
+    console.log(`✅ Completed conditional fields for: ${fieldMapping.fieldName}`)
+  }
+
+  /**
+   * Click the Next button on Step 8 to proceed to Step 9
+   */
+  private async clickStep8NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button on Step 8 to proceed to Step 9...')
+    const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+    if (await nextButton.isVisible({ timeout: 10000 })) {
+      await nextButton.click()
+      console.log('✅ Step 8 Next button clicked')
+      
+      // Wait for navigation with better error handling
+      try {
+        console.log('⏳ Waiting for page to load after Step 8 Next button click...')
+        await page.waitForLoadState('networkidle', { timeout: 45000 })
+        console.log('✅ Page loaded successfully')
+      } catch (error) {
+        console.log('⚠️ Network idle timeout, trying alternative wait strategy...')
+        
+        // Try waiting for domcontentloaded instead
+        try {
+          await page.waitForLoadState('domcontentloaded', { timeout: 30000 })
+          console.log('✅ DOM content loaded')
+          
+          // Additional wait for any remaining network activity
+          await page.waitForTimeout(5000)
+          console.log('✅ Additional wait completed')
+        } catch (domError) {
+          console.log('⚠️ DOM content loaded also timed out, proceeding anyway...')
+          await page.waitForTimeout(3000)
+        }
+      }
+      
+      // Update progress
+      await this.progressService.updateStepProgress(
+        jobId,
+        'form_step_9',
+        'running',
+        'Successfully navigated to Step 9',
+        55
+      )
+      
+      // Take screenshot
+      await this.takeScreenshot(page, jobId, 'after-step8-next-click')
+      console.log('✅ Successfully navigated to Step 9')
+    } else {
+      throw new Error('Step 8 Next button not found')
+    }
+  }
+
+
+
+  /**
+   * Fill Step 9 form (Family Information)
+   */
+  private async fillStep9Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 9 form filling (Family Information)...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_9',
+      'running',
+      'Filling Step 9 form fields',
+      55
+    )
+    
+    try {
+      // Verify we're on the correct page before proceeding
+      console.log('🔍 Verifying we are on Step 9 page...')
+      const step9Indicator = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxFATHER_SURNAME')
+      try {
+        await step9Indicator.waitFor({ state: 'visible', timeout: 10000 })
+        console.log('✅ Confirmed we are on Step 9 page')
+      } catch (error) {
+        console.log('⚠️ Could not find Step 9 indicator, taking screenshot for debugging...')
+        await this.takeScreenshot(page, jobId, 'step9-verification-failed')
+        throw new Error('Not on Step 9 page - Family Information fields not found')
+      }
+      
+      // Get Step 9 field mappings
+      const step9Mappings = getStep9FieldMappings()
+      console.log(`📋 Found ${step9Mappings.length} Step 9 field mappings`)
+      
+      // Fill each field
+      for (const fieldMapping of step9Mappings) {
+        try {
+          console.log(`📝 Processing field: ${fieldMapping.fieldName}`)
+          
+          // Get field value from form data
+          const fieldValue = formData[fieldMapping.fieldName]
+          
+          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+            console.log(`⏭️ Skipping empty field: ${fieldMapping.fieldName}`)
+            continue
+          }
+          
+          console.log(`📝 Field value: ${fieldValue}`)
+          
+          // Fill the field based on its type
+          const element = page.locator(fieldMapping.selector)
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          
+          switch (fieldMapping.type) {
+            case 'text':
+              await element.fill(fieldValue.toString())
+              console.log(`✅ Filled text field: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'select':
+              let selectValue = fieldMapping.valueMapping?.[fieldValue.toString()] || fieldValue.toString()
+              
+              await element.selectOption({ value: selectValue })
+              console.log(`✅ Selected dropdown: ${fieldMapping.fieldName} = ${selectValue}`)
+              
+              // Wait for postback if this is a dropdown that triggers conditional fields
+              if (fieldMapping.conditional) {
+                await this.waitForPostback(page, jobId)
+                console.log('✅ Postback completed after dropdown selection')
+              }
+              break
+              
+            case 'radio':
+              // For radio buttons, we need to find the correct option
+              let radioValue = fieldValue.toString()
+              if (fieldMapping.valueMapping && fieldMapping.valueMapping[radioValue]) {
+                radioValue = fieldMapping.valueMapping[radioValue]
+              }
+              
+              console.log(`📝 Looking for radio option with value: ${radioValue}`)
+              
+              const radioOptions = page.locator(`${fieldMapping.selector} input[type="radio"]`)
+              const optionCount = await radioOptions.count()
+              console.log(`📝 Found ${optionCount} radio options`)
+              
+              let found = false
+              for (let i = 0; i < optionCount; i++) {
+                const option = radioOptions.nth(i)
+                const optionValue = await option.getAttribute('value')
+                console.log(`📝 Radio option ${i + 1} has value: ${optionValue}`)
+                
+                if (optionValue === radioValue) {
+                  await option.check()
+                  console.log(`✅ Selected radio option: ${radioValue}`)
+                  found = true
+                  break
+                }
+              }
+              
+              if (!found) {
+                console.warn(`⚠️ Could not find radio option with value: ${radioValue}`)
+                // Try to find by label text as fallback
+                const radioLabels = page.locator(`${fieldMapping.selector} label`)
+                const labelCount = await radioLabels.count()
+                console.log(`📝 Found ${labelCount} radio labels`)
+                
+                for (let i = 0; i < labelCount; i++) {
+                  const label = radioLabels.nth(i)
+                  const labelText = await label.textContent()
+                  console.log(`📝 Radio label ${i + 1}: "${labelText}"`)
+                  
+                  if (labelText && (labelText.trim().toLowerCase() === fieldValue.toString().toLowerCase() || 
+                      labelText.trim().toLowerCase() === radioValue.toLowerCase())) {
+                    const radioInput = label.locator('input[type="radio"]')
+                    await radioInput.check()
+                    console.log(`✅ Selected radio option by label: ${labelText}`)
+                    found = true
+                    break
+                  }
+                }
+              }
+              
+              if (!found) {
+                throw new Error(`Could not find radio option for value: ${radioValue}`)
+              }
+              
+              // Wait for postback if this is a radio button that triggers conditional fields
+              if (fieldMapping.conditional) {
+                await this.waitForPostback(page, jobId)
+                console.log('✅ Postback completed after radio button selection')
+              }
+              break
+              
+            case 'checkbox':
+              if (fieldValue === true || fieldValue === 'Yes') {
+                await element.check()
+                console.log(`✅ Checked checkbox: ${fieldMapping.fieldName}`)
+                
+                // Wait for postback if this checkbox triggers conditional fields
+                await this.waitForPostback(page, jobId)
+                console.log('✅ Postback completed after checkbox selection')
+              } else {
+                await element.uncheck()
+                console.log(`✅ Unchecked checkbox: ${fieldMapping.fieldName}`)
+              }
+              break
+              
+            case 'date_split':
+              // Handle split date fields
+              if (fieldMapping.dateSelectors) {
+                const date = new Date(fieldValue.toString())
+                const day = date.getDate().toString().padStart(2, '0')
+                const monthIndex = date.getMonth()
+                const year = date.getFullYear().toString()
+                
+                // Map month index to text abbreviations for Step 9 (JAN, FEB, etc.)
+                const monthAbbreviations = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+                const month = monthAbbreviations[monthIndex]
+                
+                console.log(`📝 Splitting date ${fieldValue} into: day=${day}, month=${month}, year=${year}`)
+                
+                // Fill day dropdown
+                const dayElement = page.locator(fieldMapping.dateSelectors.day)
+                await dayElement.waitFor({ state: 'visible', timeout: 15000 })
+                await dayElement.selectOption({ value: day })
+                console.log(`✅ Filled day: ${day}`)
+                
+                // Small delay between date components
+                await page.waitForTimeout(500)
+                
+                // Fill month dropdown
+                const monthElement = page.locator(fieldMapping.dateSelectors.month)
+                await monthElement.waitFor({ state: 'visible', timeout: 15000 })
+                
+                // Get available options for debugging
+                const monthOptions = await monthElement.locator('option').all()
+                const availableMonths = await Promise.all(monthOptions.map(async (opt) => {
+                  const value = await opt.getAttribute('value')
+                  const text = await opt.textContent()
+                  return { value, text }
+                }))
+                console.log(`📝 Available month options:`, availableMonths)
+                
+                await monthElement.selectOption({ value: month })
+                console.log(`✅ Filled month: ${month}`)
+                
+                // Small delay between date components
+                await page.waitForTimeout(500)
+                
+                // Fill year input
+                const yearElement = page.locator(fieldMapping.dateSelectors.year)
+                await yearElement.waitFor({ state: 'visible', timeout: 15000 })
+                await yearElement.fill(year)
+                console.log(`✅ Filled year: ${year}`)
+              }
+              break
+              
+            default:
+              console.log(`⚠️ Unknown field type: ${fieldMapping.type} for field: ${fieldMapping.fieldName}`)
+              break
+          }
+          
+          // Handle conditional fields if this field has them
+          if (fieldMapping.conditional) {
+            console.log(`📝 Field has conditional logic, checking if conditions are met...`)
+            await this.handleStep9ConditionalFields(page, jobId, formData, fieldMapping)
+          }
+          
+          console.log(`✅ Successfully filled field: ${fieldMapping.fieldName}`)
+          
+        } catch (error) {
+          console.error(`❌ Error filling field ${fieldMapping.fieldName}:`, error)
+          throw error
+        }
+      }
+      
+      console.log('✅ Step 9 form filling completed successfully')
+      
+    } catch (error) {
+      console.error('❌ Error in Step 9 form filling:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Fill Step 10 form (Work/Education Information)
+   */
+  private async fillStep10Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    try {
+      console.log('📝 Starting Step 10 form filling (Work/Education Information)...')
+      
+      // Update progress to 65% (Step 10 of 17 total steps)
+      await this.progressService.updateStepProgress(jobId, 'form_step_10', 'running', 'Filling Step 10 - Work/Education Information...', 65)
+      
+      // Get Step 10 field mappings
+      const step10Mappings = getStep10FieldMappings()
+      console.log(`📋 Found ${step10Mappings.length} fields for Step 10`)
+      
+      // Fill each field
+      for (const fieldMapping of step10Mappings) {
+        try {
+          const fieldValue = formData[fieldMapping.fieldName]
+          
+          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+            console.log(`⏭️ Skipping empty field: ${fieldMapping.fieldName}`)
+            continue
+          }
+          
+          console.log(`📝 Filling field: ${fieldMapping.fieldName} = ${fieldValue}`)
+          
+          const element = page.locator(fieldMapping.selector)
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          
+          switch (fieldMapping.type) {
+            case 'text':
+              await element.fill(fieldValue.toString())
+              console.log(`✅ Filled text field: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'select':
+              if (fieldMapping.valueMapping) {
+                const mappedValue = fieldMapping.valueMapping[fieldValue.toString()]
+                if (mappedValue) {
+                  await element.selectOption({ value: mappedValue })
+                  console.log(`✅ Selected dropdown option: ${fieldMapping.fieldName} = ${mappedValue}`)
+                  
+                  // Wait for postback after occupation selection
+                  if (fieldMapping.fieldName === 'present_work_education.primary_occupation') {
+                    console.log('⏳ Waiting for postback after occupation selection...')
+                    await this.waitForPostback(page, jobId)
+                  }
+                } else {
+                  console.warn(`⚠️ No mapping found for value: ${fieldValue}`)
+                }
+              } else {
+                await element.selectOption({ value: fieldValue.toString() })
+                console.log(`✅ Selected dropdown option: ${fieldMapping.fieldName}`)
+              }
+              break
+              
+            case 'date':
+              const dateValue = new Date(fieldValue.toString()).toISOString().split('T')[0]
+              await element.fill(dateValue)
+              console.log(`✅ Filled date field: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'textarea':
+              await element.fill(fieldValue.toString())
+              console.log(`✅ Filled textarea field: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'checkbox':
+              if (fieldValue === true || fieldValue === 'Yes' || fieldValue === 'N/A') {
+                await element.check()
+                console.log(`✅ Checked checkbox: ${fieldMapping.fieldName}`)
+              } else {
+                await element.uncheck()
+                console.log(`✅ Unchecked checkbox: ${fieldMapping.fieldName}`)
+              }
+              break
+              
+            default:
+              console.warn(`⚠️ Unknown field type: ${fieldMapping.type} for ${fieldMapping.fieldName}`)
+          }
+          
+          // Small delay between fields
+          await page.waitForTimeout(200)
+          
+        } catch (error) {
+          console.error(`❌ Error filling field ${fieldMapping.fieldName}:`, error)
+          throw error
+        }
+      }
+      
+      // Handle conditional fields based on occupation
+      await this.handleStep10ConditionalFields(page, jobId, formData)
+      
+      console.log('✅ Step 10 form filling completed successfully')
+      
+      // Click the Next button to proceed to the next step
+      await this.clickStep10NextButton(page, jobId)
+      
+    } catch (error) {
+      console.error('❌ Error in Step 10 form filling:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Handle conditional fields for Step 10 based on occupation selection
+   */
+  private async handleStep10ConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Handling Step 10 conditional fields...')
+    
+    const selectedOccupation = formData['present_work_education.primary_occupation']
+    
+    if (!selectedOccupation) {
+      console.log('⏭️ No occupation selected, skipping conditional fields')
+      return
+    }
+    
+    console.log(`📝 Processing conditional fields for occupation: ${selectedOccupation}`)
+    
+    // Wait for page to reload after occupation selection
+    console.log('⏳ Waiting for page to reload after occupation selection...')
+    await page.waitForTimeout(3000)
+    
+    // Handle HOMEMAKER and RETIRED - no additional fields needed
+    if (['HOMEMAKER', 'RETIRED'].includes(selectedOccupation)) {
+      console.log(`ℹ️ No additional fields required for occupation: ${selectedOccupation}`)
+      return
+    }
+    
+    // Handle NOT EMPLOYED explanation
+    if (selectedOccupation === 'NOT EMPLOYED') {
+      console.log('📝 Looking for NOT EMPLOYED explanation field...')
+      try {
+        const explanation = formData['present_work_education.not_employed_explanation']
+        if (explanation) {
+          console.log('📝 Filling NOT EMPLOYED explanation...')
+          const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxNOT_EMPLOYED_EXPLANATION')
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          await element.fill(explanation.toString())
+          console.log('✅ Filled NOT EMPLOYED explanation')
+        }
+      } catch (error) {
+        console.warn('⚠️ NOT EMPLOYED explanation field not found or not visible')
+      }
+      return
+    }
+    
+    // Handle OTHER occupation specification
+    if (selectedOccupation === 'OTHER') {
+      console.log('📝 Looking for OTHER occupation specification field...')
+      try {
+        const specification = formData['present_work_education.other_occupation_specification']
+        if (specification) {
+          console.log('📝 Filling OTHER occupation specification...')
+          const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxExplainOtherPresentOccupation')
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          await element.fill(specification.toString())
+          console.log('✅ Filled OTHER occupation specification')
+        }
+      } catch (error) {
+        console.warn('⚠️ OTHER occupation specification field not found or not visible')
+      }
+    }
+    
+    // For all other occupations (including OTHER), fill employer/school fields
+    // Check if the employer section is visible
+    try {
+      const employerSection = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ShowDivEmployed')
+      await employerSection.waitFor({ state: 'visible', timeout: 10000 })
+      console.log('✅ Employer section is visible, proceeding to fill fields...')
+      
+      // Fill employer/school fields
+      await this.fillEmployerSchoolFields(page, jobId, formData)
+      
+    } catch (error) {
+      console.warn('⚠️ Employer section not found or not visible')
+    }
+    
+    console.log('✅ Step 10 conditional fields handling completed')
+  }
+
+  /**
+   * Click the Next button for Step 10
+   */
+  private async clickStep10NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('🔄 Clicking Step 10 Next button...')
+    
+    try {
+      // Wait for the Next button to be visible
+      const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+      await nextButton.waitFor({ state: 'visible', timeout: 15000 })
+      
+      console.log('✅ Step 10 Next button is ready')
+      
+      // Click the Next button
+      await nextButton.click()
+      console.log('✅ Clicked Step 10 Next button')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle', { timeout: 30000 })
+      console.log('✅ Navigation completed after Step 10 Next button click')
+      
+      // Update job progress
+      await this.progressService.updateStepProgress(jobId, 'form_step_11', 'running', 'Completed Step 10 - Work/Education Information...', 70)
+      console.log('📊 Updated job progress to Step 11 (70%)')
+      
+    } catch (error) {
+      console.error('❌ Error clicking Step 10 Next button:', error)
+      
+      // Take a screenshot for debugging
+      await page.screenshot({ path: `error-step10-next-${jobId}.png` })
+      console.log('📸 Screenshot saved: error-step10-next.png')
+      
+      throw error
+    }
+  }
+
+  /**
+   * Click the Next button for Step 11
+   */
+  private async clickStep11NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('🔄 Clicking Step 11 Next button...')
+    
+    try {
+      // Wait for the Next button to be visible
+      const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+      await nextButton.waitFor({ state: 'visible', timeout: 15000 })
+      
+      console.log('✅ Step 11 Next button is ready')
+      
+      // Click the Next button
+      await nextButton.click()
+      console.log('✅ Clicked Step 11 Next button')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle', { timeout: 30000 })
+      console.log('✅ Navigation completed after Step 11 Next button click')
+      
+      // Update job progress
+      await this.progressService.updateStepProgress(jobId, 'form_step_12', 'running', 'Completed Step 11 - Previous Work/Education Information...', 75)
+      console.log('📊 Updated job progress to Step 12 (75%)')
+      
+    } catch (error) {
+      console.error('❌ Error clicking Step 11 Next button:', error)
+      
+      // Take a screenshot for debugging
+      await page.screenshot({ path: `error-step11-next-${jobId}.png` })
+      console.log('📸 Screenshot saved: error-step11-next.png')
+      
+      throw error
+    }
+  }
+
+  /**
+   * Fill Step 11 form (Previous Work/Education Information)
+   */
+  private async fillStep11Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 11 form filling...')
+    
+    try {
+      // Update job progress
+      await this.progressService.updateStepProgress(jobId, 'form_step_11', 'running', 'Filling Step 11 - Previous Work/Education Information...', 75)
+      
+      // Get Step 11 field mappings
+      const step11Mappings = getStep11FieldMappings()
+      console.log(`📝 Found ${step11Mappings.length} Step 11 fields to fill`)
+      
+      // Fill each field based on mapping
+      for (const fieldMapping of step11Mappings) {
+        try {
+          const fieldValue = formData[fieldMapping.fieldName]
+          
+          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+            console.log(`⏭️ Skipping empty field: ${fieldMapping.fieldName}`)
+            continue
+          }
+          
+          console.log(`📝 Filling field: ${fieldMapping.fieldName} = ${fieldValue}`)
+          
+          const element = page.locator(fieldMapping.selector)
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          
+          switch (fieldMapping.type) {
+            case 'radio':
+              if (fieldValue === 'Yes' || fieldValue === 'Y') {
+                await element.check()
+                console.log(`✅ Selected radio button: ${fieldMapping.fieldName}`)
+                
+                // Wait for conditional sections to appear after radio selection
+                console.log('⏳ Waiting for conditional sections to appear...')
+                await page.waitForTimeout(2000)
+              } else {
+                // For "No" selection, find the corresponding "No" radio button
+                const noSelector = fieldMapping.selector.replace('_0', '_1')
+                const noElement = page.locator(noSelector)
+                await noElement.waitFor({ state: 'visible', timeout: 15000 })
+                await noElement.check()
+                console.log(`✅ Selected "No" radio button: ${fieldMapping.fieldName}`)
+                
+                // Wait for conditional sections to appear after radio selection
+                console.log('⏳ Waiting for conditional sections to appear...')
+                await page.waitForTimeout(2000)
+              }
+              break
+              
+            default:
+              console.warn(`⚠️ Unknown field type: ${fieldMapping.type} for ${fieldMapping.fieldName}`)
+          }
+          
+          // Small delay between fields
+          await page.waitForTimeout(200)
+          
+        } catch (error) {
+          console.error(`❌ Error filling field ${fieldMapping.fieldName}:`, error)
+          throw error
+        }
+      }
+      
+      // Handle conditional fields based on radio selections
+      await this.handleStep11ConditionalFields(page, jobId, formData)
+      
+      console.log('✅ Step 11 form filling completed successfully')
+      
+      // Click Next button to proceed to Step 12
+      await this.clickStep11NextButton(page, jobId)
+      
+    } catch (error) {
+      console.error('❌ Error in Step 11 form filling:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Handle conditional fields for Step 11 based on radio selections
+   */
+  private async handleStep11ConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Handling Step 11 conditional fields...')
+    
+    const previouslyEmployed = formData['previous_work_education.previously_employed']
+    const attendedEducation = formData['previous_work_education.attended_educational_institutions']
+    
+    console.log(`📝 Previously employed: ${previouslyEmployed}, Attended education: ${attendedEducation}`)
+    
+    // Handle previous employment fields
+    if (previouslyEmployed === 'Yes' || previouslyEmployed === 'Y') {
+      console.log('📝 Filling previous employment fields...')
+      await this.fillPreviousEmploymentFields(page, jobId, formData)
+    } else {
+      console.log('ℹ️ No previous employment to fill')
+    }
+    
+    // Handle education fields
+    if (attendedEducation === 'Yes' || attendedEducation === 'Y') {
+      console.log('📝 Filling education fields...')
+      await this.fillEducationFields(page, jobId, formData)
+    } else {
+      console.log('ℹ️ No education to fill')
+    }
+    
+    console.log('✅ Step 11 conditional fields handling completed')
+  }
+
+  /**
+   * Fill previous employment fields for Step 11
+   */
+  private async fillPreviousEmploymentFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling previous employment fields...')
+    
+    // Wait for the previous employment section to appear
+    console.log('⏳ Waiting for previous employment section to appear...')
+    await page.waitForTimeout(2000)
+    
+    // Check if the previous employment section is visible
+    const employmentSection = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbEmployerName')
+    await employmentSection.waitFor({ state: 'visible', timeout: 15000 })
+    console.log('✅ Previous employment section is visible')
+    
+    // Fill employer name
+    const employerName = formData['previous_work_education.previous_employer_name']
+    if (employerName) {
+      console.log(`📝 Filling employer name: ${employerName}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbEmployerName')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(employerName.toString())
+      console.log('✅ Filled employer name')
+    }
+    
+    // Fill address line 1
+    const addressLine1 = formData['previous_work_education.previous_employer_address_line1']
+    if (addressLine1) {
+      console.log(`📝 Filling address line 1: ${addressLine1}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbEmployerStreetAddress1')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(addressLine1.toString())
+      console.log('✅ Filled address line 1')
+    }
+    
+    // Fill address line 2
+    const addressLine2 = formData['previous_work_education.previous_employer_address_line2']
+    if (addressLine2) {
+      console.log(`📝 Filling address line 2: ${addressLine2}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbEmployerStreetAddress2')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(addressLine2.toString())
+      console.log('✅ Filled address line 2')
+    }
+    
+    // Fill city
+    const city = formData['previous_work_education.previous_employer_city']
+    if (city) {
+      console.log(`📝 Filling city: ${city}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbEmployerCity')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(city.toString())
+      console.log('✅ Filled city')
+    }
+    
+    // Handle state/province
+    const state = formData['previous_work_education.previous_employer_state']
+    const stateNA = formData['previous_work_education.previous_employer_state_na']
+    if (stateNA === true || state === 'N/A') {
+      console.log('📝 Checking "Does Not Apply" checkbox for state')
+      const stateNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_cbxPREV_EMPL_ADDR_STATE_NA')
+      await stateNAElement.waitFor({ state: 'visible', timeout: 15000 })
+      await stateNAElement.check()
+      console.log('✅ Checked "Does Not Apply" checkbox for state')
+    } else if (state) {
+      console.log(`📝 Filling state: ${state}`)
+      const stateElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbxPREV_EMPL_ADDR_STATE')
+      await stateElement.waitFor({ state: 'visible', timeout: 15000 })
+      await stateElement.fill(state.toString())
+      console.log('✅ Filled state')
+    }
+    
+    // Handle postal code
+    const postalCode = formData['previous_work_education.previous_employer_postal_code']
+    const postalNA = formData['previous_work_education.previous_employer_postal_na']
+    if (postalNA === true || postalCode === 'N/A') {
+      console.log('📝 Checking "Does Not Apply" checkbox for postal code')
+      const postalNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_cbxPREV_EMPL_ADDR_POSTAL_CD_NA')
+      await postalNAElement.waitFor({ state: 'visible', timeout: 15000 })
+      await postalNAElement.check()
+      console.log('✅ Checked "Does Not Apply" checkbox for postal code')
+    } else if (postalCode) {
+      console.log(`📝 Filling postal code: ${postalCode}`)
+      const postalElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbxPREV_EMPL_ADDR_POSTAL_CD')
+      await postalElement.waitFor({ state: 'visible', timeout: 15000 })
+      await postalElement.fill(postalCode.toString())
+      console.log('✅ Filled postal code')
+    }
+    
+    // Fill country
+    const country = formData['previous_work_education.previous_employer_country']
+    if (country) {
+      console.log(`📝 Filling country: ${country}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_DropDownList2')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      
+      // Map country names to codes based on the HTML options
+      const countryCodeMap: { [key: string]: string } = {
+        'PAKISTAN': 'PKST',
+        'UNITED STATES': 'USA',
+        'UNITED STATES OF AMERICA': 'USA',
+        'CANADA': 'CAN',
+        'UNITED KINGDOM': 'GRBR',
+        'INDIA': 'IND',
+        'CHINA': 'CHIN',
+        'MEXICO': 'MEX',
+        'BRAZIL': 'BRZL',
+        'FRANCE': 'FRAN',
+        'GERMANY': 'GER',
+        'ITALY': 'ITLY',
+        'SPAIN': 'SPN',
+        'JAPAN': 'JPN',
+        'AUSTRALIA': 'ASTL',
+        'NEW ZEALAND': 'NZLD',
+        'SOUTH AFRICA': 'SAFR',
+        'NIGERIA': 'NRA',
+        'EGYPT': 'EGYP',
+        'KENYA': 'KENY',
+        'ETHIOPIA': 'ETH',
+        'MOROCCO': 'MORO',
+        'ALGERIA': 'ALGR',
+        'TUNISIA': 'TNSA',
+        'LIBYA': 'LBYA',
+        'SUDAN': 'SUDA',
+        'SOMALIA': 'SOMA',
+        'DJIBOUTI': 'DJI',
+        'ERITREA': 'ERI',
+        'BURUNDI': 'BRND',
+        'RWANDA': 'RWND',
+        'TANZANIA': 'TAZN',
+        'UGANDA': 'UGAN',
+        'ZAMBIA': 'ZAMB',
+        'ZIMBABWE': 'ZIMB',
+        'MALAWI': 'MALW',
+        'MOZAMBIQUE': 'MOZ',
+        'NAMIBIA': 'NAMB',
+        'BOTSWANA': 'BOT',
+        'LESOTHO': 'LES',
+        'SWAZILAND': 'SZLD',
+        'MAURITIUS': 'MRTS',
+        'SEYCHELLES': 'SEYC',
+        'COMOROS': 'COMO',
+        'MADAGASCAR': 'MADG',
+        'CAPE VERDE': 'CAVI',
+        'CABO VERDE': 'CAVI',
+        'SENEGAL': 'SENG',
+        'GAMBIA': 'GAM',
+        'GUINEA-BISSAU': 'GUIB',
+        'GUINEA BISSAU': 'GUIB',
+        'SIERRA LEONE': 'SLEO',
+        'LIBERIA': 'LIBR',
+        'IVORY COAST': 'IVCO',
+        'COTE D\'IVOIRE': 'IVCO',
+        'GHANA': 'GHAN',
+        'TOGO': 'TOGO',
+        'BENIN': 'BENN',
+        'NIGER': 'NIR',
+        'BURKINA FASO': 'BURK',
+        'MALI': 'MALI',
+        'CHAD': 'CHAD',
+        'CAMEROON': 'CMRN',
+        'CENTRAL AFRICAN REPUBLIC': 'CAFR',
+        'EQUATORIAL GUINEA': 'EGN',
+        'GABON': 'GABN',
+        'CONGO': 'CONB',
+        'CONGO, REPUBLIC OF THE': 'CONB',
+        'CONGO, DEMOCRATIC REPUBLIC OF THE': 'COD',
+        'ANGOLA': 'ANGL',
+        'SAO TOME AND PRINCIPE': 'STPR',
+        'SAINT TOME AND PRINCIPE': 'STPR'
+      }
+      
+      const countryCode = countryCodeMap[country.toUpperCase()]
+      if (countryCode) {
+        await element.selectOption({ value: countryCode })
+        console.log(`✅ Selected country: ${country} (${countryCode})`)
+      } else {
+        console.warn(`⚠️ No country code found for: ${country}`)
+        // Try to find by partial match
+        const options = await element.locator('option').all()
+        for (const option of options) {
+          const optionText = await option.textContent()
+          const optionValue = await option.getAttribute('value')
+          if (optionText && optionText.toUpperCase().includes(country.toUpperCase())) {
+            await element.selectOption({ value: optionValue || '' })
+            console.log(`✅ Selected country by partial match: ${optionText} (${optionValue})`)
+            break
+          }
+        }
+      }
+    }
+    
+    // Fill phone number
+    const phone = formData['previous_work_education.previous_employer_phone']
+    if (phone) {
+      console.log(`📝 Filling phone number: ${phone}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbEmployerPhone')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(phone.toString())
+      console.log('✅ Filled phone number')
+    }
+    
+    // Fill job title
+    const jobTitle = formData['previous_work_education.previous_job_title']
+    if (jobTitle) {
+      console.log(`📝 Filling job title: ${jobTitle}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbJobTitle')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(jobTitle.toString())
+      console.log('✅ Filled job title')
+    }
+    
+    // Handle supervisor surname
+    const supervisorSurname = formData['previous_work_education.previous_supervisor_surname']
+    const supervisorSurnameNA = formData['previous_work_education.previous_supervisor_surname_na']
+    if (supervisorSurnameNA === true || supervisorSurname === 'N/A') {
+      console.log('📝 Checking "Do Not Know" checkbox for supervisor surname')
+      const surnameNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_cbxSupervisorSurname_NA')
+      await surnameNAElement.waitFor({ state: 'visible', timeout: 15000 })
+      await surnameNAElement.check()
+      console.log('✅ Checked "Do Not Know" checkbox for supervisor surname')
+    } else if (supervisorSurname) {
+      console.log(`📝 Filling supervisor surname: ${supervisorSurname}`)
+      const surnameElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbSupervisorSurname')
+      await surnameElement.waitFor({ state: 'visible', timeout: 15000 })
+      await surnameElement.fill(supervisorSurname.toString())
+      console.log('✅ Filled supervisor surname')
+    }
+    
+    // Handle supervisor given names
+    const supervisorGivenNames = formData['previous_work_education.previous_supervisor_given_names']
+    const supervisorGivenNamesNA = formData['previous_work_education.previous_supervisor_given_names_na']
+    if (supervisorGivenNamesNA === true || supervisorGivenNames === 'N/A') {
+      console.log('📝 Checking "Do Not Know" checkbox for supervisor given names')
+      const givenNamesNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_cbxSupervisorGivenName_NA')
+      await givenNamesNAElement.waitFor({ state: 'visible', timeout: 15000 })
+      await givenNamesNAElement.check()
+      console.log('✅ Checked "Do Not Know" checkbox for supervisor given names')
+    } else if (supervisorGivenNames) {
+      console.log(`📝 Filling supervisor given names: ${supervisorGivenNames}`)
+      const givenNamesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbSupervisorGivenName')
+      await givenNamesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await givenNamesElement.fill(supervisorGivenNames.toString())
+      console.log('✅ Filled supervisor given names')
+    }
+    
+    // Fill employment dates (split date)
+    const employmentFrom = formData['previous_work_education.previous_employment_from']
+    if (employmentFrom) {
+      console.log(`📝 Filling employment from date: ${employmentFrom}`)
+      const date = new Date(employmentFrom.toString())
+      const day = date.getDate().toString()
+      const month = (date.getMonth() + 1).toString()
+      const year = date.getFullYear().toString()
+      
+      // Fill day
+      const dayElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_ddlEmpDateFromDay')
+      await dayElement.waitFor({ state: 'visible', timeout: 15000 })
+      await dayElement.selectOption({ value: day })
+      
+      // Fill month
+      const monthElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_ddlEmpDateFromMonth')
+      await monthElement.waitFor({ state: 'visible', timeout: 15000 })
+      await monthElement.selectOption({ value: month })
+      
+      // Fill year
+      const yearElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbxEmpDateFromYear')
+      await yearElement.waitFor({ state: 'visible', timeout: 15015 })
+      await yearElement.fill(year)
+      
+      console.log('✅ Filled employment from date')
+    }
+    
+    const employmentTo = formData['previous_work_education.previous_employment_to']
+    if (employmentTo) {
+      console.log(`📝 Filling employment to date: ${employmentTo}`)
+      const date = new Date(employmentTo.toString())
+      const day = date.getDate().toString()
+      const month = (date.getMonth() + 1).toString()
+      const year = date.getFullYear().toString()
+      
+      // Fill day
+      const dayElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_ddlEmpDateToDay')
+      await dayElement.waitFor({ state: 'visible', timeout: 15000 })
+      await dayElement.selectOption({ value: day })
+      
+      // Fill month
+      const monthElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_ddlEmpDateToMonth')
+      await monthElement.waitFor({ state: 'visible', timeout: 15000 })
+      await monthElement.selectOption({ value: month })
+      
+      // Fill year
+      const yearElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbxEmpDateToYear')
+      await yearElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yearElement.fill(year)
+      
+      console.log('✅ Filled employment to date')
+    }
+    
+    // Fill job duties
+    const jobDuties = formData['previous_work_education.previous_job_duties']
+    if (jobDuties) {
+      console.log(`📝 Filling job duties: ${jobDuties}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEmpl_ctl00_tbDescribeDuties')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(jobDuties.toString())
+      console.log('✅ Filled job duties')
+    }
+    
+    console.log('✅ Completed filling previous employment fields')
+  }
+
+  /**
+   * Fill education fields for Step 11
+   */
+  private async fillEducationFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling education fields...')
+    
+    // Wait for the education section to appear
+    console.log('⏳ Waiting for education section to appear...')
+    await page.waitForTimeout(2000)
+    
+    // Check if the education section is visible
+    const educationSection = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolName')
+    await educationSection.waitFor({ state: 'visible', timeout: 15000 })
+    console.log('✅ Education section is visible')
+    
+    // Fill institution name
+    const institutionName = formData['previous_work_education.educational_institution_name']
+    if (institutionName) {
+      console.log(`📝 Filling institution name: ${institutionName}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolName')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(institutionName.toString())
+      console.log('✅ Filled institution name')
+    }
+    
+    // Fill address line 1
+    const addressLine1 = formData['previous_work_education.educational_address_line1']
+    if (addressLine1) {
+      console.log(`📝 Filling address line 1: ${addressLine1}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolAddr1')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(addressLine1.toString())
+      console.log('✅ Filled address line 1')
+    }
+    
+    // Fill address line 2
+    const addressLine2 = formData['previous_work_education.educational_address_line2']
+    if (addressLine2) {
+      console.log(`📝 Filling address line 2: ${addressLine2}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolAddr2')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(addressLine2.toString())
+      console.log('✅ Filled address line 2')
+    }
+    
+    // Fill city
+    const city = formData['previous_work_education.educational_city']
+    if (city) {
+      console.log(`📝 Filling city: ${city}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolCity')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(city.toString())
+      console.log('✅ Filled city')
+      
+      // Add a small delay after filling city to allow state field to render
+      await page.waitForTimeout(1000)
+    }
+    
+    // Handle state/province
+    const state = formData['previous_work_education.educational_state']
+    const stateNA = formData['previous_work_education.educational_state_na']
+    if (stateNA === true || state === 'N/A') {
+      console.log('📝 Checking "Does Not Apply" checkbox for state')
+      try {
+        const stateNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_cbxEDU_INST_ADDR_STATE_NA')
+        await stateNAElement.waitFor({ state: 'visible', timeout: 10000 })
+        await stateNAElement.check()
+        console.log('✅ Checked "Does Not Apply" checkbox for state')
+      } catch (error) {
+        console.log('⚠️ Could not find state NA checkbox, continuing...')
+      }
+    } else if (state) {
+      console.log(`📝 Filling state: ${state}`)
+      try {
+        // Add a longer delay to ensure the field is rendered
+        await page.waitForTimeout(2000)
+        
+        const stateElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxEDU_INST_ADDR_STATE')
+        
+        // Debug: Check if element exists
+        const elementCount = await stateElement.count()
+        console.log(`🔍 Found ${elementCount} state field elements`)
+        
+        if (elementCount > 0) {
+          // Debug: Check element properties
+          const isVisible = await stateElement.isVisible()
+          const isEnabled = await stateElement.isEnabled()
+          const isDisabled = await stateElement.isDisabled()
+          console.log(`🔍 State field - Visible: ${isVisible}, Enabled: ${isEnabled}, Disabled: ${isDisabled}`)
+          
+          // Try to focus and click first
+          await stateElement.focus()
+          await page.waitForTimeout(500)
+          await stateElement.click()
+          await page.waitForTimeout(500)
+          
+          await stateElement.fill(state.toString())
+          console.log('✅ Filled state')
+        } else {
+          console.log('⚠️ State field element not found')
+        }
+      } catch (error) {
+        console.log('⚠️ Could not find state field, continuing...')
+        console.log(`Error details: ${error}`)
+      }
+    }
+    
+    // Handle postal code
+    const postalCode = formData['previous_work_education.educational_postal_code']
+    const postalNA = formData['previous_work_education.educational_postal_na']
+    if (postalNA === true || postalCode === 'N/A') {
+      console.log('📝 Checking "Does Not Apply" checkbox for postal code')
+      try {
+        const postalNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_cbxEDU_INST_POSTAL_CD_NA')
+        await postalNAElement.waitFor({ state: 'visible', timeout: 10000 })
+        await postalNAElement.check()
+        console.log('✅ Checked "Does Not Apply" checkbox for postal code')
+      } catch (error) {
+        console.log('⚠️ Could not find postal code NA checkbox, continuing...')
+      }
+    } else if (postalCode) {
+      console.log(`📝 Filling postal code: ${postalCode}`)
+      try {
+        // Add a longer delay to ensure the field is rendered
+        await page.waitForTimeout(2000)
+        
+        const postalElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxEDU_INST_POSTAL_CD')
+        
+        // Debug: Check if element exists
+        const elementCount = await postalElement.count()
+        console.log(`🔍 Found ${elementCount} postal code field elements`)
+        
+        if (elementCount > 0) {
+          // Debug: Check element properties
+          const isVisible = await postalElement.isVisible()
+          const isEnabled = await postalElement.isEnabled()
+          const isDisabled = await postalElement.isDisabled()
+          console.log(`🔍 Postal code field - Visible: ${isVisible}, Enabled: ${isEnabled}, Disabled: ${isDisabled}`)
+          
+          // Try to focus and click first
+          await postalElement.focus()
+          await page.waitForTimeout(500)
+          await postalElement.click()
+          await page.waitForTimeout(500)
+          
+          await postalElement.fill(postalCode.toString())
+          console.log('✅ Filled postal code')
+        } else {
+          console.log('⚠️ Postal code field element not found')
+        }
+      } catch (error) {
+        console.log('⚠️ Could not find postal code field, continuing...')
+        console.log(`Error details: ${error}`)
+      }
+    }
+    
+    // Fill country
+    const country = formData['previous_work_education.educational_country']
+    if (country) {
+      console.log(`📝 Filling country: ${country}`)
+      try {
+        const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_ddlSchoolCountry')
+        await element.waitFor({ state: 'visible', timeout: 10000 })
+      
+      // Use the same country code mapping
+      const countryCodeMap: { [key: string]: string } = {
+        'PAKISTAN': 'PKST',
+        'UNITED STATES': 'USA',
+        'UNITED STATES OF AMERICA': 'USA',
+        'CANADA': 'CAN',
+        'UNITED KINGDOM': 'GRBR',
+        'INDIA': 'IND',
+        'CHINA': 'CHIN',
+        'MEXICO': 'MEX',
+        'BRAZIL': 'BRZL',
+        'FRANCE': 'FRAN',
+        'GERMANY': 'GER',
+        'ITALY': 'ITLY',
+        'SPAIN': 'SPN',
+        'JAPAN': 'JPN',
+        'AUSTRALIA': 'ASTL',
+        'NEW ZEALAND': 'NZLD',
+        'SOUTH AFRICA': 'SAFR',
+        'NIGERIA': 'NRA',
+        'EGYPT': 'EGYP',
+        'KENYA': 'KENY',
+        'ETHIOPIA': 'ETH',
+        'MOROCCO': 'MORO',
+        'ALGERIA': 'ALGR',
+        'TUNISIA': 'TNSA',
+        'LIBYA': 'LBYA',
+        'SUDAN': 'SUDA',
+        'SOMALIA': 'SOMA',
+        'DJIBOUTI': 'DJI',
+        'ERITREA': 'ERI',
+        'BURUNDI': 'BRND',
+        'RWANDA': 'RWND',
+        'TANZANIA': 'TAZN',
+        'UGANDA': 'UGAN',
+        'ZAMBIA': 'ZAMB',
+        'ZIMBABWE': 'ZIMB',
+        'MALAWI': 'MALW',
+        'MOZAMBIQUE': 'MOZ',
+        'NAMIBIA': 'NAMB',
+        'BOTSWANA': 'BOT',
+        'LESOTHO': 'LES',
+        'SWAZILAND': 'SZLD',
+        'MAURITIUS': 'MRTS',
+        'SEYCHELLES': 'SEYC',
+        'COMOROS': 'COMO',
+        'MADAGASCAR': 'MADG',
+        'CAPE VERDE': 'CAVI',
+        'CABO VERDE': 'CAVI',
+        'SENEGAL': 'SENG',
+        'GAMBIA': 'GAM',
+        'GUINEA-BISSAU': 'GUIB',
+        'GUINEA BISSAU': 'GUIB',
+        'SIERRA LEONE': 'SLEO',
+        'LIBERIA': 'LIBR',
+        'IVORY COAST': 'IVCO',
+        'COTE D\'IVOIRE': 'IVCO',
+        'GHANA': 'GHAN',
+        'TOGO': 'TOGO',
+        'BENIN': 'BENN',
+        'NIGER': 'NIR',
+        'BURKINA FASO': 'BURK',
+        'MALI': 'MALI',
+        'CHAD': 'CHAD',
+        'CAMEROON': 'CMRN',
+        'CENTRAL AFRICAN REPUBLIC': 'CAFR',
+        'EQUATORIAL GUINEA': 'EGN',
+        'GABON': 'GABN',
+        'CONGO': 'CONB',
+        'CONGO, REPUBLIC OF THE': 'CONB',
+        'CONGO, DEMOCRATIC REPUBLIC OF THE': 'COD',
+        'ANGOLA': 'ANGL',
+        'SAO TOME AND PRINCIPE': 'STPR',
+        'SAINT TOME AND PRINCIPE': 'STPR'
+      }
+      
+      const countryCode = countryCodeMap[country.toUpperCase()]
+      if (countryCode) {
+        await element.selectOption({ value: countryCode })
+        console.log(`✅ Selected country: ${country} (${countryCode})`)
+      } else {
+        console.warn(`⚠️ No country code found for: ${country}`)
+        // Try to find by partial match
+        const options = await element.locator('option').all()
+        for (const option of options) {
+          const optionText = await option.textContent()
+          const optionValue = await option.getAttribute('value')
+          if (optionText && optionText.toUpperCase().includes(country.toUpperCase())) {
+            await element.selectOption({ value: optionValue || '' })
+            console.log(`✅ Selected country by partial match: ${optionText} (${optionValue})`)
+            break
+          }
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ Could not find country field, continuing...')
+    }
+  }
+    
+    // Fill course of study
+    const courseOfStudy = formData['previous_work_education.course_of_study']
+    if (courseOfStudy) {
+      console.log(`📝 Filling course of study: ${courseOfStudy}`)
+      try {
+        const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolCourseOfStudy')
+        await element.waitFor({ state: 'visible', timeout: 10000 })
+        await element.fill(courseOfStudy.toString())
+        console.log('✅ Filled course of study')
+      } catch (error) {
+        console.log('⚠️ Could not find course of study field, continuing...')
+      }
+    }
+    
+    // Fill attendance dates (split date)
+    const attendanceFrom = formData['previous_work_education.educational_attendance_from']
+    if (attendanceFrom) {
+      console.log(`📝 Filling attendance from date: ${attendanceFrom}`)
+      try {
+        const date = new Date(attendanceFrom.toString())
+        const day = date.getDate().toString()
+        const month = (date.getMonth() + 1).toString()
+        const year = date.getFullYear().toString()
+        
+        // Fill day
+        const dayElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_ddlSchoolFromDay')
+        await dayElement.waitFor({ state: 'visible', timeout: 10000 })
+        await dayElement.selectOption({ value: day })
+        
+        // Fill month
+        const monthElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_ddlSchoolFromMonth')
+        await monthElement.waitFor({ state: 'visible', timeout: 10000 })
+        await monthElement.selectOption({ value: month })
+        
+        // Fill year
+        const yearElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolFromYear')
+        await yearElement.waitFor({ state: 'visible', timeout: 10000 })
+        await yearElement.fill(year)
+        
+        console.log('✅ Filled attendance from date')
+      } catch (error) {
+        console.log('⚠️ Could not find attendance from date fields, continuing...')
+      }
+    }
+    
+    const attendanceTo = formData['previous_work_education.educational_attendance_to']
+    if (attendanceTo) {
+      console.log(`📝 Filling attendance to date: ${attendanceTo}`)
+      try {
+        const date = new Date(attendanceTo.toString())
+        const day = date.getDate().toString()
+        const month = (date.getMonth() + 1).toString()
+        const year = date.getFullYear().toString()
+        
+        // Fill day
+        const dayElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_ddlSchoolToDay')
+        await dayElement.waitFor({ state: 'visible', timeout: 10000 })
+        await dayElement.selectOption({ value: day })
+        
+        // Fill month
+        const monthElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_ddlSchoolToMonth')
+        await monthElement.waitFor({ state: 'visible', timeout: 10000 })
+        await monthElement.selectOption({ value: month })
+        
+        // Fill year
+        const yearElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxSchoolToYear')
+        await yearElement.waitFor({ state: 'visible', timeout: 10000 })
+        await yearElement.fill(year)
+        
+        console.log('✅ Filled attendance to date')
+      } catch (error) {
+        console.log('⚠️ Could not find attendance to date fields, continuing...')
+      }
+    }
+    
+    console.log('✅ Completed filling education fields')
+  }
+
+  /**
+   * Fill employer/school fields for Step 10
+   */
+  private async fillEmployerSchoolFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling employer/school fields...')
+    
+    // Fill employer/school name
+    const employerName = formData['present_work_education.employer_school_name']
+    if (employerName) {
+      console.log(`📝 Filling employer/school name: ${employerName}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxEmpSchName')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(employerName.toString())
+      console.log('✅ Filled employer/school name')
+    }
+    
+    // Fill address line 1
+    const addressLine1 = formData['present_work_education.employer_address_line1']
+    if (addressLine1) {
+      console.log(`📝 Filling address line 1: ${addressLine1}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxEmpSchAddr1')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(addressLine1.toString())
+      console.log('✅ Filled address line 1')
+    }
+    
+    // Fill address line 2
+    const addressLine2 = formData['present_work_education.employer_address_line2']
+    if (addressLine2) {
+      console.log(`📝 Filling address line 2: ${addressLine2}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxEmpSchAddr2')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(addressLine2.toString())
+      console.log('✅ Filled address line 2')
+    }
+    
+    // Fill city
+    const city = formData['present_work_education.employer_city']
+    if (city) {
+      console.log(`📝 Filling city: ${city}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxEmpSchCity')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(city.toString())
+      console.log('✅ Filled city')
+    }
+    
+    // Handle state/province
+    const state = formData['present_work_education.employer_state']
+    const stateNA = formData['present_work_education.employer_state_na']
+    if (stateNA === true || state === 'N/A') {
+      console.log('📝 Checking "Does Not Apply" checkbox for state')
+      const stateNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxWORK_EDUC_ADDR_STATE_NA')
+      await stateNAElement.waitFor({ state: 'visible', timeout: 15000 })
+      await stateNAElement.check()
+      console.log('✅ Checked "Does Not Apply" checkbox for state')
+    } else if (state) {
+      console.log(`📝 Filling state: ${state}`)
+      const stateElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxWORK_EDUC_ADDR_STATE')
+      await stateElement.waitFor({ state: 'visible', timeout: 15000 })
+      await stateElement.fill(state.toString())
+      console.log('✅ Filled state')
+    }
+    
+    // Handle postal code
+    const postalCode = formData['present_work_education.employer_postal_code']
+    const postalNA = formData['present_work_education.employer_postal_na']
+    if (postalNA === true || postalCode === 'N/A') {
+      console.log('📝 Checking "Does Not Apply" checkbox for postal code')
+      const postalNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxWORK_EDUC_ADDR_POSTAL_CD_NA')
+      await postalNAElement.waitFor({ state: 'visible', timeout: 15000 })
+      await postalNAElement.check()
+      console.log('✅ Checked "Does Not Apply" checkbox for postal code')
+    } else if (postalCode) {
+      console.log(`📝 Filling postal code: ${postalCode}`)
+      const postalElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxWORK_EDUC_ADDR_POSTAL_CD')
+      await postalElement.waitFor({ state: 'visible', timeout: 15000 })
+      await postalElement.fill(postalCode.toString())
+      console.log('✅ Filled postal code')
+    }
+    
+    // Fill phone number
+    const phone = formData['present_work_education.employer_phone']
+    if (phone) {
+      console.log(`📝 Filling phone number: ${phone}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxWORK_EDUC_TEL')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(phone.toString())
+      console.log('✅ Filled phone number')
+    }
+    
+    // Fill country
+    const country = formData['present_work_education.employer_country']
+    if (country) {
+      console.log(`📝 Filling country: ${country}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ddlEmpSchCountry')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      
+      // Map country names to codes based on the HTML options
+      const countryCodeMap: { [key: string]: string } = {
+        'PAKISTAN': 'PKST',
+        'UNITED STATES': 'USA',
+        'UNITED STATES OF AMERICA': 'USA',
+        'CANADA': 'CAN',
+        'UNITED KINGDOM': 'GRBR',
+        'INDIA': 'IND',
+        'CHINA': 'CHIN',
+        'MEXICO': 'MEX',
+        'BRAZIL': 'BRZL',
+        'FRANCE': 'FRAN',
+        'GERMANY': 'GER',
+        'ITALY': 'ITLY',
+        'SPAIN': 'SPN',
+        'JAPAN': 'JPN',
+        'AUSTRALIA': 'ASTL',
+        'NEW ZEALAND': 'NZLD',
+        'SOUTH AFRICA': 'SAFR',
+        'NIGERIA': 'NRA',
+        'EGYPT': 'EGYP',
+        'KENYA': 'KENY',
+        'ETHIOPIA': 'ETH',
+        'MOROCCO': 'MORO',
+        'ALGERIA': 'ALGR',
+        'TUNISIA': 'TNSA',
+        'LIBYA': 'LBYA',
+        'SUDAN': 'SUDA',
+        'SOMALIA': 'SOMA',
+        'DJIBOUTI': 'DJI',
+        'ERITREA': 'ERI',
+        'BURUNDI': 'BRND',
+        'RWANDA': 'RWND',
+        'TANZANIA': 'TAZN',
+        'UGANDA': 'UGAN',
+        'ZAMBIA': 'ZAMB',
+        'ZIMBABWE': 'ZIMB',
+        'MALAWI': 'MALW',
+        'MOZAMBIQUE': 'MOZ',
+        'NAMIBIA': 'NAMB',
+        'BOTSWANA': 'BOT',
+        'LESOTHO': 'LES',
+        'SWAZILAND': 'SZLD',
+        'MAURITIUS': 'MRTS',
+        'SEYCHELLES': 'SEYC',
+        'COMOROS': 'COMO',
+        'MADAGASCAR': 'MADG',
+        'CAPE VERDE': 'CAVI',
+        'CABO VERDE': 'CAVI',
+        'SENEGAL': 'SENG',
+        'GAMBIA': 'GAM',
+        'GUINEA-BISSAU': 'GUIB',
+        'GUINEA BISSAU': 'GUIB',
+        'SIERRA LEONE': 'SLEO',
+        'LIBERIA': 'LIBR',
+        'IVORY COAST': 'IVCO',
+        'COTE D\'IVOIRE': 'IVCO',
+        'GHANA': 'GHAN',
+        'TOGO': 'TOGO',
+        'BENIN': 'BENN',
+        'NIGER': 'NIR',
+        'BURKINA FASO': 'BURK',
+        'MALI': 'MALI',
+        'CHAD': 'CHAD',
+        'CAMEROON': 'CMRN',
+        'CENTRAL AFRICAN REPUBLIC': 'CAFR',
+        'EQUATORIAL GUINEA': 'EGN',
+        'GABON': 'GABN',
+        'CONGO': 'CONB',
+        'CONGO, REPUBLIC OF THE': 'CONB',
+        'CONGO, DEMOCRATIC REPUBLIC OF THE': 'COD',
+        'ANGOLA': 'ANGL',
+        'SAO TOME AND PRINCIPE': 'STPR',
+        'SAINT TOME AND PRINCIPE': 'STPR'
+      }
+      
+      const countryCode = countryCodeMap[country.toUpperCase()]
+      if (countryCode) {
+        await element.selectOption({ value: countryCode })
+        console.log(`✅ Selected country: ${country} (${countryCode})`)
+      } else {
+        console.warn(`⚠️ No country code found for: ${country}`)
+        // Try to find by partial match
+        const options = await element.locator('option').all()
+        for (const option of options) {
+          const optionText = await option.textContent()
+          const optionValue = await option.getAttribute('value')
+          if (optionText && optionText.toUpperCase().includes(country.toUpperCase())) {
+            await element.selectOption({ value: optionValue || '' })
+            console.log(`✅ Selected country by partial match: ${optionText} (${optionValue})`)
+            break
+          }
+        }
+      }
+    }
+    
+    // Fill start date (split date)
+    const startDate = formData['present_work_education.start_date']
+    if (startDate) {
+      console.log(`📝 Filling start date: ${startDate}`)
+      const date = new Date(startDate.toString())
+      const day = date.getDate().toString()
+      const month = (date.getMonth() + 1).toString()
+      const year = date.getFullYear().toString()
+      
+      // Fill day
+      const dayElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ddlEmpDateFromDay')
+      await dayElement.waitFor({ state: 'visible', timeout: 15000 })
+      await dayElement.selectOption({ value: day })
+      
+      // Fill month
+      const monthElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_ddlEmpDateFromMonth')
+      await monthElement.waitFor({ state: 'visible', timeout: 15000 })
+      await monthElement.selectOption({ value: month })
+      
+      // Fill year
+      const yearElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxEmpDateFromYear')
+      await yearElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yearElement.fill(year)
+      
+      console.log('✅ Filled start date')
+    }
+    
+    // Handle monthly income
+    const monthlyIncome = formData['present_work_education.monthly_income']
+    const incomeNA = formData['present_work_education.monthly_income_na']
+    if (incomeNA === true || monthlyIncome === 'N/A') {
+      console.log('📝 Checking "Does Not Apply" checkbox for monthly income')
+      const incomeNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_cbxCURR_MONTHLY_SALARY_NA')
+      await incomeNAElement.waitFor({ state: 'visible', timeout: 15000 })
+      await incomeNAElement.check()
+      console.log('✅ Checked "Does Not Apply" checkbox for monthly income')
+    } else if (monthlyIncome) {
+      console.log(`📝 Filling monthly income: ${monthlyIncome}`)
+      const incomeElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxCURR_MONTHLY_SALARY')
+      await incomeElement.waitFor({ state: 'visible', timeout: 15000 })
+      await incomeElement.fill(monthlyIncome.toString())
+      console.log('✅ Filled monthly income')
+    }
+    
+    // Fill job duties
+    const jobDuties = formData['present_work_education.job_duties']
+    if (jobDuties) {
+      console.log(`📝 Filling job duties: ${jobDuties}`)
+      const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxDescribeDuties')
+      await element.waitFor({ state: 'visible', timeout: 15000 })
+      await element.fill(jobDuties.toString())
+      console.log('✅ Filled job duties')
+    }
+    
+    console.log('✅ Completed filling employer/school fields')
   }
 
   /**

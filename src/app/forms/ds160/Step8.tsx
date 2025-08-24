@@ -4,92 +4,113 @@ import { usStates } from './states'
 export default function Step8({ formData, onChange }: StepProps) {
   const get = (key: string) => formData[key] || ''
   const set = (key: string, val: any) => onChange(key, val)
-  const yesNo = ['Yes', 'No']
-
-  const hasIndividual = (get('us_contact.has_individual') || '').toString().toLowerCase() === 'yes'
-  const emailNA = get('us_contact.contact_email_na') === true || get('us_contact.contact_email') === 'N/A'
 
   const relationships = [
     'RELATIVE', 'SPOUSE', 'FRIEND', 'BUSINESS ASSOCIATE', 'EMPLOYER', 'SCHOOL OFFICIAL', 'U.S. PETITIONER', 'OTHER'
   ]
 
+  // Check if contact person "Do Not Know" is checked
+  const contactPersonNA = get('us_contact.contact_person_na') === true
+  // Check if organization "Do Not Know" is checked  
+  const organizationNA = get('us_contact.contact_organization_na') === true
+  const emailNA = get('us_contact.contact_email_na') === true || get('us_contact.contact_email') === 'N/A'
+
   return (
     <div className="space-y-8">
+      {/* Contact Person and Organization Section */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-gray-700">Do you have a specific individual as your U.S. Point of Contact?</label>
-        <div className="mt-1 flex items-center space-x-6">
-          {yesNo.map(opt => (
-            <label key={opt} className="inline-flex items-center">
-              <input type="radio" name="us_contact_has_individual" className="mr-2" checked={get('us_contact.has_individual') === opt} onChange={() => set('us_contact.has_individual', opt)} />
-              <span className='text-black'>{opt}</span>
-            </label>
-          ))}
+        <h6 className="text-sm font-medium text-gray-900">Contact Person</h6>
+        
+        {/* Contact Person Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Surnames</label>
+            <input
+              type="text"
+              value={get('us_contact.contact_surnames')}
+              onChange={(e) => set('us_contact.contact_surnames', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              placeholder='Enter surnames'
+              disabled={contactPersonNA}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Given Names</label>
+            <input
+              type="text"
+              value={get('us_contact.contact_given_names')}
+              onChange={(e) => set('us_contact.contact_given_names', e.target.value)}
+              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+              placeholder='Enter given names'
+              disabled={contactPersonNA}
+            />
+          </div>
+        </div>
+        
+        {/* Contact Person "Do Not Know" Checkbox */}
+        <div className="flex justify-end">
+          <label className="inline-flex items-center text-sm text-gray-700">
+            <input
+              type="checkbox"
+              className="mr-2"
+              checked={contactPersonNA}
+              onChange={(e) => {
+                set('us_contact.contact_person_na', e.target.checked)
+                if (e.target.checked) {
+                  // If contact person NA is checked, uncheck organization NA
+                  set('us_contact.contact_organization_na', false)
+                }
+              }}
+            />
+            Do Not Know
+          </label>
+        </div>
+
+        {/* Organization Name Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Organization Name</label>
+          <input
+            type="text"
+            value={get('us_contact.contact_organization')}
+            onChange={(e) => set('us_contact.contact_organization', e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+            placeholder='Enter organization name'
+            disabled={organizationNA}
+          />
+        </div>
+        
+        {/* Organization "Do Not Know" Checkbox */}
+        <div className="flex justify-end">
+          <label className="inline-flex items-center text-sm text-gray-700">
+            <input
+              type="checkbox"
+              className="mr-2"
+              checked={organizationNA}
+              onChange={(e) => {
+                set('us_contact.contact_organization_na', e.target.checked)
+                if (e.target.checked) {
+                  // If organization NA is checked, uncheck contact person NA
+                  set('us_contact.contact_person_na', false)
+                }
+              }}
+            />
+            Do Not Know
+          </label>
         </div>
       </div>
 
-      {hasIndividual ? (
-        <div className="space-y-4">
-          <h6 className="text-sm font-medium text-gray-900">Contact Person</h6>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Surnames</label>
-              <input
-                type="text"
-                value={get('us_contact.contact_surnames')}
-                onChange={(e) => set('us_contact.contact_surnames', e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder='Enter surnames'
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Given Names</label>
-              <input
-                type="text"
-                value={get('us_contact.contact_given_names')}
-                onChange={(e) => set('us_contact.contact_given_names', e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder='Enter given names'
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Relationship To You</label>
-            <select
-              value={get('us_contact.contact_relationship')}
-              onChange={(e) => set('us_contact.contact_relationship', e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              <option value="">Select</option>
-              {relationships.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <h6 className="text-sm font-medium text-gray-900">Contact Organization</h6>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Organization Name</label>
-            <input
-              type="text"
-              value={get('us_contact.contact_organization')}
-              onChange={(e) => set('us_contact.contact_organization', e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder='Enter organization name'
-              />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Relationship To You</label>
-            <select
-              value={get('us_contact.contact_relationship')}
-              onChange={(e) => set('us_contact.contact_relationship', e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              <option value="">Select</option>
-              {relationships.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-        </div>
-      )}
+      {/* Relationship Field */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Relationship To You</label>
+        <select
+          value={get('us_contact.contact_relationship')}
+          onChange={(e) => set('us_contact.contact_relationship', e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        >
+          <option value="">Select</option>
+          {relationships.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+      </div>
 
       {/* Address and Phone Number of Point of Contact */}
       <div className="space-y-4">
