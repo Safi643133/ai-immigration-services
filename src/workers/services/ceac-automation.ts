@@ -6421,7 +6421,7 @@ export class CeacAutomationService {
     if (stateNA === true || state === 'N/A') {
       console.log('📝 Checking "Does Not Apply" checkbox for state')
       try {
-        const stateNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_cbxEDU_INST_ADDR_STATE_NA')
+        const stateNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_cbxEDUC_INST_ADDR_STATE_NA')
         await stateNAElement.waitFor({ state: 'visible', timeout: 10000 })
         await stateNAElement.check()
         console.log('✅ Checked "Does Not Apply" checkbox for state')
@@ -6434,7 +6434,7 @@ export class CeacAutomationService {
         // Add a longer delay to ensure the field is rendered
         await page.waitForTimeout(2000)
         
-        const stateElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxEDU_INST_ADDR_STATE')
+        const stateElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxEDUC_INST_ADDR_STATE')
         
         // Debug: Check if element exists
         const elementCount = await stateElement.count()
@@ -6470,7 +6470,7 @@ export class CeacAutomationService {
     if (postalNA === true || postalCode === 'N/A') {
       console.log('📝 Checking "Does Not Apply" checkbox for postal code')
       try {
-        const postalNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_cbxEDU_INST_POSTAL_CD_NA')
+        const postalNAElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_cbxEDUC_INST_POSTAL_CD_NA')
         await postalNAElement.waitFor({ state: 'visible', timeout: 10000 })
         await postalNAElement.check()
         console.log('✅ Checked "Does Not Apply" checkbox for postal code')
@@ -6483,7 +6483,7 @@ export class CeacAutomationService {
         // Add a longer delay to ensure the field is rendered
         await page.waitForTimeout(2000)
         
-        const postalElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxEDU_INST_POSTAL_CD')
+        const postalElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlPrevEduc_ctl00_tbxEDUC_INST_POSTAL_CD')
         
         // Debug: Check if element exists
         const elementCount = await postalElement.count()
