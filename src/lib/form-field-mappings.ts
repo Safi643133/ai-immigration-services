@@ -2266,6 +2266,799 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
            }
          }
        ]
+     },
+     {
+       sectionName: 'Additional Work/Education/Training Information - Step 12',
+       fields: [
+         // Clan or Tribe Question
+         {
+           fieldName: 'additional_occupation.belong_clan_tribe',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblCLAN_TRIBE_IND_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'additional_occupation.clan_tribe_name',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxCLAN_TRIBE_NAME',
+                 type: 'text',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Language Name
+         {
+           fieldName: 'additional_occupation.language_name',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlLANGUAGES_ctl00_tbxLANGUAGE_NAME',
+           type: 'text',
+           required: false
+         },
+         // Travel History Question
+         {
+           fieldName: 'additional_occupation.traveled_last_five_years',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblCOUNTRIES_VISITED_IND_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'additional_occupation.traveled_country_region',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlCountriesVisited_ctl00_ddlCOUNTRIES_VISITED',
+                 type: 'select',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Professional Organizations Question
+         {
+           fieldName: 'additional_occupation.belonged_professional_org',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblORGANIZATION_IND_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'additional_occupation.professional_org_name',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlORGANIZATIONS_ctl00_tbxORGANIZATION_NAME',
+                 type: 'text',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Specialized Skills Question
+         {
+           fieldName: 'additional_occupation.specialized_skills_training',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblSPECIALIZED_SKILLS_IND_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'additional_occupation.specialized_skills_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxSPECIALIZED_SKILLS_EXPL',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Military Service Question
+         {
+           fieldName: 'additional_occupation.served_military',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblMILITARY_SERVICE_IND_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'additional_occupation.military_country_region',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_CNTRY',
+                 type: 'select',
+                 required: true
+               },
+               {
+                 fieldName: 'additional_occupation.military_branch',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_BRANCH',
+                 type: 'text',
+                 required: true
+               },
+               {
+                 fieldName: 'additional_occupation.military_rank_position',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_RANK',
+                 type: 'text',
+                 required: true
+               },
+               {
+                 fieldName: 'additional_occupation.military_specialty',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_SPECIALTY',
+                 type: 'text',
+                 required: true
+               },
+               {
+                 fieldName: 'additional_occupation.military_service_from',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_FROMDay',
+                 type: 'date_split',
+                 required: true
+               },
+               {
+                 fieldName: 'additional_occupation.military_service_to',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_TODay',
+                 type: 'date_split',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Paramilitary Involvement Question
+         {
+           fieldName: 'additional_occupation.involved_paramilitary',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblINSURGENT_ORG_IND_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'additional_occupation.involved_paramilitary_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxINSURGENT_ORG_EXPL',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         }
+       ]
+     },
+     {
+       sectionName: 'Security and Background Information - Step 13',
+       fields: [
+         // Communicable Disease Question
+         {
+           fieldName: 'security_background1.communicable_disease',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblDisease_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background1.communicable_disease_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxDisease',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Mental or Physical Disorder Question
+         {
+           fieldName: 'security_background1.mental_or_physical_disorder',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblDisorder_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background1.mental_or_physical_disorder_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxDisorder',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Drug Abuser/Addict Question
+         {
+           fieldName: 'security_background1.drug_abuser_or_addict',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblDruguser_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background1.drug_abuser_or_addict_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxDruguser',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         }
+       ]
+     },
+     {
+       sectionName: 'Security and Background Information - Step 14',
+       fields: [
+         // Arrested or Convicted Question
+         {
+           fieldName: 'security_background2.arrested_or_convicted',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblArrested_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background2.arrested_or_convicted_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxArrested',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Controlled Substances Violation Question
+         {
+           fieldName: 'security_background2.controlled_substances_violation',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblControlledSubstances_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background2.controlled_substances_violation_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxControlledSubstances',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Prostitution or Vice Question
+         {
+           fieldName: 'security_background2.prostitution_or_vice',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblProstitution_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background2.prostitution_or_vice_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxProstitution',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Money Laundering Question
+         {
+           fieldName: 'security_background2.money_laundering',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblMoneyLaundering_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background2.money_laundering_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxMoneyLaundering',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Human Trafficking (Committed/Conspired) Question
+         {
+           fieldName: 'security_background2.human_trafficking_committed_or_conspired',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblHumanTrafficking_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background2.human_trafficking_committed_or_conspired_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxHumanTrafficking',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Human Trafficking (Aided/Abetted) Question
+         {
+           fieldName: 'security_background2.human_trafficking_aided_abetted',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblAssistedSevereTrafficking_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background2.human_trafficking_aided_abetted_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAssistedSevereTrafficking',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Human Trafficking (Family Benefited) Question
+         {
+           fieldName: 'security_background2.human_trafficking_family_benefited',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblHumanTraffickingRelated_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background2.human_trafficking_family_benefited_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxHumanTraffickingRelated',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         }
+       ]
+     },
+     {
+       sectionName: 'Security and Background Information - Step 15',
+       fields: [
+         // Espionage/Illegal Activity Question
+         {
+           fieldName: 'security_background3.espionage_or_illegal_activity',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblIllegalActivity_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.espionage_or_illegal_activity_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxIllegalActivity',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Terrorist Activities Question
+         {
+           fieldName: 'security_background3.terrorist_activities',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristActivity_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.terrorist_activities_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristActivity',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Support to Terrorists Question
+         {
+           fieldName: 'security_background3.support_to_terrorists',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristSupport_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.support_to_terrorists_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristSupport',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Member of Terrorist Org Question
+         {
+           fieldName: 'security_background3.member_of_terrorist_org',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristOrg_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.member_of_terrorist_org_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristOrg',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Family Engaged in Terrorism Question
+         {
+           fieldName: 'security_background3.family_engaged_in_terrorism_last_five_years',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristRel_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.family_engaged_in_terrorism_last_five_years_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristRel',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Genocide Involvement Question
+         {
+           fieldName: 'security_background3.genocide_involvement',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblGenocide_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.genocide_involvement_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxGenocide',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Torture Involvement Question
+         {
+           fieldName: 'security_background3.torture_involvement',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblTorture_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.torture_involvement_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxTorture',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Violence/Killings Involvement Question
+         {
+           fieldName: 'security_background3.violence_killings_involvement',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblExViolence_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.violence_killings_involvement_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxExViolence',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Child Soldiers Involvement Question
+         {
+           fieldName: 'security_background3.child_soldiers_involvement',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblChildSoldier_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.child_soldiers_involvement_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxChildSoldier',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Religious Freedom Violations Question
+         {
+           fieldName: 'security_background3.religious_freedom_violations',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblReligiousFreedom_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.religious_freedom_violations_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxReligiousFreedom',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Population Control Question
+         {
+           fieldName: 'security_background3.population_control_forced_abortion_sterilization',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblPopulationControls_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.population_control_forced_abortion_sterilization_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPopulationControls',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Coercive Transplantation Question
+         {
+           fieldName: 'security_background3.coercive_transplantation',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblTransplant_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background3.coercive_transplantation_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxTransplant',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         }
+       ]
+     },
+     {
+       sectionName: 'Security and Background Information - Step 16',
+       fields: [
+         // Immigration Benefit Fraud Question
+         {
+           fieldName: 'security_background4.immigration_benefit_by_fraud_or_misrepresentation',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblImmigrationFraud_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background4.immigration_benefit_by_fraud_or_misrepresentation_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxImmigrationFraud',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Removed or Deported Question
+         {
+           fieldName: 'security_background4.removed_or_deported_from_any_country',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblDeport_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background4.removed_or_deported_from_any_country_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxDeport_EXPL',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         }
+       ]
+     },
+     {
+       sectionName: 'Security and Background Information - Step 17',
+       fields: [
+         // Child Custody Question
+         {
+           fieldName: 'security_background5.withheld_child_custody',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblChildCustody_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background5.withheld_child_custody_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxChildCustody',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Voting Violation Question
+         {
+           fieldName: 'security_background5.voted_in_us_violation',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblVotingViolation_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background5.voted_in_us_violation_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxVotingViolation',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Renounced Citizenship Question
+         {
+           fieldName: 'security_background5.renounced_citizenship_to_avoid_tax',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblRenounceExp_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background5.renounced_citizenship_to_avoid_tax_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxRenounceExp',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         }
+       ]
      }
    ];
 
@@ -2395,6 +3188,66 @@ export function getStep11FieldMappings(): FormFieldMapping[] {
     section.sectionName === 'Previous Work/Education Information - Step 11'
   );
   return step11Section ? step11Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 12 field mappings
+ */
+export function getStep12FieldMappings(): FormFieldMapping[] {
+  const step12Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Additional Work/Education/Training Information - Step 12'
+  );
+  return step12Section ? step12Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 13 field mappings
+ */
+export function getStep13FieldMappings(): FormFieldMapping[] {
+  const step13Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Security and Background Information - Step 13'
+  );
+  return step13Section ? step13Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 14 field mappings
+ */
+export function getStep14FieldMappings(): FormFieldMapping[] {
+  const step14Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Security and Background Information - Step 14'
+  );
+  return step14Section ? step14Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 15 field mappings
+ */
+export function getStep15FieldMappings(): FormFieldMapping[] {
+  const step15Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Security and Background Information - Step 15'
+  );
+  return step15Section ? step15Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 16 field mappings
+ */
+export function getStep16FieldMappings(): FormFieldMapping[] {
+  const step16Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Security and Background Information - Step 16'
+  );
+  return step16Section ? step16Section.fields : [];
+}
+
+/**
+ * Helper function to get only Step 17 field mappings
+ */
+export function getStep17FieldMappings(): FormFieldMapping[] {
+  const step17Section = DS160_FORM_MAPPINGS.find(section => 
+    section.sectionName === 'Security and Background Information - Step 17'
+  );
+  return step17Section ? step17Section.fields : [];
 }
 
 /**

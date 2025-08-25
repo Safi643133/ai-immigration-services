@@ -3,11 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 import { getArtifactStorage } from '../../lib/artifact-storage'
 import { ProgressService } from '../../lib/progress/progress-service'
 import type { DS160FormData } from '../../lib/types/ceac'
-import { getFieldMapping, getStep1FieldMappings, getStep2FieldMappings, getStep3FieldMappings, getStep4FieldMappings, getStep5FieldMappings, getStep6FieldMappings, getStep7FieldMappings, getStep8FieldMappings, getStep9FieldMappings, getStep10FieldMappings, getStep11FieldMappings, validateFormData } from '../../lib/form-field-mappings'
+import {getStep1FieldMappings, getStep2FieldMappings, getStep3FieldMappings, getStep4FieldMappings, getStep5FieldMappings, getStep6FieldMappings, getStep7FieldMappings, getStep8FieldMappings, getStep9FieldMappings, getStep10FieldMappings, getStep11FieldMappings, getStep12FieldMappings, getStep13FieldMappings, getStep14FieldMappings, getStep15FieldMappings, getStep16FieldMappings, getStep17FieldMappings, validateFormData } from '../../lib/form-field-mappings'
 import { getConditionalFields } from '../../app/forms/ds160/conditionalFields'
 import { getCountryCode } from '../../lib/country-code-mapping'
-import { readFileSync, existsSync, mkdirSync } from 'fs'
-import { join, dirname, basename } from 'path'
+
 import { createHash } from 'crypto'
 
 /**
@@ -3779,6 +3778,36 @@ export class CeacAutomationService {
     
     // Fill Step 11 form
     await this.fillStep11Form(page, jobId, formData)
+    
+    // Fill Step 12 form
+    await this.fillStep12Form(page, jobId, formData)
+    
+    // Fill Step 13 form
+    await this.fillStep13Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 14
+    await this.clickStep13NextButton(page, jobId)
+    
+    // Fill Step 14 form
+    await this.fillStep14Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 15
+    await this.clickStep14NextButton(page, jobId)
+    
+    // Fill Step 15 form
+    await this.fillStep15Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 16
+    await this.clickStep15NextButton(page, jobId)
+    
+    // Fill Step 16 form
+    await this.fillStep16Form(page, jobId, formData)
+    
+    // Click Next button to proceed to Step 17
+    await this.clickStep16NextButton(page, jobId)
+    
+    // Fill Step 17 form
+    await this.fillStep17Form(page, jobId, formData)
   }
 
   /**
@@ -7816,6 +7845,2619 @@ export class CeacAutomationService {
     } catch (error) {
       console.warn('Failed to store security answer:', error)
     }
+  }
+
+  /**
+   * Fill Step 12 form (Additional Work/Education/Training Information)
+   */
+  private async fillStep12Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 12 form filling...')
+    
+    try {
+      // Update job progress
+      await this.progressService.updateStepProgress(jobId, 'form_step_12', 'running', 'Filling Step 12 - Additional Work/Education/Training Information...', 80)
+      
+      // Get Step 12 field mappings
+      const step12Mappings = getStep12FieldMappings()
+      console.log(`📝 Found ${step12Mappings.length} Step 12 fields to fill`)
+      
+      // Fill each field based on mapping
+      for (const fieldMapping of step12Mappings) {
+        try {
+          const fieldValue = formData[fieldMapping.fieldName]
+          
+          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+            console.log(`⏭️ Skipping empty field: ${fieldMapping.fieldName}`)
+            continue
+          }
+          
+          console.log(`📝 Filling field: ${fieldMapping.fieldName} = ${fieldValue}`)
+          
+          const element = page.locator(fieldMapping.selector)
+          await element.waitFor({ state: 'visible', timeout: 15000 })
+          
+          switch (fieldMapping.type) {
+            case 'radio':
+              if (fieldValue === 'Yes' || fieldValue === 'Y') {
+                await element.check()
+                console.log(`✅ Selected radio button: ${fieldMapping.fieldName}`)
+                
+                // Wait for conditional sections to appear after radio selection
+                console.log('⏳ Waiting for conditional sections to appear...')
+                await page.waitForTimeout(2000)
+              } else {
+                // For "No" selection, find the corresponding "No" radio button
+                const noSelector = fieldMapping.selector.replace('_0', '_1')
+                const noElement = page.locator(noSelector)
+                await noElement.waitFor({ state: 'visible', timeout: 15000 })
+                await noElement.check()
+                console.log(`✅ Selected "No" radio button: ${fieldMapping.fieldName}`)
+                
+                // Wait for conditional sections to appear after radio selection
+                console.log('⏳ Waiting for conditional sections to appear...')
+                await page.waitForTimeout(2000)
+              }
+              break
+              
+            case 'text':
+              await element.fill(fieldValue.toString())
+              console.log(`✅ Filled text field: ${fieldMapping.fieldName}`)
+              break
+              
+            case 'select':
+              // Use value mapping if available, otherwise use the original value
+              let selectValue = fieldValue.toString()
+              console.log(`🔍 STEP12 - Original value: ${selectValue}`)
+              console.log(`🔍 STEP12 - Available mappings:`, fieldMapping.valueMapping ? Object.keys(fieldMapping.valueMapping) : 'None')
+              
+              if (fieldMapping.valueMapping && fieldMapping.valueMapping[selectValue]) {
+                selectValue = fieldMapping.valueMapping[selectValue]
+                console.log(`🔍 STEP12 - Mapped to: ${selectValue}`)
+              } else if (fieldMapping.valueMapping) {
+                // Try case-insensitive matching
+                const upperValue = selectValue.toUpperCase()
+                if (fieldMapping.valueMapping[upperValue]) {
+                  selectValue = fieldMapping.valueMapping[upperValue]
+                  console.log(`🔍 STEP12 - Case-insensitive mapped to: ${selectValue}`)
+                } else {
+                  console.log(`⚠️ STEP12 - No mapping found for: ${selectValue}`)
+                }
+              }
+              
+              console.log(`🔍 STEP12 - Final select value: ${selectValue}`)
+              console.log(`🔍 Selecting dropdown: ${fieldMapping.fieldName} with value: ${selectValue}`)
+              
+              try {
+                await element.selectOption({ value: selectValue })
+                console.log(`✅ Successfully selected by value: ${selectValue}`)
+                
+                // Wait for postback if the dropdown triggers one
+                try {
+                  await page.waitForLoadState('networkidle', { timeout: 5000 })
+                  console.log(`✅ Postback completed after selection`)
+                } catch (timeoutError) {
+                  console.log(`ℹ️ No postback detected or timeout - continuing`)
+                }
+              } catch (error) {
+                console.log(`⚠️ Could not select by value, trying by label: ${fieldValue}`)
+                await element.selectOption({ label: fieldValue.toString() })
+                console.log(`✅ Successfully selected by label: ${fieldValue}`)
+              }
+              break
+              
+            default:
+              console.warn(`⚠️ Unknown field type: ${fieldMapping.type} for ${fieldMapping.fieldName}`)
+          }
+          
+          // Small delay between fields
+          await page.waitForTimeout(200)
+          
+        } catch (error) {
+          console.error(`❌ Error filling field ${fieldMapping.fieldName}:`, error)
+          throw error
+        }
+      }
+      
+      // Handle conditional fields based on radio selections
+      await this.handleStep12ConditionalFields(page, jobId, formData)
+      
+      console.log('✅ Step 12 form filling completed successfully')
+      
+      // Click Next button to proceed to Step 13
+      await this.clickStep12NextButton(page, jobId)
+      
+    } catch (error) {
+      console.error('❌ Error in Step 12 form filling:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Handle conditional fields for Step 12 based on radio selections
+   */
+  private async handleStep12ConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Handling Step 12 conditional fields...')
+    
+    const belongClan = formData['additional_occupation.belong_clan_tribe']
+    const traveled = formData['additional_occupation.traveled_last_five_years']
+    const belongedOrg = formData['additional_occupation.belonged_professional_org']
+    const specializedSkills = formData['additional_occupation.specialized_skills_training']
+    const servedMilitary = formData['additional_occupation.served_military']
+    const involvedParamilitary = formData['additional_occupation.involved_paramilitary']
+    
+    console.log(`📝 Clan: ${belongClan}, Traveled: ${traveled}, Org: ${belongedOrg}, Skills: ${specializedSkills}, Military: ${servedMilitary}, Paramilitary: ${involvedParamilitary}`)
+    
+    // Handle clan/tribe conditional fields
+    if (belongClan === 'Yes' || belongClan === 'Y') {
+      console.log('📝 Handling clan/tribe conditional fields...')
+      await this.fillClanTribeConditionalFields(page, jobId, formData)
+    }
+    
+    // Handle travel history conditional fields
+    if (traveled === 'Yes' || traveled === 'Y') {
+      console.log('📝 Handling travel history conditional fields...')
+      await this.fillTravelHistoryConditionalFields(page, jobId, formData)
+    }
+    
+    // Handle professional organizations conditional fields
+    if (belongedOrg === 'Yes' || belongedOrg === 'Y') {
+      console.log('📝 Handling professional organizations conditional fields...')
+      // Wait for conditional field to appear after radio selection
+      await page.waitForTimeout(2000)
+      await this.fillProfessionalOrganizationsConditionalFields(page, jobId, formData)
+    }
+    
+    // Handle specialized skills conditional fields
+    if (specializedSkills === 'Yes' || specializedSkills === 'Y') {
+      console.log('📝 Handling specialized skills conditional fields...')
+      // Wait for conditional field to appear after radio selection
+      await page.waitForTimeout(2000)
+      await this.fillSpecializedSkillsConditionalFields(page, jobId, formData)
+    }
+    
+    // Handle military service conditional fields
+    if (servedMilitary === 'Yes' || servedMilitary === 'Y') {
+      console.log('📝 Handling military service conditional fields...')
+      // Wait for conditional field to appear after radio selection
+      await page.waitForTimeout(2000)
+      await this.fillMilitaryServiceConditionalFields(page, jobId, formData)
+    }
+    
+    // Handle paramilitary involvement conditional fields
+    if (involvedParamilitary === 'Yes' || involvedParamilitary === 'Y') {
+      console.log('📝 Handling paramilitary involvement conditional fields...')
+      // Wait for conditional field to appear after radio selection
+      await page.waitForTimeout(2000)
+      await this.fillParamilitaryInvolvementConditionalFields(page, jobId, formData)
+    }
+    
+    console.log('✅ Step 12 conditional fields handling completed')
+  }
+
+  /**
+   * Fill Step 13 form - Security and Background Information
+   */
+  private async fillStep13Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 13 - Security and Background Information...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_13',
+      'running',
+      'Filling Security and Background Information',
+      65
+    )
+    
+    // Fill communicable disease question
+    await this.fillCommunicableDiseaseQuestion(page, jobId, formData)
+    
+    // Fill mental/physical disorder question
+    await this.fillMentalPhysicalDisorderQuestion(page, jobId, formData)
+    
+    // Fill drug abuser/addict question
+    await this.fillDrugAbuserAddictQuestion(page, jobId, formData)
+    
+    console.log('✅ Step 13 form filling completed')
+  }
+
+  /**
+   * Fill communicable disease question
+   */
+  private async fillCommunicableDiseaseQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const diseaseValue = formData['security_background1.communicable_disease']
+    console.log(`📝 Filling communicable disease question: ${diseaseValue}`)
+    
+    if (diseaseValue === 'Yes' || diseaseValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDisease_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for communicable disease')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background1.communicable_disease_explain']
+      if (explain) {
+        console.log(`📝 Filling communicable disease explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxDisease')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled communicable disease explanation')
+      }
+    } else if (diseaseValue === 'No' || diseaseValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDisease_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for communicable disease')
+    }
+  }
+
+  /**
+   * Fill mental/physical disorder question
+   */
+  private async fillMentalPhysicalDisorderQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const disorderValue = formData['security_background1.mental_or_physical_disorder']
+    console.log(`📝 Filling mental/physical disorder question: ${disorderValue}`)
+    
+    if (disorderValue === 'Yes' || disorderValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDisorder_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for mental/physical disorder')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background1.mental_or_physical_disorder_explain']
+      if (explain) {
+        console.log(`📝 Filling mental/physical disorder explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxDisorder')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled mental/physical disorder explanation')
+      }
+    } else if (disorderValue === 'No' || disorderValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDisorder_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for mental/physical disorder')
+    }
+  }
+
+  /**
+   * Fill drug abuser/addict question
+   */
+  private async fillDrugAbuserAddictQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const drugValue = formData['security_background1.drug_abuser_or_addict']
+    console.log(`📝 Filling drug abuser/addict question: ${drugValue}`)
+    
+    if (drugValue === 'Yes' || drugValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDruguser_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for drug abuser/addict')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background1.drug_abuser_or_addict_explain']
+      if (explain) {
+        console.log(`📝 Filling drug abuser/addict explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxDruguser')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled drug abuser/addict explanation')
+      }
+    } else if (drugValue === 'No' || drugValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDruguser_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for drug abuser/addict')
+    }
+  }
+
+  /**
+   * Click Next button after Step 13
+   */
+  private async clickStep13NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button after Step 13...')
+    
+    // Look for the Next button
+    const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+    
+    if (await nextButton.isVisible({ timeout: 10000 })) {
+      await nextButton.click()
+      console.log('✅ Step 13 Next button clicked')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle')
+      
+      // Update progress
+      await this.progressService.updateStepProgress(
+        jobId,
+        'form_step_14',
+        'running',
+        'Successfully navigated to Step 14',
+        70
+      )
+      
+      // Take screenshot after navigation
+      await this.takeScreenshot(page, jobId, 'after-step13-next-button-click')
+      
+      console.log('✅ Successfully navigated to Step 14')
+    } else {
+      throw new Error('Step 13 Next button not found')
+    }
+  }
+
+  /**
+   * Fill Step 14 form - Security and Background Information (Part 2)
+   */
+  private async fillStep14Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 14 - Security and Background Information (Part 2)...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_14',
+      'running',
+      'Filling Security and Background Information (Part 2)',
+      75
+    )
+    
+    // Fill arrested or convicted question
+    await this.fillArrestedOrConvictedQuestion(page, jobId, formData)
+    
+    // Fill controlled substances violation question
+    await this.fillControlledSubstancesViolationQuestion(page, jobId, formData)
+    
+    // Fill prostitution or vice question
+    await this.fillProstitutionOrViceQuestion(page, jobId, formData)
+    
+    // Fill money laundering question
+    await this.fillMoneyLaunderingQuestion(page, jobId, formData)
+    
+    // Fill human trafficking (committed/conspired) question
+    await this.fillHumanTraffickingCommittedQuestion(page, jobId, formData)
+    
+    // Fill human trafficking (aided/abetted) question
+    await this.fillHumanTraffickingAidedQuestion(page, jobId, formData)
+    
+    // Fill human trafficking (family benefited) question
+    await this.fillHumanTraffickingFamilyBenefitedQuestion(page, jobId, formData)
+    
+    console.log('✅ Step 14 form filling completed')
+  }
+
+  /**
+   * Fill arrested or convicted question
+   */
+  private async fillArrestedOrConvictedQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const arrestedValue = formData['security_background2.arrested_or_convicted']
+    console.log(`📝 Filling arrested or convicted question: ${arrestedValue}`)
+    
+    if (arrestedValue === 'Yes' || arrestedValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblArrested_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for arrested or convicted')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background2.arrested_or_convicted_explain']
+      if (explain) {
+        console.log(`📝 Filling arrested or convicted explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxArrested')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled arrested or convicted explanation')
+      }
+    } else if (arrestedValue === 'No' || arrestedValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblArrested_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for arrested or convicted')
+    }
+  }
+
+  /**
+   * Fill controlled substances violation question
+   */
+  private async fillControlledSubstancesViolationQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const substancesValue = formData['security_background2.controlled_substances_violation']
+    console.log(`📝 Filling controlled substances violation question: ${substancesValue}`)
+    
+    if (substancesValue === 'Yes' || substancesValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblControlledSubstances_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for controlled substances violation')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background2.controlled_substances_violation_explain']
+      if (explain) {
+        console.log(`📝 Filling controlled substances violation explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxControlledSubstances')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled controlled substances violation explanation')
+      }
+    } else if (substancesValue === 'No' || substancesValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblControlledSubstances_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for controlled substances violation')
+    }
+  }
+
+  /**
+   * Fill prostitution or vice question
+   */
+  private async fillProstitutionOrViceQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const prostitutionValue = formData['security_background2.prostitution_or_vice']
+    console.log(`📝 Filling prostitution or vice question: ${prostitutionValue}`)
+    
+    if (prostitutionValue === 'Yes' || prostitutionValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblProstitution_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for prostitution or vice')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background2.prostitution_or_vice_explain']
+      if (explain) {
+        console.log(`📝 Filling prostitution or vice explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxProstitution')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled prostitution or vice explanation')
+      }
+    } else if (prostitutionValue === 'No' || prostitutionValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblProstitution_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for prostitution or vice')
+    }
+  }
+
+  /**
+   * Fill money laundering question
+   */
+  private async fillMoneyLaunderingQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const launderingValue = formData['security_background2.money_laundering']
+    console.log(`📝 Filling money laundering question: ${launderingValue}`)
+    
+    if (launderingValue === 'Yes' || launderingValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblMoneyLaundering_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for money laundering')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background2.money_laundering_explain']
+      if (explain) {
+        console.log(`📝 Filling money laundering explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxMoneyLaundering')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled money laundering explanation')
+      }
+    } else if (launderingValue === 'No' || launderingValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblMoneyLaundering_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for money laundering')
+    }
+  }
+
+  /**
+   * Fill human trafficking (committed/conspired) question
+   */
+  private async fillHumanTraffickingCommittedQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const traffickingValue = formData['security_background2.human_trafficking_committed_or_conspired']
+    console.log(`📝 Filling human trafficking (committed/conspired) question: ${traffickingValue}`)
+    
+    if (traffickingValue === 'Yes' || traffickingValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblHumanTrafficking_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for human trafficking (committed/conspired)')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background2.human_trafficking_committed_or_conspired_explain']
+      if (explain) {
+        console.log(`📝 Filling human trafficking (committed/conspired) explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxHumanTrafficking')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled human trafficking (committed/conspired) explanation')
+      }
+    } else if (traffickingValue === 'No' || traffickingValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblHumanTrafficking_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for human trafficking (committed/conspired)')
+    }
+  }
+
+  /**
+   * Fill human trafficking (aided/abetted) question
+   */
+  private async fillHumanTraffickingAidedQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const aidedValue = formData['security_background2.human_trafficking_aided_abetted']
+    console.log(`📝 Filling human trafficking (aided/abetted) question: ${aidedValue}`)
+    
+    if (aidedValue === 'Yes' || aidedValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblAssistedSevereTrafficking_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for human trafficking (aided/abetted)')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background2.human_trafficking_aided_abetted_explain']
+      if (explain) {
+        console.log(`📝 Filling human trafficking (aided/abetted) explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxAssistedSevereTrafficking')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled human trafficking (aided/abetted) explanation')
+      }
+    } else if (aidedValue === 'No' || aidedValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblAssistedSevereTrafficking_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for human trafficking (aided/abetted)')
+    }
+  }
+
+  /**
+   * Fill human trafficking (family benefited) question
+   */
+  private async fillHumanTraffickingFamilyBenefitedQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const familyValue = formData['security_background2.human_trafficking_family_benefited']
+    console.log(`📝 Filling human trafficking (family benefited) question: ${familyValue}`)
+    
+    if (familyValue === 'Yes' || familyValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblHumanTraffickingRelated_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for human trafficking (family benefited)')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background2.human_trafficking_family_benefited_explain']
+      if (explain) {
+        console.log(`📝 Filling human trafficking (family benefited) explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxHumanTraffickingRelated')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled human trafficking (family benefited) explanation')
+      }
+    } else if (familyValue === 'No' || familyValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblHumanTraffickingRelated_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for human trafficking (family benefited)')
+    }
+  }
+
+  /**
+   * Click Next button after Step 14
+   */
+  private async clickStep14NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button after Step 14...')
+    
+    // Look for the Next button
+    const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+    
+    if (await nextButton.isVisible({ timeout: 10000 })) {
+      await nextButton.click()
+      console.log('✅ Step 14 Next button clicked')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle')
+      
+      // Update progress
+      await this.progressService.updateStepProgress(
+        jobId,
+        'form_step_15',
+        'running',
+        'Successfully navigated to Step 15',
+        80
+      )
+      
+      // Take screenshot after navigation
+      await this.takeScreenshot(page, jobId, 'after-step14-next-button-click')
+      
+      console.log('✅ Successfully navigated to Step 15')
+    } else {
+      throw new Error('Step 14 Next button not found')
+    }
+  }
+
+  /**
+   * Fill Step 15 form - Security and Background Information (Part 3)
+   */
+  private async fillStep15Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 15 - Security and Background Information (Part 3)...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_15',
+      'running',
+      'Filling Security and Background Information (Part 3)',
+      85
+    )
+    
+    // Fill espionage/illegal activity question
+    await this.fillEspionageOrIllegalActivityQuestion(page, jobId, formData)
+    
+    // Fill terrorist activities question
+    await this.fillTerroristActivitiesQuestion(page, jobId, formData)
+    
+    // Fill support to terrorists question
+    await this.fillSupportToTerroristsQuestion(page, jobId, formData)
+    
+    // Fill member of terrorist org question
+    await this.fillMemberOfTerroristOrgQuestion(page, jobId, formData)
+    
+    // Fill family engaged in terrorism question
+    await this.fillFamilyEngagedInTerrorismQuestion(page, jobId, formData)
+    
+    // Fill genocide involvement question
+    await this.fillGenocideInvolvementQuestion(page, jobId, formData)
+    
+    // Fill torture involvement question
+    await this.fillTortureInvolvementQuestion(page, jobId, formData)
+    
+    // Fill violence/killings involvement question
+    await this.fillViolenceKillingsInvolvementQuestion(page, jobId, formData)
+    
+    // Fill child soldiers involvement question
+    await this.fillChildSoldiersInvolvementQuestion(page, jobId, formData)
+    
+    // Fill religious freedom violations question
+    await this.fillReligiousFreedomViolationsQuestion(page, jobId, formData)
+    
+    // Fill population control question
+    await this.fillPopulationControlQuestion(page, jobId, formData)
+    
+    // Fill coercive transplantation question
+    await this.fillCoerciveTransplantationQuestion(page, jobId, formData)
+    
+    console.log('✅ Step 15 form filling completed')
+  }
+
+  /**
+   * Fill espionage/illegal activity question
+   */
+  private async fillEspionageOrIllegalActivityQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const espionageValue = formData['security_background3.espionage_or_illegal_activity']
+    console.log(`📝 Filling espionage/illegal activity question: ${espionageValue}`)
+    
+    if (espionageValue === 'Yes' || espionageValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblIllegalActivity_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for espionage/illegal activity')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.espionage_or_illegal_activity_explain']
+      if (explain) {
+        console.log(`📝 Filling espionage/illegal activity explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxIllegalActivity')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled espionage/illegal activity explanation')
+      }
+    } else if (espionageValue === 'No' || espionageValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblIllegalActivity_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for espionage/illegal activity')
+    }
+  }
+
+  /**
+   * Fill terrorist activities question
+   */
+  private async fillTerroristActivitiesQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const terroristValue = formData['security_background3.terrorist_activities']
+    console.log(`📝 Filling terrorist activities question: ${terroristValue}`)
+    
+    if (terroristValue === 'Yes' || terroristValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristActivity_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for terrorist activities')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.terrorist_activities_explain']
+      if (explain) {
+        console.log(`📝 Filling terrorist activities explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristActivity')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled terrorist activities explanation')
+      }
+    } else if (terroristValue === 'No' || terroristValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristActivity_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for terrorist activities')
+    }
+  }
+
+  /**
+   * Fill support to terrorists question
+   */
+  private async fillSupportToTerroristsQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const supportValue = formData['security_background3.support_to_terrorists']
+    console.log(`📝 Filling support to terrorists question: ${supportValue}`)
+    
+    if (supportValue === 'Yes' || supportValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristSupport_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for support to terrorists')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.support_to_terrorists_explain']
+      if (explain) {
+        console.log(`📝 Filling support to terrorists explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristSupport')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled support to terrorists explanation')
+      }
+    } else if (supportValue === 'No' || supportValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristSupport_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for support to terrorists')
+    }
+  }
+
+  /**
+   * Fill member of terrorist org question
+   */
+  private async fillMemberOfTerroristOrgQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const memberValue = formData['security_background3.member_of_terrorist_org']
+    console.log(`📝 Filling member of terrorist org question: ${memberValue}`)
+    
+    if (memberValue === 'Yes' || memberValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristOrg_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for member of terrorist org')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.member_of_terrorist_org_explain']
+      if (explain) {
+        console.log(`📝 Filling member of terrorist org explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristOrg')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled member of terrorist org explanation')
+      }
+    } else if (memberValue === 'No' || memberValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristOrg_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for member of terrorist org')
+    }
+  }
+
+  /**
+   * Fill family engaged in terrorism question
+   */
+  private async fillFamilyEngagedInTerrorismQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const familyValue = formData['security_background3.family_engaged_in_terrorism_last_five_years']
+    console.log(`📝 Filling family engaged in terrorism question: ${familyValue}`)
+    
+    if (familyValue === 'Yes' || familyValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristRel_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for family engaged in terrorism')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.family_engaged_in_terrorism_last_five_years_explain']
+      if (explain) {
+        console.log(`📝 Filling family engaged in terrorism explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxTerroristRel')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled family engaged in terrorism explanation')
+      }
+    } else if (familyValue === 'No' || familyValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTerroristRel_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for family engaged in terrorism')
+    }
+  }
+
+  /**
+   * Fill genocide involvement question
+   */
+  private async fillGenocideInvolvementQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const genocideValue = formData['security_background3.genocide_involvement']
+    console.log(`📝 Filling genocide involvement question: ${genocideValue}`)
+    
+    if (genocideValue === 'Yes' || genocideValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblGenocide_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for genocide involvement')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.genocide_involvement_explain']
+      if (explain) {
+        console.log(`📝 Filling genocide involvement explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxGenocide')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled genocide involvement explanation')
+      }
+    } else if (genocideValue === 'No' || genocideValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblGenocide_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for genocide involvement')
+    }
+  }
+
+  /**
+   * Fill torture involvement question
+   */
+  private async fillTortureInvolvementQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const tortureValue = formData['security_background3.torture_involvement']
+    console.log(`📝 Filling torture involvement question: ${tortureValue}`)
+    
+    if (tortureValue === 'Yes' || tortureValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTorture_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for torture involvement')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.torture_involvement_explain']
+      if (explain) {
+        console.log(`📝 Filling torture involvement explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxTorture')
+        await explainElement.waitFor({ state: 'visible', timeout: 15015 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled torture involvement explanation')
+      }
+    } else if (tortureValue === 'No' || tortureValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTorture_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for torture involvement')
+    }
+  }
+
+  /**
+   * Fill violence/killings involvement question
+   */
+  private async fillViolenceKillingsInvolvementQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const violenceValue = formData['security_background3.violence_killings_involvement']
+    console.log(`📝 Filling violence/killings involvement question: ${violenceValue}`)
+    
+    if (violenceValue === 'Yes' || violenceValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblExViolence_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for violence/killings involvement')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.violence_killings_involvement_explain']
+      if (explain) {
+        console.log(`📝 Filling violence/killings involvement explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxExViolence')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled violence/killings involvement explanation')
+      }
+    } else if (violenceValue === 'No' || violenceValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblExViolence_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for violence/killings involvement')
+    }
+  }
+
+  /**
+   * Fill child soldiers involvement question
+   */
+  private async fillChildSoldiersInvolvementQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const childValue = formData['security_background3.child_soldiers_involvement']
+    console.log(`📝 Filling child soldiers involvement question: ${childValue}`)
+    
+    if (childValue === 'Yes' || childValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblChildSoldier_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for child soldiers involvement')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.child_soldiers_involvement_explain']
+      if (explain) {
+        console.log(`📝 Filling child soldiers involvement explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxChildSoldier')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled child soldiers involvement explanation')
+      }
+    } else if (childValue === 'No' || childValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblChildSoldier_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for child soldiers involvement')
+    }
+  }
+
+  /**
+   * Fill religious freedom violations question
+   */
+  private async fillReligiousFreedomViolationsQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const religiousValue = formData['security_background3.religious_freedom_violations']
+    console.log(`📝 Filling religious freedom violations question: ${religiousValue}`)
+    
+    if (religiousValue === 'Yes' || religiousValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblReligiousFreedom_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for religious freedom violations')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.religious_freedom_violations_explain']
+      if (explain) {
+        console.log(`📝 Filling religious freedom violations explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxReligiousFreedom')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled religious freedom violations explanation')
+      }
+    } else if (religiousValue === 'No' || religiousValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblReligiousFreedom_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for religious freedom violations')
+    }
+  }
+
+  /**
+   * Fill population control question
+   */
+  private async fillPopulationControlQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const populationValue = formData['security_background3.population_control_forced_abortion_sterilization']
+    console.log(`📝 Filling population control question: ${populationValue}`)
+    
+    if (populationValue === 'Yes' || populationValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblPopulationControls_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for population control')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.population_control_forced_abortion_sterilization_explain']
+      if (explain) {
+        console.log(`📝 Filling population control explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxPopulationControls')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled population control explanation')
+      }
+    } else if (populationValue === 'No' || populationValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblPopulationControls_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for population control')
+    }
+  }
+
+  /**
+   * Fill coercive transplantation question
+   */
+  private async fillCoerciveTransplantationQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const transplantValue = formData['security_background3.coercive_transplantation']
+    console.log(`📝 Filling coercive transplantation question: ${transplantValue}`)
+    
+    if (transplantValue === 'Yes' || transplantValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTransplant_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for coercive transplantation')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background3.coercive_transplantation_explain']
+      if (explain) {
+        console.log(`📝 Filling coercive transplantation explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxTransplant')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled coercive transplantation explanation')
+      }
+    } else if (transplantValue === 'No' || transplantValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblTransplant_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for coercive transplantation')
+    }
+  }
+
+  /**
+   * Click Next button after Step 15
+   */
+  private async clickStep15NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button after Step 15...')
+    
+    // Look for the Next button
+    const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+    
+    if (await nextButton.isVisible({ timeout: 10000 })) {
+      await nextButton.click()
+      console.log('✅ Step 15 Next button clicked')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle')
+      
+      // Update progress
+      await this.progressService.updateStepProgress(
+        jobId,
+        'form_step_16',
+        'running',
+        'Successfully navigated to Step 16',
+        90
+      )
+      
+      // Take screenshot after navigation
+      await this.takeScreenshot(page, jobId, 'after-step15-next-button-click')
+      
+      console.log('✅ Successfully navigated to Step 16')
+    } else {
+      throw new Error('Step 15 Next button not found')
+    }
+  }
+
+  /**
+   * Fill Step 16 form - Security and Background Information (Part 4)
+   */
+  private async fillStep16Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 16 - Security and Background Information (Part 4)...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_16',
+      'running',
+      'Filling Security and Background Information (Part 4)',
+      92
+    )
+    
+    // Fill immigration benefit fraud question (only question that exists on official page)
+    await this.fillImmigrationBenefitFraudQuestion(page, jobId, formData)
+    
+    // Fill removed or deported question (only question that exists on official page)
+    await this.fillRemovedOrDeportedQuestion(page, jobId, formData)
+    
+    console.log('✅ Step 16 form filling completed')
+  }
+
+
+
+  /**
+   * Fill immigration benefit fraud question
+   */
+  private async fillImmigrationBenefitFraudQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const fraudValue = formData['security_background4.immigration_benefit_by_fraud_or_misrepresentation']
+    console.log(`📝 Filling immigration benefit fraud question: ${fraudValue}`)
+    
+    if (fraudValue === 'Yes' || fraudValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblImmigrationFraud_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for immigration benefit fraud')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background4.immigration_benefit_by_fraud_or_misrepresentation_explain']
+      if (explain) {
+        console.log(`📝 Filling immigration benefit fraud explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxImmigrationFraud')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled immigration benefit fraud explanation')
+      }
+    } else if (fraudValue === 'No' || fraudValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblImmigrationFraud_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for immigration benefit fraud')
+    }
+  }
+
+
+
+  /**
+   * Fill removed or deported question
+   */
+  private async fillRemovedOrDeportedQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    const deportValue = formData['security_background4.removed_or_deported_from_any_country']
+    console.log(`📝 Filling removed or deported question: ${deportValue}`)
+    
+    if (deportValue === 'Yes' || deportValue === 'Y') {
+      // Select Yes
+      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDeport_0')
+      await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yesElement.check()
+      console.log('✅ Selected "Yes" for removed or deported')
+      
+      // Wait for conditional field to appear
+      await page.waitForTimeout(2000)
+      
+      // Fill explanation
+      const explain = formData['security_background4.removed_or_deported_from_any_country_explain']
+      if (explain) {
+        console.log(`📝 Filling removed or deported explanation: ${explain}`)
+        const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxDeport_EXPL')
+        await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+        await explainElement.fill(explain.toString())
+        console.log('✅ Filled removed or deported explanation')
+      }
+    } else if (deportValue === 'No' || deportValue === 'N') {
+      // Select No
+      const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDeport_1')
+      await noElement.waitFor({ state: 'visible', timeout: 15000 })
+      await noElement.check()
+      console.log('✅ Selected "No" for removed or deported')
+    }
+  }
+
+
+
+  /**
+   * Fill clan/tribe conditional fields
+   */
+  private async fillClanTribeConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling clan/tribe conditional fields...')
+    
+    const clanName = formData['additional_occupation.clan_tribe_name']
+    if (clanName) {
+      console.log(`📝 Filling clan/tribe name: ${clanName}`)
+      const nameElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxCLAN_TRIBE_NAME')
+      await nameElement.waitFor({ state: 'visible', timeout: 15000 })
+      await nameElement.fill(clanName.toString())
+      console.log('✅ Filled clan/tribe name')
+    }
+  }
+
+  /**
+   * Fill travel history conditional fields
+   */
+  private async fillTravelHistoryConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling travel history conditional fields...')
+    
+    const country = formData['additional_occupation.traveled_country_region']
+    if (country) {
+      console.log(`📝 Filling traveled country/region: ${country}`)
+      const countryElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlCountriesVisited_ctl00_ddlCOUNTRIES_VISITED')
+      await countryElement.waitFor({ state: 'visible', timeout: 15000 })
+      
+      // Map country names to CEAC codes (comprehensive list from the dropdown)
+      const countryCodeMap: { [key: string]: string } = {
+        'AFGHANISTAN': 'AFGH',
+        'ALBANIA': 'ALB',
+        'ALGERIA': 'ALGR',
+        'AMERICAN SAMOA': 'ASMO',
+        'ANDORRA': 'ANDO',
+        'ANGOLA': 'ANGL',
+        'ANGUILLA': 'ANGU',
+        'ANTIGUA AND BARBUDA': 'ANTI',
+        'ARGENTINA': 'ARG',
+        'ARMENIA': 'ARM',
+        'ARUBA': 'ARB',
+        'AUSTRALIA': 'ASTL',
+        'AUSTRIA': 'AUST',
+        'AZERBAIJAN': 'AZR',
+        'BAHAMAS': 'BAMA',
+        'BAHRAIN': 'BAHR',
+        'BANGLADESH': 'BANG',
+        'BARBADOS': 'BRDO',
+        'BELARUS': 'BYS',
+        'BELGIUM': 'BELG',
+        'BELIZE': 'BLZ',
+        'BENIN': 'BENN',
+        'BERMUDA': 'BERM',
+        'BHUTAN': 'BHU',
+        'BOLIVIA': 'BOL',
+        'BONAIRE': 'BON',
+        'BOSNIA-HERZEGOVINA': 'BIH',
+        'BOTSWANA': 'BOT',
+        'BRAZIL': 'BRZL',
+        'BRITISH INDIAN OCEAN TERRITORY': 'IOT',
+        'BRUNEI': 'BRNI',
+        'BULGARIA': 'BULG',
+        'BURKINA FASO': 'BURK',
+        'BURMA': 'BURM',
+        'BURUNDI': 'BRND',
+        'CAMBODIA': 'CBDA',
+        'CAMEROON': 'CMRN',
+        'CANADA': 'CAN',
+        'CABO VERDE': 'CAVI',
+        'CAYMAN ISLANDS': 'CAYI',
+        'CENTRAL AFRICAN REPUBLIC': 'CAFR',
+        'CHAD': 'CHAD',
+        'CHILE': 'CHIL',
+        'CHINA': 'CHIN',
+        'CHRISTMAS ISLAND': 'CHRI',
+        'COCOS KEELING ISLANDS': 'COCI',
+        'COLOMBIA': 'COL',
+        'COMOROS': 'COMO',
+        'CONGO, DEMOCRATIC REPUBLIC OF THE': 'COD',
+        'CONGO, REPUBLIC OF THE': 'CONB',
+        'COOK ISLANDS': 'CKIS',
+        'COSTA RICA': 'CSTR',
+        'COTE D`IVOIRE': 'IVCO',
+        'CROATIA': 'HRV',
+        'CUBA': 'CUBA',
+        'CURACAO': 'CUR',
+        'CYPRUS': 'CYPR',
+        'CZECH REPUBLIC': 'CZEC',
+        'DENMARK': 'DEN',
+        'DJIBOUTI': 'DJI',
+        'DOMINICA': 'DOMN',
+        'DOMINICAN REPUBLIC': 'DOMR',
+        'ECUADOR': 'ECUA',
+        'EGYPT': 'EGYP',
+        'EL SALVADOR': 'ELSL',
+        'EQUATORIAL GUINEA': 'EGN',
+        'ERITREA': 'ERI',
+        'ESTONIA': 'EST',
+        'ESWATINI': 'SZLD',
+        'ETHIOPIA': 'ETH',
+        'FALKLAND ISLANDS': 'FKLI',
+        'FAROE ISLANDS': 'FRO',
+        'FIJI': 'FIJI',
+        'FINLAND': 'FIN',
+        'FRANCE': 'FRAN',
+        'FRENCH GUIANA': 'FRGN',
+        'FRENCH POLYNESIA': 'FPOL',
+        'FRENCH SOUTHERN AND ANTARCTIC TERRITORIES': 'FSAT',
+        'GABON': 'GABN',
+        'GAMBIA, THE': 'GAM',
+        'GAZA STRIP': 'XGZ',
+        'GEORGIA': 'GEO',
+        'GERMANY': 'GER',
+        'GHANA': 'GHAN',
+        'GIBRALTAR': 'GIB',
+        'GREECE': 'GRC',
+        'GREENLAND': 'GRLD',
+        'GRENADA': 'GREN',
+        'GUADELOUPE': 'GUAD',
+        'GUAM': 'GUAM',
+        'GUATEMALA': 'GUAT',
+        'GUINEA': 'GNEA',
+        'GUINEA - BISSAU': 'GUIB',
+        'GUYANA': 'GUY',
+        'HAITI': 'HAT',
+        'HEARD AND MCDONALD ISLANDS': 'HMD',
+        'HOLY SEE (VATICAN CITY)': 'VAT',
+        'HONDURAS': 'HOND',
+        'HONG KONG': 'HNK',
+        'HOWLAND ISLAND': 'XHI',
+        'HUNGARY': 'HUNG',
+        'ICELAND': 'ICLD',
+        'INDIA': 'IND',
+        'INDONESIA': 'IDSA',
+        'IRAN': 'IRAN',
+        'IRAQ': 'IRAQ',
+        'IRELAND': 'IRE',
+        'ISRAEL': 'ISRL',
+        'ITALY': 'ITLY',
+        'JAMAICA': 'JAM',
+        'JAPAN': 'JPN',
+        'JERUSALEM': 'JRSM',
+        'JORDAN': 'JORD',
+        'KAZAKHSTAN': 'KAZ',
+        'KENYA': 'KENY',
+        'KIRIBATI': 'KIRI',
+        'KOREA, DEMOCRATIC REPUBLIC OF (NORTH)': 'PRK',
+        'KOREA, REPUBLIC OF (SOUTH)': 'KOR',
+        'KOSOVO': 'KSV',
+        'KUWAIT': 'KUWT',
+        'KYRGYZSTAN': 'KGZ',
+        'LAOS': 'LAOS',
+        'LATVIA': 'LATV',
+        'LEBANON': 'LEBN',
+        'LESOTHO': 'LES',
+        'LIBERIA': 'LIBR',
+        'LIBYA': 'LBYA',
+        'LIECHTENSTEIN': 'LCHT',
+        'LITHUANIA': 'LITH',
+        'LUXEMBOURG': 'LXM',
+        'MACAU': 'MAC',
+        'MACEDONIA, NORTH': 'MKD',
+        'MADAGASCAR': 'MADG',
+        'MALAWI': 'MALW',
+        'MALAYSIA': 'MLAS',
+        'MALDEN ISLAND': 'MLDI',
+        'MALDIVES': 'MLDV',
+        'MALI': 'MALI',
+        'MALTA': 'MLTA',
+        'MARSHALL ISLANDS': 'RMI',
+        'MARTINIQUE': 'MART',
+        'MAURITANIA': 'MAUR',
+        'MAURITIUS': 'MRTS',
+        'MAYOTTE': 'MYT',
+        'MEXICO': 'MEX',
+        'MICRONESIA': 'FSM',
+        'MIDWAY ISLANDS': 'MDWI',
+        'MOLDOVA': 'MLD',
+        'MONACO': 'MON',
+        'MONGOLIA': 'MONG',
+        'MONTENEGRO': 'MTG',
+        'MONTSERRAT': 'MONT',
+        'MOROCCO': 'MORO',
+        'MOZAMBIQUE': 'MOZ',
+        'NAMIBIA': 'NAMB',
+        'NAURU': 'NAU',
+        'NEPAL': 'NEP',
+        'NETHERLANDS': 'NETH',
+        'NEW CALEDONIA': 'NCAL',
+        'NEW ZEALAND': 'NZLD',
+        'NICARAGUA': 'NIC',
+        'NIGER': 'NIR',
+        'NIGERIA': 'NRA',
+        'NIUE': 'NIUE',
+        'NORFOLK ISLAND': 'NFK',
+        'NORTH MARIANA ISLANDS': 'MNP',
+        'NORTHERN IRELAND': 'NIRE',
+        'NORWAY': 'NORW',
+        'OMAN': 'OMAN',
+        'PAKISTAN': 'PKST',
+        'PALAU': 'PALA',
+        'PALMYRA ATOLL': 'PLMR',
+        'PANAMA': 'PAN',
+        'PAPUA NEW GUINEA': 'PNG',
+        'PARAGUAY': 'PARA',
+        'PERU': 'PERU',
+        'PHILIPPINES': 'PHIL',
+        'PITCAIRN ISLANDS': 'PITC',
+        'POLAND': 'POL',
+        'PORTUGAL': 'PORT',
+        'PUERTO RICO': 'PR',
+        'QATAR': 'QTAR',
+        'REUNION': 'REUN',
+        'ROMANIA': 'ROM',
+        'RUSSIA': 'RUS',
+        'RWANDA': 'RWND',
+        'SABA ISLAND': 'SABA',
+        'SAINT MARTIN': 'MAF',
+        'SAMOA': 'WSAM',
+        'SAN MARINO': 'SMAR',
+        'SAO TOME AND PRINCIPE': 'STPR',
+        'SAUDI ARABIA': 'SARB',
+        'SENEGAL': 'SENG',
+        'SERBIA': 'SBA',
+        'SEYCHELLES': 'SEYC',
+        'SIERRA LEONE': 'SLEO',
+        'SINGAPORE': 'SING',
+        'SINT MAARTEN': 'STM',
+        'SLOVAKIA': 'SVK',
+        'SLOVENIA': 'SVN',
+        'SOLOMON ISLANDS': 'SLMN',
+        'SOMALIA': 'SOMA',
+        'SOUTH AFRICA': 'SAFR',
+        'SOUTH GEORGIA AND THE SOUTH SANDWICH ISLAND': 'SGS',
+        'SOUTH SUDAN': 'SSDN',
+        'SPAIN': 'SPN',
+        'SRI LANKA': 'SRL',
+        'ST. EUSTATIUS': 'STEU',
+        'ST. HELENA': 'SHEL',
+        'ST. KITTS AND NEVIS': 'STCN',
+        'ST. LUCIA': 'SLCA',
+        'ST. PIERRE AND MIQUELON': 'SPMI',
+        'ST. VINCENT AND THE GRENADINES': 'STVN',
+        'SUDAN': 'SUDA',
+        'SURINAME': 'SURM',
+        'SVALBARD': 'SJM',
+        'SWEDEN': 'SWDN',
+        'SWITZERLAND': 'SWTZ',
+        'SYRIA': 'SYR',
+        'TAIWAN': 'TWAN',
+        'TAJIKISTAN': 'TJK',
+        'TANZANIA': 'TAZN',
+        'THAILAND': 'THAI',
+        'TIMOR-LESTE': 'TMOR',
+        'TOGO': 'TOGO',
+        'TOKELAU': 'TKL',
+        'TONGA': 'TONG',
+        'TRINIDAD AND TOBAGO': 'TRIN',
+        'TUNISIA': 'TNSA',
+        'TURKEY': 'TRKY',
+        'TURKMENISTAN': 'TKM',
+        'TURKS AND CAICOS ISLANDS': 'TCIS',
+        'TUVALU': 'TUV',
+        'UGANDA': 'UGAN',
+        'UKRAINE': 'UKR',
+        'UNITED ARAB EMIRATES': 'UAE',
+        'UNITED KINGDOM': 'GRBR',
+        'UNITED STATES OF AMERICA': 'USA',
+        'URUGUAY': 'URU',
+        'UZBEKISTAN': 'UZB',
+        'VANUATU': 'VANU',
+        'VENEZUELA': 'VENZ',
+        'VIETNAM': 'VTNM',
+        'VIRGIN ISLANDS (U.S.)': 'VI',
+        'VIRGIN ISLANDS, BRITISH': 'BRVI',
+        'WAKE ISLAND': 'WKI',
+        'WALLIS AND FUTUNA ISLANDS': 'WAFT',
+        'WEST BANK': 'XWB',
+        'WESTERN SAHARA': 'SSAH',
+        'YEMEN': 'YEM',
+        'ZAMBIA': 'ZAMB',
+        'ZIMBABWE': 'ZIMB'
+      }
+      
+      // Try to find the country code
+      let countryCode = countryCodeMap[country.toUpperCase()]
+      if (!countryCode) {
+        // If not found in our mapping, try to select by label
+        console.log(`⚠️ Country code not found for: ${country}, trying to select by label`)
+        try {
+          await countryElement.selectOption({ label: country })
+          console.log(`✅ Selected country by label: ${country}`)
+        } catch (error) {
+          console.log(`❌ Could not select country by label: ${country}`)
+          throw error
+        }
+      } else {
+        // Select by value using the country code
+        console.log(`📝 Selecting country with code: ${countryCode}`)
+        try {
+          await countryElement.selectOption({ value: countryCode })
+          console.log(`✅ Selected country with code: ${countryCode}`)
+        } catch (error) {
+          console.log(`⚠️ Could not select by code, trying by label: ${country}`)
+          await countryElement.selectOption({ label: country })
+          console.log(`✅ Selected country by label: ${country}`)
+        }
+      }
+    }
+  }
+
+  /**
+   * Fill professional organizations conditional fields
+   */
+  private async fillProfessionalOrganizationsConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling professional organizations conditional fields...')
+    
+    const orgName = formData['additional_occupation.professional_org_name']
+    if (orgName) {
+      console.log(`📝 Filling professional organization name: ${orgName}`)
+      const orgElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlORGANIZATIONS_ctl00_tbxORGANIZATION_NAME')
+      await orgElement.waitFor({ state: 'visible', timeout: 15000 })
+      await orgElement.fill(orgName.toString())
+      console.log('✅ Filled professional organization name')
+    }
+  }
+
+  /**
+   * Fill specialized skills conditional fields
+   */
+  private async fillSpecializedSkillsConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling specialized skills conditional fields...')
+    
+    const skillsExplain = formData['additional_occupation.specialized_skills_explain']
+    if (skillsExplain) {
+      console.log(`📝 Filling specialized skills explanation: ${skillsExplain}`)
+      const skillsElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxSPECIALIZED_SKILLS_EXPL')
+      await skillsElement.waitFor({ state: 'visible', timeout: 15000 })
+      await skillsElement.fill(skillsExplain.toString())
+      console.log('✅ Filled specialized skills explanation')
+    }
+  }
+
+  /**
+   * Fill military service conditional fields
+   */
+  private async fillMilitaryServiceConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling military service conditional fields...')
+    
+    // Fill country/region
+    const country = formData['additional_occupation.military_country_region']
+    if (country) {
+      console.log(`📝 Filling military country/region: ${country}`)
+      const countryElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_CNTRY')
+      await countryElement.waitFor({ state: 'visible', timeout: 15000 })
+      
+      // Map country names to CEAC codes (same comprehensive list as travel history)
+      const countryCodeMap: { [key: string]: string } = {
+        'AFGHANISTAN': 'AFGH',
+        'ALBANIA': 'ALB',
+        'ALGERIA': 'ALGR',
+        'AMERICAN SAMOA': 'ASMO',
+        'ANDORRA': 'ANDO',
+        'ANGOLA': 'ANGL',
+        'ANGUILLA': 'ANGU',
+        'ANTIGUA AND BARBUDA': 'ANTI',
+        'ARGENTINA': 'ARG',
+        'ARMENIA': 'ARM',
+        'ARUBA': 'ARB',
+        'AUSTRALIA': 'ASTL',
+        'AUSTRIA': 'AUST',
+        'AZERBAIJAN': 'AZR',
+        'BAHAMAS': 'BAMA',
+        'BAHRAIN': 'BAHR',
+        'BANGLADESH': 'BANG',
+        'BARBADOS': 'BRDO',
+        'BELARUS': 'BYS',
+        'BELGIUM': 'BELG',
+        'BELIZE': 'BLZ',
+        'BENIN': 'BENN',
+        'BERMUDA': 'BERM',
+        'BHUTAN': 'BHU',
+        'BOLIVIA': 'BOL',
+        'BONAIRE': 'BON',
+        'BOSNIA-HERZEGOVINA': 'BIH',
+        'BOTSWANA': 'BOT',
+        'BRAZIL': 'BRZL',
+        'BRITISH INDIAN OCEAN TERRITORY': 'IOT',
+        'BRUNEI': 'BRNI',
+        'BULGARIA': 'BULG',
+        'BURKINA FASO': 'BURK',
+        'BURMA': 'BURM',
+        'BURUNDI': 'BRND',
+        'CAMBODIA': 'CBDA',
+        'CAMEROON': 'CMRN',
+        'CANADA': 'CAN',
+        'CABO VERDE': 'CAVI',
+        'CAYMAN ISLANDS': 'CAYI',
+        'CENTRAL AFRICAN REPUBLIC': 'CAFR',
+        'CHAD': 'CHAD',
+        'CHILE': 'CHIL',
+        'CHINA': 'CHIN',
+        'CHRISTMAS ISLAND': 'CHRI',
+        'COCOS KEELING ISLANDS': 'COCI',
+        'COLOMBIA': 'COL',
+        'COMOROS': 'COMO',
+        'CONGO, DEMOCRATIC REPUBLIC OF THE': 'COD',
+        'CONGO, REPUBLIC OF THE': 'CONB',
+        'COOK ISLANDS': 'CKIS',
+        'COSTA RICA': 'CSTR',
+        'COTE D`IVOIRE': 'IVCO',
+        'CROATIA': 'HRV',
+        'CUBA': 'CUBA',
+        'CURACAO': 'CUR',
+        'CYPRUS': 'CYPR',
+        'CZECH REPUBLIC': 'CZEC',
+        'DENMARK': 'DEN',
+        'DJIBOUTI': 'DJI',
+        'DOMINICA': 'DOMN',
+        'DOMINICAN REPUBLIC': 'DOMR',
+        'ECUADOR': 'ECUA',
+        'EGYPT': 'EGYP',
+        'EL SALVADOR': 'ELSL',
+        'EQUATORIAL GUINEA': 'EGN',
+        'ERITREA': 'ERI',
+        'ESTONIA': 'EST',
+        'ESWATINI': 'SZLD',
+        'ETHIOPIA': 'ETH',
+        'FALKLAND ISLANDS': 'FKLI',
+        'FAROE ISLANDS': 'FRO',
+        'FIJI': 'FIJI',
+        'FINLAND': 'FIN',
+        'FRANCE': 'FRAN',
+        'FRENCH GUIANA': 'FRGN',
+        'FRENCH POLYNESIA': 'FPOL',
+        'FRENCH SOUTHERN AND ANTARCTIC TERRITORIES': 'FSAT',
+        'GABON': 'GABN',
+        'GAMBIA, THE': 'GAM',
+        'GAZA STRIP': 'XGZ',
+        'GEORGIA': 'GEO',
+        'GERMANY': 'GER',
+        'GHANA': 'GHAN',
+        'GIBRALTAR': 'GIB',
+        'GREECE': 'GRC',
+        'GREENLAND': 'GRLD',
+        'GRENADA': 'GREN',
+        'GUADELOUPE': 'GUAD',
+        'GUAM': 'GUAM',
+        'GUATEMALA': 'GUAT',
+        'GUINEA': 'GNEA',
+        'GUINEA - BISSAU': 'GUIB',
+        'GUYANA': 'GUY',
+        'HAITI': 'HAT',
+        'HEARD AND MCDONALD ISLANDS': 'HMD',
+        'HOLY SEE (VATICAN CITY)': 'VAT',
+        'HONDURAS': 'HOND',
+        'HONG KONG': 'HNK',
+        'HOWLAND ISLAND': 'XHI',
+        'HUNGARY': 'HUNG',
+        'ICELAND': 'ICLD',
+        'INDIA': 'IND',
+        'INDONESIA': 'IDSA',
+        'IRAN': 'IRAN',
+        'IRAQ': 'IRAQ',
+        'IRELAND': 'IRE',
+        'ISRAEL': 'ISRL',
+        'ITALY': 'ITLY',
+        'JAMAICA': 'JAM',
+        'JAPAN': 'JPN',
+        'JERUSALEM': 'JRSM',
+        'JORDAN': 'JORD',
+        'KAZAKHSTAN': 'KAZ',
+        'KENYA': 'KENY',
+        'KIRIBATI': 'KIRI',
+        'KOREA, DEMOCRATIC REPUBLIC OF (NORTH)': 'PRK',
+        'KOREA, REPUBLIC OF (SOUTH)': 'KOR',
+        'KOSOVO': 'KSV',
+        'KUWAIT': 'KUWT',
+        'KYRGYZSTAN': 'KGZ',
+        'LAOS': 'LAOS',
+        'LATVIA': 'LATV',
+        'LEBANON': 'LEBN',
+        'LESOTHO': 'LES',
+        'LIBERIA': 'LIBR',
+        'LIBYA': 'LBYA',
+        'LIECHTENSTEIN': 'LCHT',
+        'LITHUANIA': 'LITH',
+        'LUXEMBOURG': 'LXM',
+        'MACAU': 'MAC',
+        'MACEDONIA, NORTH': 'MKD',
+        'MADAGASCAR': 'MADG',
+        'MALAWI': 'MALW',
+        'MALAYSIA': 'MLAS',
+        'MALDEN ISLAND': 'MLDI',
+        'MALDIVES': 'MLDV',
+        'MALI': 'MALI',
+        'MALTA': 'MLTA',
+        'MARSHALL ISLANDS': 'RMI',
+        'MARTINIQUE': 'MART',
+        'MAURITANIA': 'MAUR',
+        'MAURITIUS': 'MRTS',
+        'MAYOTTE': 'MYT',
+        'MEXICO': 'MEX',
+        'MICRONESIA': 'FSM',
+        'MIDWAY ISLANDS': 'MDWI',
+        'MOLDOVA': 'MLD',
+        'MONACO': 'MON',
+        'MONGOLIA': 'MONG',
+        'MONTENEGRO': 'MTG',
+        'MONTSERRAT': 'MONT',
+        'MOROCCO': 'MORO',
+        'MOZAMBIQUE': 'MOZ',
+        'NAMIBIA': 'NAMB',
+        'NAURU': 'NAU',
+        'NEPAL': 'NEP',
+        'NETHERLANDS': 'NETH',
+        'NEW CALEDONIA': 'NCAL',
+        'NEW ZEALAND': 'NZLD',
+        'NICARAGUA': 'NIC',
+        'NIGER': 'NIR',
+        'NIGERIA': 'NRA',
+        'NIUE': 'NIUE',
+        'NORFOLK ISLAND': 'NFK',
+        'NORTH MARIANA ISLANDS': 'MNP',
+        'NORTHERN IRELAND': 'NIRE',
+        'NORWAY': 'NORW',
+        'OMAN': 'OMAN',
+        'PAKISTAN': 'PKST',
+        'PALAU': 'PALA',
+        'PALMYRA ATOLL': 'PLMR',
+        'PANAMA': 'PAN',
+        'PAPUA NEW GUINEA': 'PNG',
+        'PARAGUAY': 'PARA',
+        'PERU': 'PERU',
+        'PHILIPPINES': 'PHIL',
+        'PITCAIRN ISLANDS': 'PITC',
+        'POLAND': 'POL',
+        'PORTUGAL': 'PORT',
+        'PUERTO RICO': 'PR',
+        'QATAR': 'QTAR',
+        'REUNION': 'REUN',
+        'ROMANIA': 'ROM',
+        'RUSSIA': 'RUS',
+        'RWANDA': 'RWND',
+        'SABA ISLAND': 'SABA',
+        'SAINT MARTIN': 'MAF',
+        'SAMOA': 'WSAM',
+        'SAN MARINO': 'SMAR',
+        'SAO TOME AND PRINCIPE': 'STPR',
+        'SAUDI ARABIA': 'SARB',
+        'SENEGAL': 'SENG',
+        'SERBIA': 'SBA',
+        'SEYCHELLES': 'SEYC',
+        'SIERRA LEONE': 'SLEO',
+        'SINGAPORE': 'SING',
+        'SINT MAARTEN': 'STM',
+        'SLOVAKIA': 'SVK',
+        'SLOVENIA': 'SVN',
+        'SOLOMON ISLANDS': 'SLMN',
+        'SOMALIA': 'SOMA',
+        'SOUTH AFRICA': 'SAFR',
+        'SOUTH GEORGIA AND THE SOUTH SANDWICH ISLAND': 'SGS',
+        'SOUTH SUDAN': 'SSDN',
+        'SPAIN': 'SPN',
+        'SRI LANKA': 'SRL',
+        'ST. EUSTATIUS': 'STEU',
+        'ST. HELENA': 'SHEL',
+        'ST. KITTS AND NEVIS': 'STCN',
+        'ST. LUCIA': 'SLCA',
+        'ST. PIERRE AND MIQUELON': 'SPMI',
+        'ST. VINCENT AND THE GRENADINES': 'STVN',
+        'SUDAN': 'SUDA',
+        'SURINAME': 'SURM',
+        'SVALBARD': 'SJM',
+        'SWEDEN': 'SWDN',
+        'SWITZERLAND': 'SWTZ',
+        'SYRIA': 'SYR',
+        'TAIWAN': 'TWAN',
+        'TAJIKISTAN': 'TJK',
+        'TANZANIA': 'TAZN',
+        'THAILAND': 'THAI',
+        'TIMOR-LESTE': 'TMOR',
+        'TOGO': 'TOGO',
+        'TOKELAU': 'TKL',
+        'TONGA': 'TONG',
+        'TRINIDAD AND TOBAGO': 'TRIN',
+        'TUNISIA': 'TNSA',
+        'TURKEY': 'TRKY',
+        'TURKMENISTAN': 'TKM',
+        'TURKS AND CAICOS ISLANDS': 'TCIS',
+        'TUVALU': 'TUV',
+        'UGANDA': 'UGAN',
+        'UKRAINE': 'UKR',
+        'UNITED ARAB EMIRATES': 'UAE',
+        'UNITED KINGDOM': 'GRBR',
+        'UNITED STATES OF AMERICA': 'USA',
+        'URUGUAY': 'URU',
+        'UZBEKISTAN': 'UZB',
+        'VANUATU': 'VANU',
+        'VENEZUELA': 'VENZ',
+        'VIETNAM': 'VTNM',
+        'VIRGIN ISLANDS (U.S.)': 'VI',
+        'VIRGIN ISLANDS, BRITISH': 'BRVI',
+        'WAKE ISLAND': 'WKI',
+        'WALLIS AND FUTUNA ISLANDS': 'WAFT',
+        'WEST BANK': 'XWB',
+        'WESTERN SAHARA': 'SSAH',
+        'YEMEN': 'YEM',
+        'ZAMBIA': 'ZAMB',
+        'ZIMBABWE': 'ZIMB'
+      }
+      
+      // Try to find the country code
+      let countryCode = countryCodeMap[country.toUpperCase()]
+      if (!countryCode) {
+        // If not found in our mapping, try to select by label
+        console.log(`⚠️ Country code not found for: ${country}, trying to select by label`)
+        try {
+          await countryElement.selectOption({ label: country })
+          console.log(`✅ Selected military country by label: ${country}`)
+        } catch (error) {
+          console.log(`❌ Could not select military country by label: ${country}`)
+          throw error
+        }
+      } else {
+        // Select by value using the country code
+        console.log(`📝 Selecting military country with code: ${countryCode}`)
+        try {
+          await countryElement.selectOption({ value: countryCode })
+          console.log(`✅ Selected military country with code: ${countryCode}`)
+        } catch (error) {
+          console.log(`⚠️ Could not select by code, trying by label: ${country}`)
+          await countryElement.selectOption({ label: country })
+          console.log(`✅ Selected military country by label: ${country}`)
+        }
+      }
+    }
+    
+    // Fill branch of service
+    const branch = formData['additional_occupation.military_branch']
+    console.log(`🔍 Military branch data: ${branch}`)
+    if (branch) {
+      console.log(`📝 Filling military branch: ${branch}`)
+      const branchElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_BRANCH')
+      
+      // Wait for element to be visible
+      await branchElement.waitFor({ state: 'visible', timeout: 15000 })
+      
+      // Check if element exists
+      const elementCount = await branchElement.count()
+      console.log(`🔍 Found ${elementCount} military branch elements`)
+      
+      // Clear the field first
+      await branchElement.clear()
+      
+      // Fill the field
+      await branchElement.fill(branch.toString())
+      
+      // Trigger change event
+      await branchElement.evaluate((el) => {
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+      })
+      
+      console.log('✅ Filled military branch')
+      
+      // Wait a moment for any postback
+      await page.waitForTimeout(1000)
+    }
+    
+    // Fill rank/position
+    const rank = formData['additional_occupation.military_rank_position']
+    console.log(`🔍 Military rank data: ${rank}`)
+    if (rank) {
+      console.log(`📝 Filling military rank/position: ${rank}`)
+      const rankElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_RANK')
+      
+      // Wait for element to be visible
+      await rankElement.waitFor({ state: 'visible', timeout: 15000 })
+      
+      // Check if element exists
+      const elementCount = await rankElement.count()
+      console.log(`🔍 Found ${elementCount} military rank elements`)
+      
+      // Clear the field first
+      await rankElement.clear()
+      
+      // Fill the field
+      await rankElement.fill(rank.toString())
+      
+      // Trigger change event
+      await rankElement.evaluate((el) => {
+        el.dispatchEvent(new Event('change', { bubbles: true }))
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+      })
+      
+      console.log('✅ Filled military rank/position')
+      
+      // Wait a moment for any postback
+      await page.waitForTimeout(1000)
+    }
+    
+    // Fill military specialty
+    const specialty = formData['additional_occupation.military_specialty']
+    if (specialty) {
+      console.log(`📝 Filling military specialty: ${specialty}`)
+      const specialtyElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_SPECIALTY')
+      await specialtyElement.waitFor({ state: 'visible', timeout: 15000 })
+      await specialtyElement.fill(specialty.toString())
+      console.log('✅ Filled military specialty')
+    }
+    
+    // Fill service from date
+    const serviceFrom = formData['additional_occupation.military_service_from']
+    if (serviceFrom) {
+      console.log(`📝 Filling military service from date: ${serviceFrom}`)
+      const { day, month, year } = this.splitDate(serviceFrom.toString())
+      
+      const dayElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_FROMDay')
+      const monthElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_FROMMonth')
+      const yearElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_FROMYear')
+      
+      await dayElement.waitFor({ state: 'visible', timeout: 15000 })
+      await monthElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yearElement.waitFor({ state: 'visible', timeout: 15000 })
+      
+      await dayElement.selectOption({ value: day })
+      await monthElement.selectOption({ value: month })
+      await yearElement.fill(year)
+      
+      console.log('✅ Filled military service from date')
+    }
+    
+    // Fill service to date
+    const serviceTo = formData['additional_occupation.military_service_to']
+    if (serviceTo) {
+      console.log(`📝 Filling military service to date: ${serviceTo}`)
+      const { day, month, year } = this.splitDate(serviceTo.toString())
+      
+      const dayElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_TODay')
+      const monthElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_ddlMILITARY_SVC_TOMonth')
+      const yearElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlMILITARY_SERVICE_ctl00_tbxMILITARY_SVC_TOYear')
+      
+      await dayElement.waitFor({ state: 'visible', timeout: 15000 })
+      await monthElement.waitFor({ state: 'visible', timeout: 15000 })
+      await yearElement.waitFor({ state: 'visible', timeout: 15000 })
+      
+      await dayElement.selectOption({ value: day })
+      await monthElement.selectOption({ value: month })
+      await yearElement.fill(year)
+      
+      console.log('✅ Filled military service to date')
+    }
+  }
+
+  /**
+   * Fill paramilitary involvement conditional fields
+   */
+  private async fillParamilitaryInvolvementConditionalFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling paramilitary involvement conditional fields...')
+    
+    const paramilitaryExplain = formData['additional_occupation.involved_paramilitary_explain']
+    if (paramilitaryExplain) {
+      console.log(`📝 Filling paramilitary involvement explanation: ${paramilitaryExplain}`)
+      const explainElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxINSURGENT_ORG_EXPL')
+      await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+      await explainElement.fill(paramilitaryExplain.toString())
+      console.log('✅ Filled paramilitary involvement explanation')
+    }
+  }
+
+  /**
+   * Fill clan or tribe fields
+   */
+  private async fillClanTribeFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling clan or tribe fields...')
+    
+    const belongClan = formData['additional_occupation.belong_clan_tribe']
+    
+    if (belongClan) {
+      console.log(`📝 Belong to clan/tribe: ${belongClan}`)
+      
+      try {
+        if (belongClan === 'Yes' || belongClan === 'Y') {
+          // Select Yes
+          const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblCLAN_TRIBE_IND_0')
+          await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+          await yesElement.check()
+          console.log('✅ Selected "Yes" for clan/tribe')
+          
+          // Wait for conditional field to appear
+          await page.waitForTimeout(2000)
+          
+          // Fill clan/tribe name
+          const clanName = formData['additional_occupation.clan_tribe_name']
+          if (clanName) {
+            console.log(`📝 Filling clan/tribe name: ${clanName}`)
+            const nameElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_tbxCLAN_TRIBE_NAME')
+            await nameElement.waitFor({ state: 'visible', timeout: 15000 })
+            await nameElement.fill(clanName.toString())
+            console.log('✅ Filled clan/tribe name')
+          }
+        } else {
+          // Select No
+          const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblCLAN_TRIBE_IND_1')
+          await noElement.waitFor({ state: 'visible', timeout: 15000 })
+          await noElement.check()
+          console.log('✅ Selected "No" for clan/tribe')
+        }
+      } catch (error) {
+        console.error('❌ Error filling clan/tribe fields:', error)
+        throw error
+      }
+    } else {
+      console.log('ℹ️ No clan/tribe information to fill')
+    }
+  }
+
+  /**
+   * Fill language fields
+   */
+  private async fillLanguageFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling language fields...')
+    
+    const languageName = formData['additional_occupation.language_name']
+    
+    if (languageName) {
+      console.log(`📝 Filling language name: ${languageName}`)
+      
+      try {
+        const element = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlLANGUAGES_ctl00_tbxLANGUAGE_NAME')
+        await element.waitFor({ state: 'visible', timeout: 15000 })
+        await element.fill(languageName.toString())
+        console.log('✅ Filled language name')
+      } catch (error) {
+        console.error('❌ Error filling language name:', error)
+        throw error
+      }
+    } else {
+      console.log('ℹ️ No language name to fill')
+    }
+  }
+
+  /**
+   * Fill travel history fields
+   */
+  private async fillTravelHistoryFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling travel history fields...')
+    
+    const traveled = formData['additional_occupation.traveled_last_five_years']
+    
+    if (traveled) {
+      console.log(`📝 Traveled in last 5 years: ${traveled}`)
+      
+      try {
+        if (traveled === 'Yes' || traveled === 'Y') {
+          // Select Yes
+          const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblCOUNTRIES_VISITED_IND_0')
+          await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+          await yesElement.check()
+          console.log('✅ Selected "Yes" for travel history')
+          
+          // Wait for conditional dropdown to appear
+          await page.waitForTimeout(2000)
+          
+          // Fill country/region
+          const country = formData['additional_occupation.traveled_country_region']
+          if (country) {
+            console.log(`📝 Filling traveled country/region: ${country}`)
+            const countryElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlCountriesVisited_ctl00_ddlCOUNTRIES_VISITED')
+            await countryElement.waitFor({ state: 'visible', timeout: 15000 })
+            
+            // Map country names to CEAC codes (comprehensive list from the dropdown)
+            const countryCodeMap: { [key: string]: string } = {
+              'AFGHANISTAN': 'AFGH',
+              'ALBANIA': 'ALB',
+              'ALGERIA': 'ALGR',
+              'AMERICAN SAMOA': 'ASMO',
+              'ANDORRA': 'ANDO',
+              'ANGOLA': 'ANGL',
+              'ANGUILLA': 'ANGU',
+              'ANTIGUA AND BARBUDA': 'ANTI',
+              'ARGENTINA': 'ARG',
+              'ARMENIA': 'ARM',
+              'ARUBA': 'ARB',
+              'AUSTRALIA': 'ASTL',
+              'AUSTRIA': 'AUST',
+              'AZERBAIJAN': 'AZR',
+              'BAHAMAS': 'BAMA',
+              'BAHRAIN': 'BAHR',
+              'BANGLADESH': 'BANG',
+              'BARBADOS': 'BRDO',
+              'BELARUS': 'BYS',
+              'BELGIUM': 'BELG',
+              'BELIZE': 'BLZ',
+              'BENIN': 'BENN',
+              'BERMUDA': 'BERM',
+              'BHUTAN': 'BHU',
+              'BOLIVIA': 'BOL',
+              'BONAIRE': 'BON',
+              'BOSNIA-HERZEGOVINA': 'BIH',
+              'BOTSWANA': 'BOT',
+              'BRAZIL': 'BRZL',
+              'BRITISH INDIAN OCEAN TERRITORY': 'IOT',
+              'BRUNEI': 'BRNI',
+              'BULGARIA': 'BULG',
+              'BURKINA FASO': 'BURK',
+              'BURMA': 'BURM',
+              'BURUNDI': 'BRND',
+              'CAMBODIA': 'CBDA',
+              'CAMEROON': 'CMRN',
+              'CANADA': 'CAN',
+              'CABO VERDE': 'CAVI',
+              'CAYMAN ISLANDS': 'CAYI',
+              'CENTRAL AFRICAN REPUBLIC': 'CAFR',
+              'CHAD': 'CHAD',
+              'CHILE': 'CHIL',
+              'CHINA': 'CHIN',
+              'CHRISTMAS ISLAND': 'CHRI',
+              'COCOS KEELING ISLANDS': 'COCI',
+              'COLOMBIA': 'COL',
+              'COMOROS': 'COMO',
+              'CONGO, DEMOCRATIC REPUBLIC OF THE': 'COD',
+              'CONGO, REPUBLIC OF THE': 'CONB',
+              'COOK ISLANDS': 'CKIS',
+              'COSTA RICA': 'CSTR',
+              'COTE D`IVOIRE': 'IVCO',
+              'CROATIA': 'HRV',
+              'CUBA': 'CUBA',
+              'CURACAO': 'CUR',
+              'CYPRUS': 'CYPR',
+              'CZECH REPUBLIC': 'CZEC',
+              'DENMARK': 'DEN',
+              'DJIBOUTI': 'DJI',
+              'DOMINICA': 'DOMN',
+              'DOMINICAN REPUBLIC': 'DOMR',
+              'ECUADOR': 'ECUA',
+              'EGYPT': 'EGYP',
+              'EL SALVADOR': 'ELSL',
+              'EQUATORIAL GUINEA': 'EGN',
+              'ERITREA': 'ERI',
+              'ESTONIA': 'EST',
+              'ESWATINI': 'SZLD',
+              'ETHIOPIA': 'ETH',
+              'FALKLAND ISLANDS': 'FKLI',
+              'FAROE ISLANDS': 'FRO',
+              'FIJI': 'FIJI',
+              'FINLAND': 'FIN',
+              'FRANCE': 'FRAN',
+              'FRENCH GUIANA': 'FRGN',
+              'FRENCH POLYNESIA': 'FPOL',
+              'FRENCH SOUTHERN AND ANTARCTIC TERRITORIES': 'FSAT',
+              'GABON': 'GABN',
+              'GAMBIA, THE': 'GAM',
+              'GAZA STRIP': 'XGZ',
+              'GEORGIA': 'GEO',
+              'GERMANY': 'GER',
+              'GHANA': 'GHAN',
+              'GIBRALTAR': 'GIB',
+              'GREECE': 'GRC',
+              'GREENLAND': 'GRLD',
+              'GRENADA': 'GREN',
+              'GUADELOUPE': 'GUAD',
+              'GUAM': 'GUAM',
+              'GUATEMALA': 'GUAT',
+              'GUINEA': 'GNEA',
+              'GUINEA - BISSAU': 'GUIB',
+              'GUYANA': 'GUY',
+              'HAITI': 'HAT',
+              'HEARD AND MCDONALD ISLANDS': 'HMD',
+              'HOLY SEE (VATICAN CITY)': 'VAT',
+              'HONDURAS': 'HOND',
+              'HONG KONG': 'HNK',
+              'HOWLAND ISLAND': 'XHI',
+              'HUNGARY': 'HUNG',
+              'ICELAND': 'ICLD',
+              'INDIA': 'IND',
+              'INDONESIA': 'IDSA',
+              'IRAN': 'IRAN',
+              'IRAQ': 'IRAQ',
+              'IRELAND': 'IRE',
+              'ISRAEL': 'ISRL',
+              'ITALY': 'ITLY',
+              'JAMAICA': 'JAM',
+              'JAPAN': 'JPN',
+              'JERUSALEM': 'JRSM',
+              'JORDAN': 'JORD',
+              'KAZAKHSTAN': 'KAZ',
+              'KENYA': 'KENY',
+              'KIRIBATI': 'KIRI',
+              'KOREA, DEMOCRATIC REPUBLIC OF (NORTH)': 'PRK',
+              'KOREA, REPUBLIC OF (SOUTH)': 'KOR',
+              'KOSOVO': 'KSV',
+              'KUWAIT': 'KUWT',
+              'KYRGYZSTAN': 'KGZ',
+              'LAOS': 'LAOS',
+              'LATVIA': 'LATV',
+              'LEBANON': 'LEBN',
+              'LESOTHO': 'LES',
+              'LIBERIA': 'LIBR',
+              'LIBYA': 'LBYA',
+              'LIECHTENSTEIN': 'LCHT',
+              'LITHUANIA': 'LITH',
+              'LUXEMBOURG': 'LXM',
+              'MACAU': 'MAC',
+              'MACEDONIA, NORTH': 'MKD',
+              'MADAGASCAR': 'MADG',
+              'MALAWI': 'MALW',
+              'MALAYSIA': 'MLAS',
+              'MALDEN ISLAND': 'MLDI',
+              'MALDIVES': 'MLDV',
+              'MALI': 'MALI',
+              'MALTA': 'MLTA',
+              'MARSHALL ISLANDS': 'RMI',
+              'MARTINIQUE': 'MART',
+              'MAURITANIA': 'MAUR',
+              'MAURITIUS': 'MRTS',
+              'MAYOTTE': 'MYT',
+              'MEXICO': 'MEX',
+              'MICRONESIA': 'FSM',
+              'MIDWAY ISLANDS': 'MDWI',
+              'MOLDOVA': 'MLD',
+              'MONACO': 'MON',
+              'MONGOLIA': 'MONG',
+              'MONTENEGRO': 'MTG',
+              'MONTSERRAT': 'MONT',
+              'MOROCCO': 'MORO',
+              'MOZAMBIQUE': 'MOZ',
+              'NAMIBIA': 'NAMB',
+              'NAURU': 'NAU',
+              'NEPAL': 'NEP',
+              'NETHERLANDS': 'NETH',
+              'NEW CALEDONIA': 'NCAL',
+              'NEW ZEALAND': 'NZLD',
+              'NICARAGUA': 'NIC',
+              'NIGER': 'NIR',
+              'NIGERIA': 'NRA',
+              'NIUE': 'NIUE',
+              'NORFOLK ISLAND': 'NFK',
+              'NORTH MARIANA ISLANDS': 'MNP',
+              'NORTHERN IRELAND': 'NIRE',
+              'NORWAY': 'NORW',
+              'OMAN': 'OMAN',
+              'PAKISTAN': 'PKST',
+              'PALAU': 'PALA',
+              'PALMYRA ATOLL': 'PLMR',
+              'PANAMA': 'PAN',
+              'PAPUA NEW GUINEA': 'PNG',
+              'PARAGUAY': 'PARA',
+              'PERU': 'PERU',
+              'PHILIPPINES': 'PHIL',
+              'PITCAIRN ISLANDS': 'PITC',
+              'POLAND': 'POL',
+              'PORTUGAL': 'PORT',
+              'PUERTO RICO': 'PR',
+              'QATAR': 'QTAR',
+              'REUNION': 'REUN',
+              'ROMANIA': 'ROM',
+              'RUSSIA': 'RUS',
+              'RWANDA': 'RWND',
+              'SABA ISLAND': 'SABA',
+              'SAINT MARTIN': 'MAF',
+              'SAMOA': 'WSAM',
+              'SAN MARINO': 'SMAR',
+              'SAO TOME AND PRINCIPE': 'STPR',
+              'SAUDI ARABIA': 'SARB',
+              'SENEGAL': 'SENG',
+              'SERBIA': 'SBA',
+              'SEYCHELLES': 'SEYC',
+              'SIERRA LEONE': 'SLEO',
+              'SINGAPORE': 'SING',
+              'SINT MAARTEN': 'STM',
+              'SLOVAKIA': 'SVK',
+              'SLOVENIA': 'SVN',
+              'SOLOMON ISLANDS': 'SLMN',
+              'SOMALIA': 'SOMA',
+              'SOUTH AFRICA': 'SAFR',
+              'SOUTH GEORGIA AND THE SOUTH SANDWICH ISLAND': 'SGS',
+              'SOUTH SUDAN': 'SSDN',
+              'SPAIN': 'SPN',
+              'SRI LANKA': 'SRL',
+              'ST. EUSTATIUS': 'STEU',
+              'ST. HELENA': 'SHEL',
+              'ST. KITTS AND NEVIS': 'STCN',
+              'ST. LUCIA': 'SLCA',
+              'ST. PIERRE AND MIQUELON': 'SPMI',
+              'ST. VINCENT AND THE GRENADINES': 'STVN',
+              'SUDAN': 'SUDA',
+              'SURINAME': 'SURM',
+              'SVALBARD': 'SJM',
+              'SWEDEN': 'SWDN',
+              'SWITZERLAND': 'SWTZ',
+              'SYRIA': 'SYR',
+              'TAIWAN': 'TWAN',
+              'TAJIKISTAN': 'TJK',
+              'TANZANIA': 'TAZN',
+              'THAILAND': 'THAI',
+              'TIMOR-LESTE': 'TMOR',
+              'TOGO': 'TOGO',
+              'TOKELAU': 'TKL',
+              'TONGA': 'TONG',
+              'TRINIDAD AND TOBAGO': 'TRIN',
+              'TUNISIA': 'TNSA',
+              'TURKEY': 'TRKY',
+              'TURKMENISTAN': 'TKM',
+              'TURKS AND CAICOS ISLANDS': 'TCIS',
+              'TUVALU': 'TUV',
+              'UGANDA': 'UGAN',
+              'UKRAINE': 'UKR',
+              'UNITED ARAB EMIRATES': 'UAE',
+              'UNITED KINGDOM': 'GRBR',
+              'UNITED STATES OF AMERICA': 'USA',
+              'URUGUAY': 'URU',
+              'UZBEKISTAN': 'UZB',
+              'VANUATU': 'VANU',
+              'VENEZUELA': 'VENZ',
+              'VIETNAM': 'VTNM',
+              'VIRGIN ISLANDS (U.S.)': 'VI',
+              'VIRGIN ISLANDS, BRITISH': 'BRVI',
+              'WAKE ISLAND': 'WKI',
+              'WALLIS AND FUTUNA ISLANDS': 'WAFT',
+              'WEST BANK': 'XWB',
+              'WESTERN SAHARA': 'SSAH',
+              'YEMEN': 'YEM',
+              'ZAMBIA': 'ZAMB',
+              'ZIMBABWE': 'ZIMB'
+            }
+            
+            // Try to find the country code
+            let countryCode = countryCodeMap[country.toUpperCase()]
+            if (!countryCode) {
+              // If not found in our mapping, try to select by label
+              console.log(`⚠️ Country code not found for: ${country}, trying to select by label`)
+              try {
+                await countryElement.selectOption({ label: country })
+                console.log(`✅ Selected country by label: ${country}`)
+              } catch (error) {
+                console.log(`❌ Could not select country by label: ${country}`)
+                throw error
+              }
+            } else {
+              // Select by value using the country code
+              console.log(`📝 Selecting country with code: ${countryCode}`)
+              try {
+                await countryElement.selectOption({ value: countryCode })
+                console.log(`✅ Selected country with code: ${countryCode}`)
+              } catch (error) {
+                console.log(`⚠️ Could not select by code, trying by label: ${country}`)
+                await countryElement.selectOption({ label: country })
+                console.log(`✅ Selected country by label: ${country}`)
+              }
+            }
+          }
+        } else {
+          // Select No
+          const noElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblCOUNTRIES_VISITED_IND_1')
+          await noElement.waitFor({ state: 'visible', timeout: 15000 })
+          await noElement.check()
+          console.log('✅ Selected "No" for travel history')
+        }
+      } catch (error) {
+        console.error('❌ Error filling travel history fields:', error)
+        throw error
+      }
+    } else {
+      console.log('ℹ️ No travel history information to fill')
+    }
+  }
+
+  /**
+   * Fill professional organizations fields
+   */
+  private async fillProfessionalOrganizationsFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling professional organizations fields...')
+    // TODO: Implement when HTML is provided
+    console.log('ℹ️ Professional organizations fields not yet implemented')
+  }
+
+  /**
+   * Fill specialized skills fields
+   */
+  private async fillSpecializedSkillsFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling specialized skills fields...')
+    // TODO: Implement when HTML is provided
+    console.log('ℹ️ Specialized skills fields not yet implemented')
+  }
+
+  /**
+   * Fill military service fields
+   */
+  private async fillMilitaryServiceFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling military service fields...')
+    // TODO: Implement when HTML is provided
+    console.log('ℹ️ Military service fields not yet implemented')
+  }
+
+  /**
+   * Fill paramilitary involvement fields
+   */
+  private async fillParamilitaryInvolvementFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Filling paramilitary involvement fields...')
+    // TODO: Implement when HTML is provided
+    console.log('ℹ️ Paramilitary involvement fields not yet implemented')
+  }
+
+  /**
+   * Click Step 12 Next button and navigate to Step 13
+   */
+  private async clickStep12NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('🔄 Clicking Step 12 Next button...')
+    
+    try {
+      // Wait for the Next button to be visible
+      const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+      await nextButton.waitFor({ state: 'visible', timeout: 15000 })
+      
+      console.log('✅ Step 12 Next button is ready')
+      
+      // Click the Next button
+      await nextButton.click()
+      console.log('✅ Clicked Step 12 Next button')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle', { timeout: 30000 })
+      console.log('✅ Navigation completed after Step 12 Next button click')
+      
+      // Update job progress
+      await this.progressService.updateStepProgress(jobId, 'form_step_13', 'running', 'Completed Step 12 - Additional Work/Education/Training Information...', 85)
+      console.log('📊 Updated job progress to Step 13 (85%)')
+      
+    } catch (error) {
+      console.error('❌ Error clicking Step 12 Next button:', error)
+      
+      // Take a screenshot for debugging
+      await page.screenshot({ path: `error-step12-next-${jobId}.png` })
+      console.log('📸 Screenshot saved: error-step12-next.png')
+      
+      throw error
+    }
+  }
+
+  /**
+   * Click Next button for Step 16
+   */
+  private async clickStep16NextButton(page: Page, jobId: string): Promise<void> {
+    console.log('➡️ Clicking Next button after Step 16...')
+    
+    // Look for the Next button
+    const nextButton = page.locator('#ctl00_SiteContentPlaceHolder_UpdateButton3')
+    
+    if (await nextButton.isVisible({ timeout: 10000 })) {
+      await nextButton.click()
+      console.log('✅ Step 16 Next button clicked')
+      
+      // Wait for navigation to complete
+      await page.waitForLoadState('networkidle')
+      
+      // Update progress
+      await this.progressService.updateStepProgress(
+        jobId,
+        'form_step_17',
+        'running',
+        'Successfully navigated to Step 17',
+        95
+      )
+      
+      // Take screenshot after navigation
+      await this.takeScreenshot(page, jobId, 'after-step16-next-button-click')
+      
+      console.log('✅ Successfully navigated to Step 17')
+    } else {
+      throw new Error('Step 16 Next button not found')
+    }
+  }
+
+  /**
+   * Fill Step 17 form - Security and Background Information (Part 5)
+   */
+  private async fillStep17Form(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Starting Step 17 - Security and Background Information (Part 5)...')
+    
+    // Update progress
+    await this.progressService.updateStepProgress(
+      jobId,
+      'form_step_17',
+      'running',
+      'Filling Security and Background Information (Part 5)',
+      97
+    )
+    
+    // Get Step 17 field mappings
+    const step17Mappings = getStep17FieldMappings()
+    
+    // Fill each field using the mappings
+    for (const fieldMapping of step17Mappings) {
+      const fieldValue = formData[fieldMapping.fieldName]
+      console.log(`📝 Filling ${fieldMapping.fieldName}: ${fieldValue}`)
+      
+      if (fieldValue === 'Yes' || fieldValue === 'Y') {
+        // Select Yes radio button
+        const yesElement = page.locator(fieldMapping.selector)
+        await yesElement.waitFor({ state: 'visible', timeout: 15000 })
+        await yesElement.check()
+        console.log(`✅ Selected "Yes" for ${fieldMapping.fieldName}`)
+        
+        // Wait for conditional field to appear
+        await page.waitForTimeout(2000)
+        
+        // Fill conditional fields if they exist
+        if (fieldMapping.conditional?.showFields) {
+          for (const conditionalField of fieldMapping.conditional.showFields) {
+            const explainValue = formData[conditionalField.fieldName]
+            if (explainValue) {
+              console.log(`📝 Filling ${conditionalField.fieldName}: ${explainValue}`)
+              const explainElement = page.locator(conditionalField.selector)
+              await explainElement.waitFor({ state: 'visible', timeout: 15000 })
+              await explainElement.fill(explainValue.toString())
+              console.log(`✅ Filled ${conditionalField.fieldName}`)
+            }
+          }
+        }
+      } else if (fieldValue === 'No' || fieldValue === 'N') {
+        // Select No radio button (add _1 to the selector)
+        const noSelector = fieldMapping.selector.replace('_0', '_1')
+        const noElement = page.locator(noSelector)
+        await noElement.waitFor({ state: 'visible', timeout: 15000 })
+        await noElement.check()
+        console.log(`✅ Selected "No" for ${fieldMapping.fieldName}`)
+      }
+    }
+    
+    console.log('✅ Step 17 form filling completed')
   }
 
   /**
