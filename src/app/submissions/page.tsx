@@ -3,33 +3,20 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { FileText, Download, Eye, Calendar, User, Send, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { FileText, Download, Eye, Calendar, User, XCircle } from 'lucide-react'
 import type { FormSubmission, FormTemplate } from '@/lib/supabase'
-import { ProgressTracker } from '@/components'
-import CaptchaDebug from '@/components/debug/CaptchaDebug'
 
 interface SubmissionWithTemplate extends FormSubmission {
   form_templates: FormTemplate
 }
 
-interface CeacJob {
-  id: string
-  status: string
-  createdAt: string
-  applicationId?: string
-  confirmationId?: string
-  embassy?: string
-  retryCount?: number
-}
+
 
 export default function SubmissionsPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
   const [submissions, setSubmissions] = useState<SubmissionWithTemplate[]>([])
-  const [ceacJobs, setCeacJobs] = useState<Record<string, CeacJob[]>>({})
   const [loading, setLoading] = useState(true)
-  const [submittingTo, setSubmittingTo] = useState<Record<string, boolean>>({})
-  const [trackingJob, setTrackingJob] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -39,7 +26,6 @@ export default function SubmissionsPage() {
 
     if (user && !authLoading) {
       loadSubmissions()
-      loadCeacJobs()
     }
   }, [user, authLoading, router])
 
@@ -80,41 +66,7 @@ export default function SubmissionsPage() {
     }
   }
 
-  const loadCeacJobs = async () => {
-    try {
-      const response = await fetch('/api/ceac/jobs')
-      if (response.ok) {
-        const data = await response.json()
-        const jobsMap: Record<string, CeacJob[]> = {}
-        data.jobs.forEach((job: any) => {
-          const submissionId = job.submission_id
-          if (!jobsMap[submissionId]) {
-            jobsMap[submissionId] = []
-          }
-          jobsMap[submissionId].push({
-            id: job.id,
-            status: job.status,
-            createdAt: job.created_at,
-            applicationId: job.ceac_application_id,
-            confirmationId: job.ceac_confirmation_id,
-            embassy: job.embassy_location,
-            retryCount: job.retry_count
-          })
-        })
-        
-        // Sort jobs by creation date (newest first)
-        Object.keys(jobsMap).forEach(submissionId => {
-          jobsMap[submissionId].sort((a, b) => 
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-        })
-        
-        setCeacJobs(jobsMap)
-      }
-    } catch (error) {
-      console.error('Error loading CEAC jobs:', error)
-    }
-  }
+
 
   const handleDelete = async (submissionId: string) => {
     if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
@@ -140,61 +92,7 @@ export default function SubmissionsPage() {
     }
   }
 
-  const handleSubmitToCeac = async (submissionId: string) => {
-    setSubmittingTo(prev => ({ ...prev, [submissionId]: true }))
-    
-    try {
-      const response = await fetch('/api/ceac/jobs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          submissionId,
-          embassy: 'PAKISTAN, ISLAMABAD', // Default embassy, could be made configurable
-          priority: 1
-        })
-      })
 
-      if (response.ok) {
-        const data = await response.json()
-        const job: CeacJob = {
-          id: data.job.id,
-          status: data.job.status || 'queued',
-          createdAt: data.job.created_at,
-          embassy: data.job.embassy_location
-        }
-        
-        // Check if job already exists in the list
-        const existingJobs = ceacJobs[submissionId] || []
-        const jobExists = existingJobs.some(existingJob => existingJob.id === job.id)
-        
-        if (!jobExists) {
-          setCeacJobs(prev => ({
-            ...prev,
-            [submissionId]: [job, ...(prev[submissionId] || [])]
-          }))
-        }
-        
-        // Start tracking the job with ProgressTracker
-        setTrackingJob(data.job.id)
-        
-        if (data.message === 'Using existing job') {
-          alert('Resuming existing CEAC automation job...')
-        } else {
-          alert('DS-160 form submitted to CEAC! Tracking progress...')
-        }
-      } else {
-        const error = await response.json()
-        alert(`Failed to submit to CEAC: ${error.error}`)
-      }
-    } catch (error) {
-      console.error('Error submitting to CEAC:', error)
-      alert('Failed to submit to CEAC')
-    } finally {
-      setSubmittingTo(prev => ({ ...prev, [submissionId]: false }))
-    }
-  }
 
 
 
@@ -208,37 +106,7 @@ export default function SubmissionsPage() {
     })
   }
 
-  const getCeacStatusIcon = (status: string) => {
-    switch (status) {
-      case 'queued':
-        return <Clock className="h-4 w-4 text-yellow-500" />
-      case 'running':
-        return <AlertCircle className="h-4 w-4 text-blue-500" />
-      case 'completed':
-      case 'succeeded':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'failed':
-        return <XCircle className="h-4 w-4 text-red-500" />
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />
-    }
-  }
 
-  const getCeacStatusText = (status: string) => {
-    switch (status) {
-      case 'queued':
-        return 'Queued'
-      case 'running':
-        return 'Processing'
-      case 'completed':
-      case 'succeeded':
-        return 'Completed'
-      case 'failed':
-        return 'Failed'
-      default:
-        return status
-    }
-  }
 
   if (authLoading || loading) {
     return (
@@ -290,35 +158,7 @@ export default function SubmissionsPage() {
             </p>
           </div>
 
-          {/* Progress Tracker */}
-          {trackingJob && (
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-gray-900">CEAC Automation Progress</h3>
-                <button
-                  onClick={() => {
-                    setTrackingJob(null)
-                  }}
-                  className="text-sm text-gray-500 hover:text-gray-700"
-                >
-                  Close
-                </button>
-              </div>
-              <CaptchaDebug jobId={trackingJob} />
-              <ProgressTracker
-                jobId={trackingJob}
-                onComplete={(summary) => {
-                  console.log('Job completed:', summary)
-                  setTrackingJob(null)
-                  loadCeacJobs() // Refresh jobs list
-                }}
-                onError={(error) => {
-                  console.error('Job error:', error)
-                  alert(`Job failed: ${error}`)
-                }}
-              />
-            </div>
-          )}
+
 
           {submissions.length === 0 ? (
             <div className="bg-white shadow rounded-lg p-12 text-center">
@@ -396,55 +236,13 @@ export default function SubmissionsPage() {
                         </button>
                         
                         {submission.form_templates.form_type === 'ds160' && (
-                          <>
-                            <div className="space-y-2">
-                              {/* Always show submit button */}
-                              <button
-                                onClick={() => handleSubmitToCeac(submission.id)}
-                                disabled={submittingTo[submission.id]}
-                                className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-1 text-sm"
-                              >
-                                {submittingTo[submission.id] ? (
-                                  <Clock className="h-4 w-4 animate-spin text-white" />
-                                ) : (
-                                  <Send className="h-4 w-4" />
-                                )}
-                                <span>
-                                  {submittingTo[submission.id] 
-                                    ? 'Submitting...' 
-                                    : (ceacJobs[submission.id]?.length > 0 ? 'Resubmit to CEAC' : 'Submit to CEAC')
-                                  }
-                                </span>
-                              </button>
-                              
-                              {/* Show all CEAC jobs for this submission */}
-                              {ceacJobs[submission.id] && ceacJobs[submission.id].length > 0 && (
-                                <div className="space-y-1">
-                                  <div className="text-xs font-medium text-gray-600">CEAC Submissions:</div>
-                                  {ceacJobs[submission.id].slice(0, 3).map((job, index) => (
-                                    <div key={job.id} className="flex items-center space-x-2 px-2 py-1 rounded-md bg-gray-50 text-xs">
-                                      {getCeacStatusIcon(job.status)}
-                                      <span className="font-medium text-black">{getCeacStatusText(job.status)}</span>
-                                      {job.embassy && (
-                                        <span className="text-gray-600">• {job.embassy}</span>
-                                      )}
-                                      {job.applicationId && (
-                                        <span className="text-gray-600">• ID: {job.applicationId}</span>
-                                      )}
-                                      <span className="text-gray-500">• {formatDate(job.createdAt)}</span>
-                                      {index === 0 && <span className="text-blue-600 font-medium">Latest</span>}
-                                    </div>
-                                  ))}
-                                  {ceacJobs[submission.id].length > 3 && (
-                                    <div className="text-xs text-gray-500 px-2">
-                                      +{ceacJobs[submission.id].length - 3} more submissions...
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            
-                          </>
+                          <button
+                            onClick={() => router.push(`/submissions/${submission.id}`)}
+                            className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 flex items-center space-x-1 text-sm"
+                          >
+                            <Eye className="h-4 w-4" />
+                            <span>View Details</span>
+                          </button>
                         )}
                       </div>
                     </div>
