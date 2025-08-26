@@ -15,6 +15,7 @@ import ProgressStatus from './ProgressStatus'
 import CaptchaImage from '../captcha/CaptchaImage'
 import CaptchaInput from '../captcha/CaptchaInput'
 import type { ProgressSummary } from '@/lib/progress/progress-types'
+import { RefreshCw } from 'lucide-react'
 
 interface ProgressTrackerProps {
   jobId: string
@@ -36,7 +37,7 @@ export default function ProgressTracker({
     loading: progressLoading,
     error: progressError,
     refreshProgress,
-    isRealtimeConnected
+    isStreaming
   } = useProgress({ jobId, enableRealtime: true })
 
   // CAPTCHA handling
@@ -153,39 +154,44 @@ export default function ProgressTracker({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Progress Bar */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">
-            CEAC Automation Progress
-          </h2>
-          <div className="flex items-center space-x-2">
-            {/* Realtime Status */}
-            <div className="flex items-center space-x-1">
-              <div className={`w-2 h-2 rounded-full ${isRealtimeConnected ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-              <span className="text-xs text-gray-500">
-                {isRealtimeConnected ? 'Live' : 'Polling'}
-              </span>
+      {/* Progress Summary */}
+      {summary && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Current Progress
+            </h3>
+            <div className="flex items-center space-x-2">
+              {/* SSE Connection Status */}
+              <div className={`flex items-center space-x-1 text-xs ${
+                isStreaming ? 'text-green-600' : 'text-yellow-600'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  isStreaming ? 'bg-green-500' : 'bg-yellow-500'
+                }`}></div>
+                <span>
+                  {isStreaming ? 'Live Updates' : 'Polling'}
+                </span>
+              </div>
+              
+              <button
+                onClick={refreshProgress}
+                disabled={progressLoading}
+                className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                title="Refresh progress"
+              >
+                <RefreshCw className={`h-4 w-4 ${progressLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
-            
-            {/* Refresh Button */}
-            <button
-              onClick={refreshProgress}
-              disabled={progressLoading}
-              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-              title="Refresh progress"
-            >
-              <span className="text-sm">🔄</span>
-            </button>
           </div>
-        </div>
 
-        <ProgressBar
-          percentage={summary.progress_percentage}
-          status={summary.current_status}
-          size="lg"
-        />
-      </div>
+          <ProgressBar
+            percentage={summary.progress_percentage}
+            status={summary.current_status}
+            size="lg"
+          />
+        </div>
+      )}
 
       {/* Progress Status */}
       <ProgressStatus
@@ -251,7 +257,7 @@ export default function ProgressTracker({
             Job ID: {jobId.slice(0, 8)}...
           </span>
           <span>
-            {isRealtimeConnected ? '🟢 Real-time connected' : '🟡 Polling mode'}
+            {isStreaming ? '🟢 SSE connected' : '🟡 Polling mode'}
           </span>
         </div>
       </div>

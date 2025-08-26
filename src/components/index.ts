@@ -25,5 +25,5 @@ export type {
   ProgressStep,
   CaptchaChallenge,
   CaptchaSolution,
-  RealtimeEvent
+  SSEEvent
 } from '@/lib/progress/progress-types'

@@ -332,22 +332,6 @@ export class CeacAutomationService {
     // First select the embassy location from the main page dropdown
     await this.selectEmbassyLocation(page, params.embassy, params.jobId)
     
-    // Handle CAPTCHA if present - wait for solution before continuing
-    const captchaSolution = await this.handleCaptcha(page, params.jobId)
-    
-    // If CAPTCHA was detected but not solved, stop the automation
-    if (captchaSolution === null) {
-      console.log('❌ CAPTCHA was detected but not solved - stopping automation')
-      throw new Error('CAPTCHA solution required but not provided within timeout')
-    }
-    
-    // If no CAPTCHA was detected, continue normally
-    if (captchaSolution === 'no_captcha') {
-      console.log('✅ No CAPTCHA detected - continuing normally')
-    } else {
-      console.log('✅ CAPTCHA solved successfully - continuing')
-    }
-    
     // Click "START AN APPLICATION" button
     console.log('🚀 Clicking START AN APPLICATION...')
     
@@ -403,9 +387,34 @@ export class CeacAutomationService {
       // Wait a bit more for potential redirects
       await page.waitForTimeout(2000)
       
-      // Check if we're on the Application ID Confirmation page
+      // Check if we're already on the security question page (CAPTCHA was already solved)
       let currentUrl = page.url()
       console.log(`📍 Current URL after clicking START AN APPLICATION: ${currentUrl}`)
+      
+      // If we're already on the security question page, CAPTCHA was already handled
+      if (currentUrl.includes('ConfirmApplicationID.aspx') || currentUrl.includes('SecureQuestion')) {
+        console.log('✅ Already on security question page - CAPTCHA was successfully solved')
+      } else {
+        // Handle CAPTCHA if present after clicking START AN APPLICATION
+        const captchaSolution = await this.handleCaptcha(page, params.jobId)
+        
+        // If CAPTCHA was detected but not solved, stop the automation
+        if (captchaSolution === null) {
+          console.log('❌ CAPTCHA was detected but not solved - stopping automation')
+          throw new Error('CAPTCHA solution required but not provided within timeout')
+        }
+        
+        // If no CAPTCHA was detected, continue normally
+        if (captchaSolution === 'no_captcha') {
+          console.log('✅ No CAPTCHA detected - continuing normally')
+        } else {
+          console.log('✅ CAPTCHA solved successfully - continuing')
+        }
+        
+        // Update current URL after CAPTCHA handling
+        currentUrl = page.url()
+        console.log(`📍 Current URL after CAPTCHA handling: ${currentUrl}`)
+      }
       
       // If we're still on the main page, wait for navigation to complete
       if (currentUrl.includes('Default.aspx') && !currentUrl.includes('ConfirmApplicationID')) {
@@ -668,25 +677,12 @@ export class CeacAutomationService {
         const solution = await this.waitForCaptchaSolution(jobId)
         
         if (solution) {
-          console.log('🔐 CAPTCHA solution received, filling input field...')
+          console.log('✅ CAPTCHA solution handled by waitForCaptchaSolution - returning solution')
           
-          // Fill the CAPTCHA solution
-          const success = await this.fillCaptcha(page, solution)
+          // Note: Progress update and screenshot are already handled by waitForCaptchaSolution
+          // No need to do anything else here to avoid race conditions
           
-          if (success) {
-            console.log('✅ CAPTCHA solution filled successfully')
-            
-            // Update progress to indicate CAPTCHA is solved
-            await this.progressService.handleCaptchaSolution(jobId, solution)
-            
-            // Take a screenshot after filling CAPTCHA
-            await this.takeScreenshot(page, jobId, 'captcha-filled')
-            
-            return solution
-          } else {
-            console.log('❌ Failed to fill CAPTCHA solution')
-            return null
-          }
+          return solution
         } else {
           console.log('❌ No CAPTCHA solution received within timeout')
           return null
@@ -831,7 +827,7 @@ export class CeacAutomationService {
   }
 
   /**
-   * Wait for CAPTCHA solution from user
+   * Wait for CAPTCHA solution from user with real-time validation
    */
   private async waitForCaptchaSolution(jobId: string): Promise<string | null> {
     console.log('⏳ Waiting for CAPTCHA solution from user...')
@@ -840,8 +836,10 @@ export class CeacAutomationService {
     const checkInterval = 2000 // 2 seconds
     let startTime = Date.now()
     let lastChallengeId = null
+    let attemptCount = 0
+    const maxAttempts = 5
     
-    while (Date.now() - startTime < maxWaitTime) {
+    while (Date.now() - startTime < maxWaitTime && attemptCount < maxAttempts) {
       try {
         console.log(`🔍 Polling cycle ${Math.floor((Date.now() - startTime) / checkInterval) + 1}...`)
         
@@ -888,7 +886,39 @@ export class CeacAutomationService {
           
           if (solvedChallenge && solvedChallenge.solution) {
             console.log(`✅ CAPTCHA solution received from user: "${solvedChallenge.solution}"`)
-            return solvedChallenge.solution
+            
+            // Get the current page to validate the solution
+            const pages = this.browser?.contexts()[0]?.pages()
+            if (pages && pages.length > 0) {
+              const page = pages[0]
+              
+              // Use real-time validation
+              const validationResult = await this.fillCaptchaWithRealTimeValidation(page, solvedChallenge.solution, jobId)
+              
+              if (validationResult.success) {
+                console.log('✅ CAPTCHA validation successful')
+                return solvedChallenge.solution
+              } else {
+                console.log('❌ CAPTCHA validation failed:', validationResult.errorMessage)
+                attemptCount++
+                
+                if (validationResult.needsNewCaptcha) {
+                  console.log('🔄 New CAPTCHA will be shown to user automatically')
+                  // The new CAPTCHA is already created in fillCaptchaWithRealTimeValidation
+                  // Reset timer for new attempt
+                  startTime = Date.now()
+                  continue
+                }
+                
+                if (attemptCount >= maxAttempts) {
+                  console.log('❌ Max CAPTCHA attempts reached')
+                  return null
+                }
+              }
+            } else {
+              console.log('❌ No browser page available for validation')
+              return null
+            }
           } else {
             console.log('📝 No solved challenge found either')
           }
@@ -996,6 +1026,231 @@ export class CeacAutomationService {
     } catch (error) {
       console.error('❌ Error filling CAPTCHA:', error)
       return false
+    }
+  }
+
+  /**
+   * Detect CAPTCHA validation result in real-time
+   */
+  private async detectCaptchaValidationResult(page: Page): Promise<{
+    isValid: boolean
+    errorMessage: string | null
+    needsNewCaptcha: boolean
+  }> {
+    try {
+      console.log('🔍 Detecting CAPTCHA validation result...')
+      
+      // Wait for potential validation response
+      await page.waitForTimeout(2000)
+      
+      // Check for validation error elements
+      const errorSummary = page.locator('#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_ValidationSummary')
+      const errorSpan = page.locator('#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_csvCaptChaCodeTextBox')
+      
+      // Check if error elements are visible
+      const hasErrorSummary = await errorSummary.isVisible()
+      const hasErrorSpan = await errorSpan.isVisible()
+      
+      // Get error message if present
+      let errorMessage: string | null = null
+      if (hasErrorSummary) {
+        errorMessage = await errorSummary.textContent()
+        console.log('❌ CAPTCHA error detected:', errorMessage)
+      }
+      
+      // Check if we're still on the CAPTCHA page
+      const currentUrl = page.url()
+      const isStillOnCaptchaPage = currentUrl.includes('captcha') || 
+                                   await page.locator('#ctl00_SiteContentPlaceHolder_ucLocation_IdentifyCaptcha1_txtCodeTextBox').isVisible()
+      
+      // Check if we've been redirected to security question page (success)
+      const isOnSecurityQuestionPage = currentUrl.includes('ConfirmApplicationID.aspx?node=SecureQuestion')
+      
+      // Determine validation result
+      if (isOnSecurityQuestionPage) {
+        console.log('✅ CAPTCHA validation successful - redirected to security question page')
+        return {
+          isValid: true,
+          errorMessage: null,
+          needsNewCaptcha: false
+        }
+      } else if (hasErrorSummary || hasErrorSpan) {
+        console.log('❌ CAPTCHA validation failed - error elements visible')
+        return {
+          isValid: false,
+          errorMessage: errorMessage,
+          needsNewCaptcha: true
+        }
+      } else if (isStillOnCaptchaPage) {
+        console.log('⚠️ Still on CAPTCHA page - validation may have failed silently')
+        return {
+          isValid: false,
+          errorMessage: 'Still on CAPTCHA page after submission',
+          needsNewCaptcha: false
+        }
+      } else {
+        console.log('✅ CAPTCHA validation appears successful - not on CAPTCHA page')
+        return {
+          isValid: true,
+          errorMessage: null,
+          needsNewCaptcha: false
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error detecting CAPTCHA validation result:', error)
+      return {
+        isValid: false,
+        errorMessage: 'Error during validation detection',
+        needsNewCaptcha: false
+      }
+    }
+  }
+
+  /**
+   * Fill CAPTCHA with real-time validation
+   */
+  private async fillCaptchaWithRealTimeValidation(page: Page, solution: string, jobId: string): Promise<{
+    success: boolean
+    errorMessage: string | null
+    needsNewCaptcha: boolean
+  }> {
+    try {
+      console.log('🔐 Filling CAPTCHA with real-time validation:', solution)
+      
+      // Fill the CAPTCHA input
+      const fillSuccess = await this.fillCaptcha(page, solution)
+      if (!fillSuccess) {
+        return { 
+          success: false, 
+          errorMessage: 'Failed to fill CAPTCHA input',
+          needsNewCaptcha: false
+        }
+      }
+      
+      // Take screenshot before submission
+      await this.takeScreenshot(page, jobId, `captcha-before-submission-${Date.now()}`)
+      
+      // Click START AN APPLICATION button (not Next button)
+      console.log('🚀 Clicking START AN APPLICATION button...')
+      
+      // Try multiple selectors for the START AN APPLICATION button
+      const startButtonSelectors = [
+        '#ctl00_SiteContentPlaceHolder_lnkNew',
+        'text=START AN APPLICATION',
+        '[role="Button"]:has-text("START AN APPLICATION")',
+        'a:has-text("START AN APPLICATION")'
+      ]
+      
+      let startButton = null
+      
+      for (const selector of startButtonSelectors) {
+        try {
+          console.log(`🔍 Trying START AN APPLICATION button selector: ${selector}`)
+          const button = page.locator(selector).first()
+          
+          if (await button.isVisible({ timeout: 3000 })) {
+            startButton = button
+            console.log(`✅ Found START AN APPLICATION button with selector: ${selector}`)
+            break
+          }
+        } catch (error: any) {
+          console.log(`❌ Selector ${selector} failed: ${error.message}`)
+          continue
+        }
+      }
+      
+      if (startButton) {
+        await startButton.click()
+        await page.waitForLoadState('networkidle')
+      } else {
+        console.log('❌ START AN APPLICATION button not found')
+        return { 
+          success: false, 
+          errorMessage: 'START AN APPLICATION button not found',
+          needsNewCaptcha: false
+        }
+      }
+      
+      // Wait for page response
+      await page.waitForLoadState('networkidle')
+      
+      // Take screenshot after submission
+      await this.takeScreenshot(page, jobId, `captcha-after-submission-${Date.now()}`)
+      
+      // Detect validation result
+      const validationResult = await this.detectCaptchaValidationResult(page)
+      
+      if (!validationResult.isValid) {
+        console.log('❌ CAPTCHA validation failed:', validationResult.errorMessage)
+        
+        // If new CAPTCHA is needed, CEAC automatically provides it
+        if (validationResult.needsNewCaptcha) {
+          console.log('🔄 CAPTCHA was wrong - CEAC automatically provides new CAPTCHA')
+          
+          // Create a progress update to indicate CAPTCHA validation failed
+          // Get user ID from the job record
+          const { data: jobData } = await this.supabase
+            .from('ceac_automation_jobs')
+            .select('user_id')
+            .eq('id', jobId)
+            .single()
+          
+          if (jobData) {
+            await this.progressService.createProgressUpdate({
+              job_id: jobId,
+              user_id: jobData.user_id,
+              step_name: 'captcha_detected',
+              status: 'waiting_for_captcha',
+              message: `CAPTCHA validation failed: ${validationResult.errorMessage || 'Incorrect CAPTCHA solution'}`,
+              progress_percentage: 50,
+              needs_captcha: true,
+              metadata: {
+                validation_failed: true,
+                error_message: validationResult.errorMessage,
+                needs_new_captcha: true,
+                timestamp: new Date().toISOString()
+              }
+            })
+          }
+          
+          // Take new CAPTCHA screenshot (CEAC already refreshed it)
+          const newCaptchaScreenshotPath = await this.takeCaptchaScreenshot(page, jobId)
+          if (newCaptchaScreenshotPath) {
+            // Create a new CAPTCHA challenge for the user
+            await this.progressService.createCaptchaChallenge(jobId, newCaptchaScreenshotPath)
+            
+            console.log('✅ New CAPTCHA challenge created and ready for user')
+          } else {
+            console.log('⚠️ Could not capture new CAPTCHA screenshot')
+          }
+        }
+        
+        return { 
+          success: false, 
+          errorMessage: validationResult.errorMessage,
+          needsNewCaptcha: validationResult.needsNewCaptcha
+        }
+      }
+      
+      console.log('✅ CAPTCHA validation successful')
+      
+      // Update progress to indicate CAPTCHA is solved
+      await this.progressService.handleCaptchaSolution(jobId, solution)
+      
+      return { 
+        success: true, 
+        errorMessage: null,
+        needsNewCaptcha: false
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in CAPTCHA validation:', error)
+      return { 
+        success: false, 
+        errorMessage: 'Validation error occurred',
+        needsNewCaptcha: false
+      }
     }
   }
 

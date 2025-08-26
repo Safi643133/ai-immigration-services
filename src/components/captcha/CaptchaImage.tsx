@@ -87,16 +87,7 @@ export default function CaptchaImage({
         <h3 className="text-lg font-semibold text-gray-900">
           CAPTCHA Challenge
         </h3>
-        {onRefresh && (
-          <button
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center space-x-1 px-3 py-1 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <span className="text-sm">🔄</span>
-            <span>Refresh</span>
-          </button>
-        )}
+
       </div>
 
       {/* Image Container */}

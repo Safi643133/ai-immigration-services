@@ -113,10 +113,10 @@ export interface CaptchaSolution {
 }
 
 // ============================================================================
-// REALTIME TYPES
+// SSE TYPES
 // ============================================================================
 
-export type RealtimeEventType = 
+export type SSEEventType = 
   | 'progress_update'
   | 'captcha_challenge'
   | 'captcha_solved'
@@ -124,11 +124,14 @@ export type RealtimeEventType =
   | 'job_failed'
   | 'error'
 
-export interface RealtimeEvent {
-  type: RealtimeEventType
-  job_id: string
-  data: ProgressUpdate | CaptchaChallenge | any
-  timestamp: string
+export interface SSEEvent {
+  type: SSEEventType
+  data: {
+    summary?: ProgressSummary
+    history?: ProgressUpdate[]
+    challenge?: CaptchaChallenge
+    timestamp: string
+  }
 }
 
 // ============================================================================
@@ -151,11 +154,11 @@ export interface CaptchaServiceInterface {
   refreshCaptcha(jobId: string): Promise<CaptchaChallenge>
 }
 
-export interface RealtimeServiceInterface {
-  subscribeToProgress(jobId: string, callback: (event: RealtimeEvent) => void): () => void
+export interface SSEServiceInterface {
+  subscribeToProgress(jobId: string, callback: (event: SSEEvent) => void): () => void
   subscribeToCaptcha(jobId: string, callback: (challenge: CaptchaChallenge) => void): () => void
   unsubscribe(jobId: string): void
-  publishEvent(event: RealtimeEvent): Promise<void>
+  publishEvent(event: SSEEvent): Promise<void>
 }
 
 // ============================================================================

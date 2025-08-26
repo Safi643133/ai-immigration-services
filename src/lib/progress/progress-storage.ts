@@ -145,16 +145,33 @@ export class ProgressStorage {
         100
       )
 
+      // Check if there's an active CAPTCHA challenge
+      const activeCaptcha = await this.getCaptchaChallenge(jobId)
+      const needsCaptcha = activeCaptcha !== null
+      const captchaImage = activeCaptcha?.image_url || latest.captcha_image
+
+      // Determine current status based on latest update and active CAPTCHA
+      let currentStatus = latest.status
+      let currentStep = latest.step_name
+      let currentMessage = latest.message
+
+      // If there's an active CAPTCHA challenge, override the status
+      if (needsCaptcha) {
+        currentStatus = 'waiting_for_captcha'
+        currentStep = 'captcha_detected'
+        currentMessage = 'CAPTCHA challenge detected - waiting for solution'
+      }
+
       return {
         job_id: jobId,
-        current_step: latest.step_name,
-        current_status: latest.status,
+        current_step: currentStep,
+        current_status: currentStatus,
         progress_percentage: progressPercentage,
         total_steps: totalSteps,
         completed_steps: completedSteps,
         last_update: latest.created_at,
-        needs_captcha: latest.needs_captcha,
-        captcha_image: latest.captcha_image
+        needs_captcha: needsCaptcha,
+        captcha_image: captchaImage
       }
     } catch (error) {
       console.error('ProgressStorage.getProgressSummary error:', error)

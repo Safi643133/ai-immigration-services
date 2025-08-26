@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, Download } from 'lucide-react'
+import { ArrowLeft, Clock, CheckCircle, XCircle, AlertCircle, RefreshCw, Download, Eye, EyeOff, Copy } from 'lucide-react'
 import { ProgressTracker } from '@/components'
 import CaptchaDebug from '@/components/debug/CaptchaDebug'
 import type { FormSubmission, FormTemplate } from '@/lib/supabase'
@@ -22,6 +22,21 @@ interface CeacJob {
   retryCount?: number
 }
 
+interface ApplicationData {
+  applicationId: {
+    job_id: string
+    application_id: string
+    application_date: string
+    created_at: string
+  } | null
+  securityAnswer: {
+    job_id: string
+    security_question: string
+    security_answer: string
+    created_at: string
+  } | null
+}
+
 export default function JobProgressPage() {
   const { user, loading: authLoading } = useAuth()
   const router = useRouter()
@@ -31,6 +46,8 @@ export default function JobProgressPage() {
   
   const [submission, setSubmission] = useState<SubmissionWithTemplate | null>(null)
   const [job, setJob] = useState<CeacJob | null>(null)
+  const [applicationData, setApplicationData] = useState<ApplicationData | null>(null)
+  const [showSecurityAnswer, setShowSecurityAnswer] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -78,6 +95,13 @@ export default function JobProgressPage() {
           router.push(`/submissions/${submissionId}`)
           return
         }
+      }
+
+      // Load application data (application ID and security answer)
+      const applicationDataResponse = await fetch(`/api/ceac/jobs/${jobId}/application-data`)
+      if (applicationDataResponse.ok) {
+        const applicationDataResult = await applicationDataResponse.json()
+        setApplicationData(applicationDataResult.data)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -195,6 +219,16 @@ export default function JobProgressPage() {
     } catch (error) {
       console.error('Error downloading PDF:', error)
       alert('Failed to download PDF')
+    }
+  }
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      alert(`${label} copied to clipboard!`)
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+      alert('Failed to copy to clipboard')
     }
   }
 
@@ -344,6 +378,71 @@ export default function JobProgressPage() {
               </div>
             )}
           </div>
+
+          {/* Application ID and Security Answer Section */}
+          {applicationData && (applicationData.applicationId || applicationData.securityAnswer) && (
+            <div className="bg-white shadow rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                CEAC Application Details
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Application ID */}
+                {applicationData.applicationId && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-gray-700">Application ID</h4>
+                      <button
+                        onClick={() => copyToClipboard(applicationData.applicationId!.application_id, 'Application ID')}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="text-lg font-mono text-gray-900 mb-2">
+                      {applicationData.applicationId.application_id}
+                    </p>
+                    <div className="text-xs text-gray-500">
+                      <p>Date: {formatDate(applicationData.applicationId.application_date)}</p>
+                      <p>Created: {formatDate(applicationData.applicationId.created_at)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Security Answer */}
+                {applicationData.securityAnswer && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-medium text-gray-700">Security Question</h4>
+                      <button
+                        onClick={() => copyToClipboard(applicationData.securityAnswer!.security_answer, 'Security Answer')}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {applicationData.securityAnswer.security_question}
+                    </p>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <p className="text-lg font-mono text-gray-900">
+                        {showSecurityAnswer ? applicationData.securityAnswer.security_answer : '••••••'}
+                      </p>
+                      <button
+                        onClick={() => setShowSecurityAnswer(!showSecurityAnswer)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        {showSecurityAnswer ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      <p>Created: {formatDate(applicationData.securityAnswer.created_at)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* CAPTCHA Debug Component */}
           {/* <div className="mb-6">

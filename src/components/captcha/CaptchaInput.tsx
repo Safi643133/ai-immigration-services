@@ -8,12 +8,16 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import CaptchaValidationStatus from './CaptchaValidationStatus'
 
 interface CaptchaInputProps {
   onSubmit: (solution: string) => Promise<boolean>
   onCancel?: () => void
   loading?: boolean
   error?: string | null
+  validationStatus?: 'idle' | 'validating' | 'validated' | 'failed' | 'new_captcha'
+  validationError?: string | null
+  attemptCount?: number
   className?: string
 }
 
@@ -22,6 +26,9 @@ export default function CaptchaInput({
   onCancel,
   loading = false,
   error = null,
+  validationStatus = 'idle',
+  validationError = null,
+  attemptCount = 0,
   className = ''
 }: CaptchaInputProps) {
   const [solution, setSolution] = useState('')
@@ -42,6 +49,17 @@ export default function CaptchaInput({
       setLocalError(error)
     }
   }, [error])
+
+  // Clear input when new CAPTCHA is loaded
+  useEffect(() => {
+    if (validationStatus === 'new_captcha') {
+      setSolution('')
+      setLocalError(null)
+      if (inputRef.current) {
+        inputRef.current.focus()
+      }
+    }
+  }, [validationStatus])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,133 +112,122 @@ export default function CaptchaInput({
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    // Only allow alphanumeric characters and common symbols
-    const sanitizedValue = value.replace(/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g, '')
-    setSolution(sanitizedValue)
-    
-    // Clear error when user starts typing
+    setSolution(e.target.value)
     if (localError) {
       setLocalError(null)
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      handleSubmit(e)
-    } else if (e.key === 'Escape') {
-      e.preventDefault()
-      handleCancel()
+      handleSubmit(e as any)
     }
   }
 
   const isDisabled = loading || isSubmitting
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Enter CAPTCHA Solution
-        </h3>
-        {onCancel && (
-          <button
-            onClick={handleCancel}
-            disabled={isDisabled}
-            className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancel
-          </button>
-        )}
-      </div>
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Input Field */}
-        <div>
-          <label htmlFor="captcha-solution" className="block text-sm font-medium text-gray-700 mb-2">
-            CAPTCHA Solution
-          </label>
-          <input
-            ref={inputRef}
-            id="captcha-solution"
-            type="text"
-            value={solution}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            disabled={isDisabled}
-            placeholder="Enter the characters you see..."
-            className="w-full px-3 py-2 border text-black border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
-            maxLength={10}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Enter the characters exactly as you see them (case-sensitive)
+    <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            CAPTCHA Verification Required
+          </h3>
+          <p className="text-sm text-gray-600">
+            Please enter the characters you see in the image below
           </p>
         </div>
 
-        {/* Error Display */}
-        {localError && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-red-600">❌</span>
-              <span className="text-red-800 text-sm font-medium">
-                {localError}
-              </span>
-            </div>
-          </div>
-        )}
+        {/* Validation Status */}
+        <CaptchaValidationStatus
+          status={validationStatus}
+          errorMessage={validationError || undefined}
+          attemptCount={attemptCount}
+        />
 
-        {/* Success Message */}
-        {!localError && !loading && !isSubmitting && (
-          <div className="bg-green-50 border border-green-200 rounded-md p-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-green-600">💡</span>
-              <span className="text-green-800 text-sm">
-                Tip: Look carefully at each character. Some may be similar (like 0 and O, 1 and l).
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <div className="flex items-center justify-end space-x-3">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={handleCancel}
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Input Field */}
+          <div>
+            <label htmlFor="captcha-solution" className="block text-sm font-medium text-gray-700 mb-2">
+              CAPTCHA Solution
+            </label>
+            <input
+              ref={inputRef}
+              id="captcha-solution"
+              type="text"
+              value={solution}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
               disabled={isDisabled}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            type="submit"
-            disabled={isDisabled || !solution.trim()}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSubmitting ? (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Submitting...</span>
-              </div>
-            ) : (
-              'Submit Solution'
-            )}
-          </button>
-        </div>
-      </form>
+              placeholder="Enter the characters you see..."
+              className="w-full px-3 py-2 border text-black border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+              maxLength={10}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Enter the characters exactly as you see them (case-sensitive)
+            </p>
+          </div>
 
-      {/* Keyboard Shortcuts */}
-      <div className="mt-4 pt-3 border-t border-gray-200">
-        <p className="text-xs text-gray-500">
-          <span className="font-medium">Keyboard shortcuts:</span> Press Enter to submit, Escape to cancel
-        </p>
+          {/* Error Display */}
+          {localError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-red-600">❌</span>
+                <span className="text-red-800 text-sm font-medium">
+                  {localError}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {!localError && !loading && !isSubmitting && validationStatus === 'idle' && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-green-600">💡</span>
+                <span className="text-green-800 text-sm">
+                  Tip: Look carefully at each character. Some may be similar (like 0 and O, 1 and l).
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <div className="flex space-x-3">
+            <button
+              type="submit"
+              disabled={isDisabled}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Validating...</span>
+                </>
+              ) : (
+                <span>Submit Solution</span>
+              )}
+            </button>
+            
+            {onCancel && (
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={isDisabled}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
       </div>
     </div>
   )

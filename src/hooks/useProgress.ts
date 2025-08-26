@@ -1,17 +1,15 @@
 /**
  * Progress Hook
  * 
- * React hook for managing progress tracking with API integration
- * and real-time updates using Supabase realtime.
+ * React hook for managing progress tracking with real-time updates using Server-Sent Events (SSE).
+ * Eliminates the need for continuous API polling by using HTTP streaming.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { realtimeService } from '@/lib/realtime/realtime-service'
 import type { 
   ProgressSummary, 
   ProgressUpdate, 
-  CaptchaChallenge,
-  RealtimeEvent 
+  CaptchaChallenge
 } from '@/lib/progress/progress-types'
 
 interface UseProgressOptions {
@@ -31,16 +29,16 @@ interface UseProgressReturn {
   refreshProgress: () => Promise<void>
   updateProgress: (update: Partial<ProgressUpdate>) => Promise<void>
   
-  // Realtime
-  isRealtimeConnected: boolean
-  lastEvent: RealtimeEvent | null
+  // SSE
+  isStreaming: boolean
+  lastUpdate: string | null
 }
 
 export function useProgress(options: UseProgressOptions = {}): UseProgressReturn {
   const { 
     jobId, 
     enableRealtime = true, 
-    pollInterval = 5000 
+    pollInterval = 10000 // Increased to reduce polling frequency
   } = options
 
   // State
@@ -48,12 +46,12 @@ export function useProgress(options: UseProgressOptions = {}): UseProgressReturn
   const [history, setHistory] = useState<ProgressUpdate[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
-  const [lastEvent, setLastEvent] = useState<RealtimeEvent | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null)
 
   // Refs
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const unsubscribeRef = useRef<(() => void) | null>(null)
+  const eventSourceRef = useRef<EventSource | null>(null)
+  const initialFetchDoneRef = useRef(false)
 
   // ============================================================================
   // API FUNCTIONS
@@ -77,6 +75,7 @@ export function useProgress(options: UseProgressOptions = {}): UseProgressReturn
       if (data.success) {
         setSummary(data.data.summary)
         setHistory(data.data.history || [])
+        initialFetchDoneRef.current = true
       } else {
         throw new Error(data.error || 'Failed to fetch progress')
       }
@@ -121,127 +120,106 @@ export function useProgress(options: UseProgressOptions = {}): UseProgressReturn
   }, [jobId, fetchProgress])
 
   // ============================================================================
-  // REALTIME SUBSCRIPTION
+  // SSE STREAMING
   // ============================================================================
 
-  const setupRealtimeSubscription = useCallback(() => {
+  const setupSSEStream = useCallback(() => {
     if (!jobId || !enableRealtime) return
 
     try {
-      // Subscribe to progress updates
-      const unsubscribe = realtimeService.subscribeToProgress(jobId, (event: RealtimeEvent) => {
-        console.log('📡 Received progress event:', event)
-        setLastEvent(event)
-        setIsRealtimeConnected(true)
-
-        if (event.type === 'progress_update') {
-          const progressUpdate = event.data as ProgressUpdate
-          
-          // Update history
-          setHistory(prev => [...prev, progressUpdate])
-          
-          // Update summary if this is the latest update
-          setSummary(prev => {
-            if (!prev || new Date(progressUpdate.created_at) > new Date(prev.last_update)) {
-              return {
-                job_id: progressUpdate.job_id,
-                current_step: progressUpdate.step_name,
-                current_status: progressUpdate.status,
-                progress_percentage: progressUpdate.progress_percentage,
-                total_steps: 17,
-                completed_steps: 0, // This would need to be calculated
-                last_update: progressUpdate.created_at,
-                needs_captcha: progressUpdate.needs_captcha,
-                captcha_image: progressUpdate.captcha_image
-              }
-            }
-            return prev
-          })
-        }
-      })
-
-      unsubscribeRef.current = unsubscribe
-      setIsRealtimeConnected(true)
+      console.log(`📡 Setting up SSE stream for job ${jobId}`)
       
-      console.log(`📡 Realtime subscription established for job ${jobId}`)
+      // Close existing connection
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+      }
+
+      // Create new EventSource connection
+      const eventSource = new EventSource(`/api/ceac/progress?jobId=${jobId}&stream=true`)
+      eventSourceRef.current = eventSource
+
+      eventSource.onopen = () => {
+        console.log(`📡 SSE connection opened for job ${jobId}`)
+        setIsStreaming(true)
+      }
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          console.log('📡 Received SSE progress event:', data)
+          setLastUpdate(new Date().toISOString())
+
+          if (data.type === 'progress_update' || data.type === 'job_completed') {
+            const { summary, history } = data.data
+            
+            setSummary(summary)
+            setHistory(history)
+            
+            console.log('📡 Updated progress via SSE:', summary)
+          }
+        } catch (error) {
+          console.error('❌ Error parsing SSE message:', error)
+        }
+      }
+
+      eventSource.onerror = (error) => {
+        console.error('❌ SSE connection error:', error)
+        setIsStreaming(false)
+        eventSource.close()
+      }
+
+      console.log(`✅ SSE stream established for job ${jobId}`)
     } catch (error) {
-      console.error('Error setting up realtime subscription:', error)
-      setIsRealtimeConnected(false)
+      console.error('❌ Error setting up SSE stream:', error)
+      setIsStreaming(false)
     }
   }, [jobId, enableRealtime])
 
-  const cleanupRealtimeSubscription = useCallback(() => {
-    if (unsubscribeRef.current) {
-      unsubscribeRef.current()
-      unsubscribeRef.current = null
+  const cleanupSSEStream = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
     }
-    setIsRealtimeConnected(false)
-    console.log(`📡 Realtime subscription cleaned up for job ${jobId}`)
-  }, [jobId])
-
-  // ============================================================================
-  // POLLING
-  // ============================================================================
-
-  const startPolling = useCallback(() => {
-    if (!jobId || enableRealtime) return
-
-    // Clear existing interval
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current)
-    }
-
-    // Start new polling interval
-    pollIntervalRef.current = setInterval(() => {
-      fetchProgress()
-    }, pollInterval)
-
-    console.log(`🔄 Started polling for job ${jobId} every ${pollInterval}ms`)
-  }, [jobId, enableRealtime, pollInterval, fetchProgress])
-
-  const stopPolling = useCallback(() => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current)
-      pollIntervalRef.current = null
-      console.log(`🔄 Stopped polling for job ${jobId}`)
-    }
+    setIsStreaming(false)
+    console.log(`📡 SSE stream cleaned up for job ${jobId}`)
   }, [jobId])
 
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
-  // Initial fetch
+  // Initial fetch only once
   useEffect(() => {
-    if (jobId) {
+    if (jobId && !initialFetchDoneRef.current) {
+      console.log(`📊 Initial progress fetch for job ${jobId}`)
       fetchProgress()
     }
-  }, [jobId]) // Remove fetchProgress from dependencies to prevent infinite loop
+  }, [jobId, fetchProgress])
 
-  // Setup realtime or polling
+  // Setup SSE streaming
   useEffect(() => {
     if (jobId) {
       if (enableRealtime) {
-        setupRealtimeSubscription()
-        stopPolling() // Stop polling if realtime is enabled
+        console.log(`📡 Enabling SSE streaming for job ${jobId}`)
+        setupSSEStream()
       } else {
-        cleanupRealtimeSubscription() // Clean up realtime if polling is enabled
-        startPolling()
+        console.log(`🔄 SSE streaming disabled for job ${jobId}`)
+        cleanupSSEStream()
       }
     }
 
     // Cleanup on unmount or jobId change
     return () => {
-      cleanupRealtimeSubscription()
-      stopPolling()
+      cleanupSSEStream()
     }
-  }, [jobId, enableRealtime, setupRealtimeSubscription, cleanupRealtimeSubscription, startPolling, stopPolling])
+  }, [jobId, enableRealtime, setupSSEStream, cleanupSSEStream])
 
   // ============================================================================
   // PUBLIC API
   // ============================================================================
 
   const refreshProgress = useCallback(async () => {
+    console.log(`🔄 Manual progress refresh for job ${jobId}`)
     await fetchProgress()
   }, [fetchProgress])
 
@@ -256,9 +234,9 @@ export function useProgress(options: UseProgressOptions = {}): UseProgressReturn
     refreshProgress,
     updateProgress,
     
-    // Realtime
-    isRealtimeConnected,
-    lastEvent
+    // SSE
+    isStreaming,
+    lastUpdate
   }
 }
 

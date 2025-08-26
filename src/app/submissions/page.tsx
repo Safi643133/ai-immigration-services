@@ -76,6 +76,9 @@ export default function SubmissionsPage() {
     try {
       const response = await fetch(`/api/forms/submissions/${submissionId}`, {
         method: 'DELETE',
+        headers: {
+          'X-User-ID': user!.id // Add the user ID header for authentication
+        }
       })
 
       if (response.ok) {

@@ -1,15 +1,13 @@
 /**
  * CAPTCHA Hook
  * 
- * React hook for managing CAPTCHA challenges and solutions
- * with API integration and real-time updates.
+ * React hook for managing CAPTCHA challenges with real-time updates using Server-Sent Events (SSE).
+ * Eliminates the need for continuous API polling by using HTTP streaming.
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { realtimeService } from '@/lib/realtime/realtime-service'
 import type { 
-  CaptchaChallenge, 
-  RealtimeEvent 
+  CaptchaChallenge
 } from '@/lib/progress/progress-types'
 
 interface UseCaptchaOptions {
@@ -26,20 +24,24 @@ interface UseCaptchaReturn {
   solving: boolean
   
   // Actions
-  refreshChallenge: () => Promise<void>
   solveCaptcha: (solution: string) => Promise<boolean>
   refreshCaptcha: () => Promise<void>
   
-  // Realtime
-  isRealtimeConnected: boolean
-  lastEvent: RealtimeEvent | null
+  // SSE
+  isStreaming: boolean
+  lastUpdate: string | null
+  
+  // Validation Status
+  validationStatus: 'idle' | 'validating' | 'validated' | 'failed' | 'new_captcha'
+  validationError: string | null
+  attemptCount: number
 }
 
 export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
   const { 
     jobId, 
     enableRealtime = true, 
-    pollInterval = 3000 
+    pollInterval = 10000 // Increased to reduce polling frequency
   } = options
 
   // State
@@ -47,12 +49,17 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [solving, setSolving] = useState(false)
-  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
-  const [lastEvent, setLastEvent] = useState<RealtimeEvent | null>(null)
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null)
+  
+  // Validation Status
+  const [validationStatus, setValidationStatus] = useState<'idle' | 'validating' | 'validated' | 'failed' | 'new_captcha'>('idle')
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [attemptCount, setAttemptCount] = useState(0)
 
   // Refs
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const unsubscribeRef = useRef<(() => void) | null>(null)
+  const eventSourceRef = useRef<EventSource | null>(null)
+  const initialFetchDoneRef = useRef(false)
 
   // ============================================================================
   // API FUNCTIONS
@@ -75,6 +82,7 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
       
       if (data.success) {
         setChallenge(data.data)
+        initialFetchDoneRef.current = true
       } else {
         throw new Error(data.error || 'Failed to fetch CAPTCHA challenge')
       }
@@ -88,11 +96,12 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
   }, [jobId])
 
   const submitSolution = useCallback(async (solution: string): Promise<boolean> => {
-    if (!jobId || !solution.trim()) return false
+    if (!jobId) return false
 
     try {
       setSolving(true)
       setError(null)
+      setValidationStatus('validating')
 
       const response = await fetch(`/api/ceac/captcha/${jobId}/solve`, {
         method: 'POST',
@@ -111,14 +120,22 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
       
       if (data.success) {
         console.log('✅ CAPTCHA solved successfully')
+        setValidationStatus('validated')
         setChallenge(null) // Clear the challenge since it's solved
         return true
       } else {
+        // CAPTCHA was wrong
+        setValidationStatus('failed')
+        setValidationError(data.error || 'CAPTCHA validation failed')
+        setAttemptCount(prev => prev + 1)
         throw new Error(data.error || 'Failed to solve CAPTCHA')
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
       setError(errorMessage)
+      setValidationStatus('failed')
+      setValidationError(errorMessage)
+      setAttemptCount(prev => prev + 1)
       console.error('Error solving CAPTCHA:', err)
       return false
     } finally {
@@ -126,7 +143,7 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
     }
   }, [jobId])
 
-  const refreshCaptchaImage = useCallback(async () => {
+  const refreshCaptchaImage = useCallback(async (): Promise<void> => {
     if (!jobId) return
 
     try {
@@ -134,18 +151,22 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
       setError(null)
 
       const response = await fetch(`/api/ceac/captcha/${jobId}/refresh`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to refresh CAPTCHA: ${response.statusText}`)
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Failed to refresh CAPTCHA: ${response.statusText}`)
       }
 
       const data = await response.json()
       
       if (data.success) {
-        setChallenge(data.data)
         console.log('🔄 CAPTCHA refreshed successfully')
+        // The realtime system will automatically update the challenge
       } else {
         throw new Error(data.error || 'Failed to refresh CAPTCHA')
       }
@@ -159,122 +180,124 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
   }, [jobId])
 
   // ============================================================================
-  // REALTIME SUBSCRIPTION
+  // SSE STREAMING
   // ============================================================================
 
-  const setupRealtimeSubscription = useCallback(() => {
+  const setupSSEStream = useCallback(() => {
     if (!jobId || !enableRealtime) return
 
     try {
-      // Subscribe to CAPTCHA challenges
-      const unsubscribe = realtimeService.subscribeToCaptcha(jobId, (captchaChallenge: CaptchaChallenge) => {
-        console.log('📡 Received CAPTCHA challenge:', captchaChallenge)
-        setLastEvent({
-          type: 'captcha_challenge',
-          job_id: jobId,
-          data: captchaChallenge,
-          timestamp: new Date().toISOString()
-        })
-        setIsRealtimeConnected(true)
-
-        // Update challenge if it's not solved
-        if (!captchaChallenge.solved) {
-          setChallenge(captchaChallenge)
-        } else {
-          setChallenge(null) // Clear if solved
-        }
-      })
-
-      unsubscribeRef.current = unsubscribe
-      setIsRealtimeConnected(true)
+      console.log(`📡 Setting up CAPTCHA SSE stream for job ${jobId}`)
       
-      console.log(`📡 CAPTCHA realtime subscription established for job ${jobId}`)
+      // Close existing connection
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+      }
+
+      // Create new EventSource connection for CAPTCHA updates
+      const eventSource = new EventSource(`/api/ceac/progress?jobId=${jobId}&stream=true`)
+      eventSourceRef.current = eventSource
+
+      eventSource.onopen = () => {
+        console.log(`📡 CAPTCHA SSE connection opened for job ${jobId}`)
+        setIsStreaming(true)
+      }
+
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          console.log('📡 Received SSE CAPTCHA event:', data)
+          setLastUpdate(new Date().toISOString())
+
+          if (data.type === 'progress_update' || data.type === 'job_completed') {
+            const { summary } = data.data
+            
+            // Check if there's a new CAPTCHA challenge
+            if (summary.needs_captcha && summary.captcha_image) {
+              const newChallenge: CaptchaChallenge = {
+                id: `captcha-${Date.now()}`, // Generate temporary ID
+                job_id: jobId,
+                image_url: summary.captcha_image,
+                created_at: new Date().toISOString(),
+                expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes
+                solved: false,
+                input_selector: '#ctl00_SiteContentPlaceHolder_txtCode',
+                submit_selector: '#ctl00_SiteContentPlaceHolder_btnSubmit'
+              }
+              
+              setChallenge(prev => {
+                // If this is a new challenge after a failed attempt, update validation status
+                if (prev && newChallenge.image_url !== prev.image_url) {
+                  setValidationStatus('new_captcha')
+                  setValidationError(null)
+                }
+                return newChallenge
+              })
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error parsing SSE CAPTCHA message:', error)
+        }
+      }
+
+      eventSource.onerror = (error) => {
+        console.error('❌ CAPTCHA SSE connection error:', error)
+        setIsStreaming(false)
+        eventSource.close()
+      }
+
+      console.log(`✅ CAPTCHA SSE stream established for job ${jobId}`)
     } catch (error) {
-      console.error('Error setting up CAPTCHA realtime subscription:', error)
-      setIsRealtimeConnected(false)
+      console.error('❌ Error setting up CAPTCHA SSE stream:', error)
+      setIsStreaming(false)
     }
   }, [jobId, enableRealtime])
 
-  const cleanupRealtimeSubscription = useCallback(() => {
-    if (unsubscribeRef.current) {
-      unsubscribeRef.current()
-      unsubscribeRef.current = null
+  const cleanupSSEStream = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close()
+      eventSourceRef.current = null
     }
-    setIsRealtimeConnected(false)
-    console.log(`📡 CAPTCHA realtime subscription cleaned up for job ${jobId}`)
-  }, [jobId])
-
-  // ============================================================================
-  // POLLING
-  // ============================================================================
-
-  const startPolling = useCallback(() => {
-    if (!jobId || enableRealtime) return
-
-    // Clear existing interval
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current)
-    }
-
-    // Start new polling interval
-    pollIntervalRef.current = setInterval(() => {
-      fetchChallenge()
-    }, pollInterval)
-
-    console.log(`🔄 Started CAPTCHA polling for job ${jobId} every ${pollInterval}ms`)
-  }, [jobId, enableRealtime, pollInterval]) // Remove fetchChallenge from dependencies
-
-  const stopPolling = useCallback(() => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current)
-      pollIntervalRef.current = null
-      console.log(`🔄 Stopped CAPTCHA polling for job ${jobId}`)
-    }
+    setIsStreaming(false)
+    console.log(`📡 CAPTCHA SSE stream cleaned up for job ${jobId}`)
   }, [jobId])
 
   // ============================================================================
   // EFFECTS
   // ============================================================================
 
-  // Initial fetch
+  // Initial fetch only once
   useEffect(() => {
-    if (jobId) {
+    if (jobId && !initialFetchDoneRef.current) {
+      console.log(`📊 Initial CAPTCHA fetch for job ${jobId}`)
       fetchChallenge()
     }
-  }, [jobId]) // Remove fetchChallenge from dependencies to prevent infinite loop
+  }, [jobId, fetchChallenge])
 
-  // Setup realtime or polling
+  // Setup SSE streaming
   useEffect(() => {
     if (jobId) {
       if (enableRealtime) {
-        setupRealtimeSubscription()
-        stopPolling() // Stop polling if realtime is enabled
+        console.log(`📡 Enabling CAPTCHA SSE streaming for job ${jobId}`)
+        setupSSEStream()
       } else {
-        cleanupRealtimeSubscription() // Clean up realtime if polling is enabled
-        startPolling()
+        console.log(`🔄 CAPTCHA SSE streaming disabled for job ${jobId}`)
+        cleanupSSEStream()
       }
     }
 
     // Cleanup on unmount or jobId change
     return () => {
-      cleanupRealtimeSubscription()
-      stopPolling()
+      cleanupSSEStream()
     }
-  }, [jobId, enableRealtime, setupRealtimeSubscription, cleanupRealtimeSubscription, startPolling, stopPolling])
+  }, [jobId, enableRealtime, setupSSEStream, cleanupSSEStream])
 
   // ============================================================================
   // PUBLIC API
   // ============================================================================
 
-  const refreshChallenge = useCallback(async () => {
-    await fetchChallenge()
-  }, [fetchChallenge])
-
-  const solveCaptcha = useCallback(async (solution: string): Promise<boolean> => {
-    return await submitSolution(solution)
-  }, [submitSolution])
-
   const refreshCaptcha = useCallback(async () => {
+    console.log(`🔄 Manual CAPTCHA refresh for job ${jobId}`)
     await refreshCaptchaImage()
   }, [refreshCaptchaImage])
 
@@ -286,13 +309,17 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
     solving,
     
     // Actions
-    refreshChallenge,
-    solveCaptcha,
+    solveCaptcha: submitSolution,
     refreshCaptcha,
     
-    // Realtime
-    isRealtimeConnected,
-    lastEvent
+    // SSE
+    isStreaming,
+    lastUpdate,
+    
+    // Validation Status
+    validationStatus,
+    validationError,
+    attemptCount
   }
 }
 
