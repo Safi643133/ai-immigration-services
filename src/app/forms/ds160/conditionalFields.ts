@@ -4111,3 +4111,43 @@ export function getConditionalFieldKeys(): string[] {
     'travel_info.phone_number'
   ]
 }
+
+// Validation function for conditional fields
+export function validateConditionalFields(specifyOption: string, formData: any): string[] {
+  const errors: string[] = []
+  const fieldGroup = conditionalFieldMap[specifyOption]
+  
+  if (!fieldGroup) {
+    return errors
+  }
+  
+  // Validate each field in the conditional field group
+  fieldGroup.fields.forEach(field => {
+    if (field.required) {
+      const value = formData[field.key]
+      
+      // Check if field is empty or only whitespace
+      if (!value || (typeof value === 'string' && !value.trim())) {
+        errors.push(`${field.label} is required`)
+      }
+    }
+  })
+  
+  // Special validation for E1/E2 executives with nested conditional fields
+  if ((specifyOption === 'EXECUTIVE/MGR/ESSENTIAL EMP (E1)' || specifyOption === 'EXECUTIVE/MGR/ESSENTIAL EMP (E2)') && 
+      formData['travel_info.principal_visa_issued'] === 'Yes') {
+    
+    // Validate principal applicant fields
+    if (!formData['travel_info.principal_surnames']?.trim()) {
+      errors.push('Principal applicant surnames is required')
+    }
+    if (!formData['travel_info.principal_given_names']?.trim()) {
+      errors.push('Principal applicant given names is required')
+    }
+    if (!formData['travel_info.principal_date_of_birth']) {
+      errors.push('Principal applicant date of birth is required')
+    }
+  }
+  
+  return errors
+}

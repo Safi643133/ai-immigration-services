@@ -241,13 +241,14 @@ export default function Step3({ formData, onChange }: StepProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Arrival City</label>
+              <label className="block text-sm font-medium text-gray-700">Arrival City <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={get('travel_info.arrival_city')}
                 onChange={(e) => set('travel_info.arrival_city', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 placeholder='Enter arrival city'
+                required
               />
             </div>
           </div>
@@ -272,24 +273,26 @@ export default function Step3({ formData, onChange }: StepProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Departure City</label>
+              <label className="block text-sm font-medium text-gray-700">Departure City <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={get('travel_info.departure_city')}
                 onChange={(e) => set('travel_info.departure_city', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 placeholder='Enter departure city'
+                required
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Location</label>
+            <label className="block text-sm font-medium text-gray-700">Location <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={get('travel_info.location')}
               onChange={(e) => set('travel_info.location', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder='Enter location'
+              required
             />
           </div>
         </div>
@@ -338,13 +341,14 @@ export default function Step3({ formData, onChange }: StepProps) {
         <h6 className="text-sm font-medium text-gray-900">Address where you will stay in the U.S.</h6>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Address Line 1</label>
+            <label className="block text-sm font-medium text-gray-700">Address Line 1 <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={get('travel_info.us_stay_address_line1')}
               onChange={(e) => set('travel_info.us_stay_address_line1', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder='Enter address line 1'
+              required
             />
           </div>
           <div>
@@ -360,43 +364,47 @@ export default function Step3({ formData, onChange }: StepProps) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">City</label>
+            <label className="block text-sm font-medium text-gray-700">City <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={get('travel_info.us_stay_city')}
               onChange={(e) => set('travel_info.us_stay_city', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder='Enter city'
+              required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">State</label>
+            <label className="block text-sm font-medium text-gray-700">State <span className="text-red-500">*</span></label>
             <select
               value={get('travel_info.us_stay_state')}
               onChange={(e) => set('travel_info.us_stay_state', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              required
             >
               <option value="">Select a state</option>
               {usStates.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Zip Code</label>
+            <label className="block text-sm font-medium text-gray-700">Zip Code <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={get('travel_info.us_stay_zip')}
               onChange={(e) => set('travel_info.us_stay_zip', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder='Enter zip code'
+              required
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Person/Entity Paying for Your Trip</label>
+          <label className="block text-sm font-medium text-gray-700">Person/Entity Paying for Your Trip <span className="text-red-500">*</span></label>
           <select
             value={get('travel_info.trip_payer')}
             onChange={(e) => set('travel_info.trip_payer', e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            required
           >
             <option value="">Select</option>
             <option value="Self">Self</option>
