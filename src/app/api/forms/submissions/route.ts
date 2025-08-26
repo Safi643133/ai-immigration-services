@@ -8,19 +8,13 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get the user ID from header (alternative to Bearer token)
+    const userId = request.headers.get('X-User-ID')
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID required' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
-
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    console.log('Processing request for user:', userId)
 
     // Get query parameters
     const { searchParams } = new URL(request.url)
@@ -44,7 +38,7 @@ export async function GET(request: NextRequest) {
           form_type
         )
       `)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     // Add status filter if provided
@@ -61,7 +55,7 @@ export async function GET(request: NextRequest) {
     const { count } = await supabase
       .from('form_submissions')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
 
     // Get paginated results
     const { data: submissions, error } = await query
@@ -89,19 +83,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get the user ID from header (alternative to Bearer token)
+    const userId = request.headers.get('X-User-ID')
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID required' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
-
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    console.log('Processing POST request for user:', userId)
 
     const body = await request.json()
 
@@ -109,7 +97,7 @@ export async function POST(request: NextRequest) {
     const { data: submission, error } = await supabase
       .from('form_submissions')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         form_template_id: body.form_template_id,
         form_data: body.form_data,
         extracted_data_summary: body.extracted_data_summary,

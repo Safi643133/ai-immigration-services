@@ -55,43 +55,47 @@ export default function Step4({ formData, onChange }: StepProps) {
 
           {travelingAsGroup ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Enter the name of the group you are traveling with</label>
+              <label className="block text-sm font-medium text-gray-700">Enter the name of the group you are traveling with <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={get('traveling_companions.group_name')}
                 onChange={(e) => set('traveling_companions.group_name', e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 placeholder='Enter group name'
+                required
               />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Surnames of the person traveling with you</label>
+                <label className="block text-sm font-medium text-gray-700">Surnames of the person traveling with you <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={get('traveling_companions.companion_surnames')}
                   onChange={(e) => setUpper('traveling_companions.companion_surnames', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
                   placeholder='Enter surnames'
+                  required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Given names of the person traveling with you</label>
+                <label className="block text-sm font-medium text-gray-700">Given names of the person traveling with you <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={get('traveling_companions.companion_given_names')}
                   onChange={(e) => setUpper('traveling_companions.companion_given_names', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm uppercase"
                   placeholder='Enter given names'
+                  required
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">Relationship to you</label>
+                <label className="block text-sm font-medium text-gray-700">Relationship to you <span className="text-red-500">*</span></label>
                 <select
                   value={get('traveling_companions.companion_relationship')}
                   onChange={(e) => set('traveling_companions.companion_relationship', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  required
                 >
                   <option value="">Select</option>
                   {relationships.map(r => <option key={r} value={r}>{r}</option>)}

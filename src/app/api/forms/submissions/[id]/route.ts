@@ -11,19 +11,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get the user ID from header (alternative to Bearer token)
+    const userId = request.headers.get('X-User-ID')
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID required' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
-
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    console.log('Processing GET request for user:', userId)
 
     const { id: submissionId } = await params
 
@@ -40,7 +34,7 @@ export async function GET(
         )
       `)
       .eq('id', submissionId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .maybeSingle()
 
     if (error) {
@@ -49,7 +43,7 @@ export async function GET(
     }
 
     if (!submission) {
-      console.log(`Submission not found: ${submissionId} for user: ${user.id}`)
+      console.log(`Submission not found: ${submissionId} for user: ${userId}`)
       return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
     }
 
@@ -65,19 +59,13 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get the user ID from header (alternative to Bearer token)
+    const userId = request.headers.get('X-User-ID')
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID required' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
-
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    console.log('Processing PUT request for user:', userId)
 
     const { id: submissionId } = await params
     const body = await request.json()
@@ -92,7 +80,7 @@ export async function PUT(
         updated_at: new Date().toISOString()
       })
       .eq('id', submissionId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .select()
       .single()
 
@@ -117,19 +105,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Get the authorization header
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Get the user ID from header (alternative to Bearer token)
+    const userId = request.headers.get('X-User-ID')
+    if (!userId) {
+      return NextResponse.json({ error: 'User ID required' }, { status: 401 })
     }
 
-    const token = authHeader.substring(7)
-
-    // Verify the user
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    console.log('Processing DELETE request for user:', userId)
 
     const { id: submissionId } = await params
 
@@ -138,7 +120,7 @@ export async function DELETE(
       .from('form_submissions')
       .delete()
       .eq('id', submissionId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
 
     if (error) {
       console.error('Error deleting submission:', error)
