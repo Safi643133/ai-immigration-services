@@ -1220,7 +1220,26 @@ export class CeacAutomationService {
             // Create a new CAPTCHA challenge for the user
             await this.progressService.createCaptchaChallenge(jobId, newCaptchaScreenshotPath)
             
-            console.log('✅ New CAPTCHA challenge created and ready for user')
+            // Create a progress update to notify frontend about new CAPTCHA
+            if (jobData) {
+              await this.progressService.createProgressUpdate({
+                job_id: jobId,
+                user_id: jobData.user_id,
+                step_name: 'captcha_detected',
+                status: 'waiting_for_captcha',
+                message: 'New CAPTCHA challenge created - please solve',
+                progress_percentage: 50,
+                captcha_image: newCaptchaScreenshotPath,
+                needs_captcha: true,
+                metadata: {
+                  new_captcha_created: true,
+                  previous_validation_failed: true,
+                  timestamp: new Date().toISOString()
+                }
+              })
+            }
+            
+            console.log('✅ New CAPTCHA challenge created and progress update sent')
           } else {
             console.log('⚠️ Could not capture new CAPTCHA screenshot')
           }

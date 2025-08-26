@@ -210,28 +210,35 @@ export function useCaptcha(options: UseCaptchaOptions = {}): UseCaptchaReturn {
           setLastUpdate(new Date().toISOString())
 
           if (data.type === 'progress_update' || data.type === 'job_completed') {
-            const { summary } = data.data
+            const { summary, history } = data.data
             
             // Check if there's a new CAPTCHA challenge
             if (summary.needs_captcha && summary.captcha_image) {
-              const newChallenge: CaptchaChallenge = {
-                id: `captcha-${Date.now()}`, // Generate temporary ID
-                job_id: jobId,
-                image_url: summary.captcha_image,
-                created_at: new Date().toISOString(),
-                expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes
-                solved: false,
-                input_selector: '#ctl00_SiteContentPlaceHolder_txtCode',
-                submit_selector: '#ctl00_SiteContentPlaceHolder_btnSubmit'
-              }
-              
+              // Check if this is a new CAPTCHA (different from current one)
               setChallenge(prev => {
-                // If this is a new challenge after a failed attempt, update validation status
-                if (prev && newChallenge.image_url !== prev.image_url) {
-                  setValidationStatus('new_captcha')
-                  setValidationError(null)
+                if (!prev || prev.image_url !== summary.captcha_image) {
+                  const newChallenge: CaptchaChallenge = {
+                    id: `captcha-${Date.now()}`, // Generate temporary ID
+                    job_id: jobId,
+                    image_url: summary.captcha_image,
+                    created_at: new Date().toISOString(),
+                    expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes
+                    solved: false,
+                    input_selector: '#ctl00_SiteContentPlaceHolder_txtCode',
+                    submit_selector: '#ctl00_SiteContentPlaceHolder_btnSubmit'
+                  }
+                  
+                  // If this is a new challenge after a failed attempt, update validation status
+                  if (prev) {
+                    setValidationStatus('new_captcha')
+                    setValidationError(null)
+                    setAttemptCount(prev => prev + 1)
+                  }
+                  
+                  console.log('📡 New CAPTCHA challenge detected via SSE:', newChallenge)
+                  return newChallenge
                 }
-                return newChallenge
+                return prev
               })
             }
           }
