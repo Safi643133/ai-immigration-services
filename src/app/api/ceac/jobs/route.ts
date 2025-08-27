@@ -85,44 +85,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for existing running job for this submission
-    const { data: existingJob, error: existingJobError } = await supabaseAdmin
-      .from('ceac_automation_jobs')
-      .select('id, status, created_at, embassy_location')
-      .eq('submission_id', submissionId)
-      .eq('user_id', user.id)
-      .in('status', ['queued', 'running'])
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (existingJobError && existingJobError.code !== 'PGRST116') {
-      console.error('Error checking existing job:', existingJobError)
-    }
-
-    // If there's an existing running job, return it instead of creating a new one
-    if (existingJob) {
-      console.log(`Found existing job ${existingJob.id} for submission ${submissionId}`)
-      
-      // Force restart by updating job status to queued
-      await supabaseAdmin
-        .from('ceac_automation_jobs')
-        .update({
-          status: 'queued',
-          started_at: null,
-          finished_at: null,
-          error_code: null,
-          error_message: null
-        })
-        .eq('id', existingJob.id)
-      
-      return NextResponse.json({
-        job: { ...existingJob, status: 'queued' },
-        message: 'Restarted existing job'
-      })
-    }
-
-    // Check for existing active jobs for this submission
+    // Check for existing active jobs for this submission and fail them
     const { data: existingJobs, error: existingJobsError } = await supabaseAdmin
       .from('ceac_automation_jobs')
       .select('id, status, created_at, embassy_location')
@@ -139,16 +102,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // If there's an active job, return it instead of creating a new one
+    // Fail any existing active jobs
     if (existingJobs && existingJobs.length > 0) {
-      const existingJob = existingJobs[0]
-      console.log(`🔄 Found existing active job ${existingJob.id} for submission ${submissionId}`)
+      console.log(`🔄 Found ${existingJobs.length} existing active job(s) for submission ${submissionId}, failing them...`)
       
-      return NextResponse.json({
-        job: existingJob,
-        message: 'Using existing active job',
-        isExisting: true
-      })
+      // Update all existing active jobs to failed status
+      const jobIds = existingJobs.map(job => job.id)
+      await supabaseAdmin
+        .from('ceac_automation_jobs')
+        .update({
+          status: 'failed',
+          finished_at: new Date().toISOString(),
+          error_code: 'SUPERSEDED',
+          error_message: 'Job superseded by new submission request'
+        })
+        .in('id', jobIds)
+
+      // Log events for failed jobs
+      for (const job of existingJobs) {
+        await supabaseAdmin
+          .from('ceac_job_events')
+          .insert({
+            job_id: job.id,
+            event_type: 'job_failed',
+            level: 'info',
+            message: 'Job superseded by new submission request',
+            metadata: {
+              superseded_by: 'new_submission',
+              submission_id: submissionId
+            }
+          })
+      }
+
+      console.log(`✅ Failed ${existingJobs.length} existing job(s) for submission ${submissionId}`)
     }
 
     // Perform validation if requested
