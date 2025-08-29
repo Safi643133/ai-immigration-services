@@ -884,5 +884,38 @@ export abstract class BaseStepHandler {
     }
   }
 
+  /**
+   * Update job status to completed
+   */
+  protected async updateJobStatusToCompleted(jobId: string, completionMessage: string): Promise<void> {
+    try {
+      console.log(`✅ Updating job ${jobId} status to completed...`)
+      
+      // Update job status in database
+      const { error } = await this.supabase
+        .from('ceac_automation_jobs')
+        .update({
+          status: 'completed',
+          finished_at: new Date().toISOString(),
+          metadata: {
+            completion_message: completionMessage,
+            completion_timestamp: new Date().toISOString(),
+            final_step: this.stepNumber,
+            total_steps_completed: 17
+          }
+        })
+        .eq('id', jobId)
+      
+      if (error) {
+        console.error('❌ Failed to update job status to completed:', error)
+      } else {
+        console.log(`✅ Job ${jobId} status updated to completed`)
+        console.log(`📝 Completion message: ${completionMessage}`)
+      }
+    } catch (error) {
+      console.error('❌ Error updating job status to completed:', error)
+    }
+  }
+
 
 }

@@ -263,6 +263,10 @@ export class Step17Handler extends BaseStepHandler {
         )
         await page.screenshot({ path: `after-step17-next-button-click-${jobId}.png` })
         console.log('✅ Successfully completed all DS-160 form steps')
+        
+        // Mark job as completed
+        await this.updateJobStatusToCompleted(jobId, 'DS-160 form filling completed successfully')
+        console.log('🎉 Job marked as completed successfully!')
       } else {
         throw new Error('Step 17 Next button not found')
       }
