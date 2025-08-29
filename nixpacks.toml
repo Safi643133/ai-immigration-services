@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ['nodejs_18', 'npm']
+
+[phases.install]
+cmds = [
+  'npm ci',
+  'npx playwright install --with-deps chromium'
+]
+
+[phases.build]
+cmds = ['npm run build']
+
+[start]
+cmd = 'npm run worker:prod'

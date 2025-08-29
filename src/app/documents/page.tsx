@@ -110,7 +110,7 @@ export default function DocumentsPage() {
               }))
               
               // Check if processing is complete
-              if (statusData.processing_status === 'completed' || statusData.processing_status === 'failed') {
+              if (statusData.processing_status === 'succeeded' || statusData.processing_status === 'failed') {
                 clearInterval(pollInterval)
                 setProcessing(null)
                 // Remove from polling intervals

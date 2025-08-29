@@ -326,7 +326,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       if (status === 'running' && !updateData.started_at) {
         updateData.started_at = new Date().toISOString()
       }
-      if (['completed', 'failed', 'cancelled'].includes(status)) {
+      if (['succeeded', 'failed', 'cancelled'].includes(status)) {
         updateData.finished_at = new Date().toISOString()
       }
     }

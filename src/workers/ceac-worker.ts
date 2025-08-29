@@ -1,6 +1,7 @@
 // Load environment variables from .env file if needed
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { startHealthServer } from './health-server'
 
 try {
   const envPath = join(process.cwd(), '.env')
@@ -366,5 +367,8 @@ process.on('unhandledRejection', (reason, promise) => {
 console.log('✅ CEAC Worker started successfully')
 console.log(`🔧 Worker concurrency: ${process.env.WORKER_CONCURRENCY || '2'}`)
 console.log(`🏢 Environment: ${process.env.NODE_ENV || 'production'}`)
+
+// Start health server for Railway deployment
+startHealthServer()
 
 export { submissionWorker, statusWorker, cleanupWorker }

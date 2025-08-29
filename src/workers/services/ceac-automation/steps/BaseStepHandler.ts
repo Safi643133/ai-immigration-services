@@ -895,7 +895,7 @@ export abstract class BaseStepHandler {
       const { error } = await this.supabase
         .from('ceac_automation_jobs')
         .update({
-          status: 'completed',
+          status: 'succeeded',
           finished_at: new Date().toISOString(),
           metadata: {
             completion_message: completionMessage,
