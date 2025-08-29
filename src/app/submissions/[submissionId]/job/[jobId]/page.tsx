@@ -20,6 +20,13 @@ interface CeacJob {
   confirmationId?: string
   embassy?: string
   retryCount?: number
+  errorMessage?: string
+  metadata?: {
+    validation_errors?: string[]
+    validation_error_count?: number
+    step_number?: number
+    error_timestamp?: string
+  }
 }
 
 interface ApplicationData {
@@ -48,6 +55,7 @@ export default function JobProgressPage() {
   const [job, setJob] = useState<CeacJob | null>(null)
   const [applicationData, setApplicationData] = useState<ApplicationData | null>(null)
   const [showSecurityAnswer, setShowSecurityAnswer] = useState(false)
+  const [errorScreenshots, setErrorScreenshots] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -60,6 +68,18 @@ export default function JobProgressPage() {
       loadData()
     }
   }, [user, authLoading, router, submissionId, jobId])
+
+  const loadErrorScreenshots = async (jobId: string) => {
+    try {
+      const response = await fetch(`/api/ceac/jobs/${jobId}/error-screenshots`)
+      if (response.ok) {
+        const data = await response.json()
+        setErrorScreenshots(data.screenshots || [])
+      }
+    } catch (error) {
+      console.error('Error loading error screenshots:', error)
+    }
+  }
 
   const loadData = async () => {
     try {
@@ -89,8 +109,15 @@ export default function JobProgressPage() {
             applicationId: foundJob.ceac_application_id,
             confirmationId: foundJob.ceac_confirmation_id,
             embassy: foundJob.embassy_location,
-            retryCount: foundJob.retry_count
+            retryCount: foundJob.retry_count,
+            errorMessage: foundJob.error_message,
+            metadata: foundJob.metadata
           })
+
+          // Load error screenshots if job failed
+          if (foundJob.status === 'failed') {
+            await loadErrorScreenshots(jobId)
+          }
         } else {
           router.push(`/submissions/${submissionId}`)
           return
@@ -378,6 +405,116 @@ export default function JobProgressPage() {
               </div>
             )}
           </div>
+
+          {/* Error Information Section */}
+          {job.status === 'failed' && (
+            <div className="bg-red-50 border border-red-200 shadow rounded-lg p-6 mb-6">
+              <div className="flex items-center mb-4">
+                <XCircle className="h-6 w-6 text-red-500 mr-3" />
+                <h3 className="text-lg font-semibold text-red-900">
+                  Job Failed
+                </h3>
+              </div>
+              
+              {/* Error Message */}
+              {job.errorMessage && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-red-700 mb-2">Error Details:</h4>
+                  <p className="text-red-800 bg-red-100 p-3 rounded-md">
+                    {job.errorMessage}
+                  </p>
+                </div>
+              )}
+
+              {/* Validation Errors */}
+              {job.metadata?.validation_errors && job.metadata.validation_errors.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-red-700 mb-2">
+                    Validation Errors ({job.metadata.validation_error_count} errors):
+                  </h4>
+                  <div className="bg-red-100 p-3 rounded-md">
+                    <ul className="list-disc list-inside space-y-1">
+                      {job.metadata.validation_errors.map((error, index) => (
+                        <li key={index} className="text-red-800 text-sm">
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Screenshots */}
+              {errorScreenshots.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-red-700 mb-3">
+                    Error Screenshots ({errorScreenshots.length}):
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {errorScreenshots.map((screenshot, index) => (
+                      <div key={index} className="bg-white border border-red-200 rounded-lg overflow-hidden">
+                        <div className="p-3 bg-red-50 border-b border-red-200">
+                          <h5 className="text-sm font-medium text-red-700">
+                            Error Screenshot {index + 1}
+                          </h5>
+                        </div>
+                        <div className="p-4">
+                          <img
+                            src={screenshot}
+                            alt={`Error screenshot ${index + 1}`}
+                            className="w-full h-auto rounded border border-gray-200"
+                            style={{ maxHeight: '400px', objectFit: 'contain' }}
+                          />
+                          <div className="mt-3 flex justify-between items-center">
+                            <a
+                              href={screenshot}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View Full Size
+                            </a>
+                            <button
+                              onClick={() => copyToClipboard(screenshot, 'Screenshot URL')}
+                              className="text-sm text-gray-600 hover:text-gray-800 flex items-center"
+                            >
+                              <Copy className="h-4 w-4 mr-1" />
+                              Copy URL
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Error Metadata */}
+              {job.metadata?.step_number && (
+                <div className="mt-4 pt-4 border-t border-red-200">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-red-700">Failed at Step:</span>
+                      <p className="text-red-800">{job.metadata.step_number}</p>
+                    </div>
+                    {job.metadata.error_timestamp && (
+                      <div>
+                        <span className="font-medium text-red-700">Error Time:</span>
+                        <p className="text-red-800">{formatDate(job.metadata.error_timestamp)}</p>
+                      </div>
+                    )}
+                    {job.metadata.validation_error_count && (
+                      <div>
+                        <span className="font-medium text-red-700">Error Count:</span>
+                        <p className="text-red-800">{job.metadata.validation_error_count}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Application ID and Security Answer Section */}
           {applicationData && (applicationData.applicationId || applicationData.securityAnswer) && (

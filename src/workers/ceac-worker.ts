@@ -24,7 +24,7 @@ import { Worker, Job } from 'bullmq'
 import { redis } from '../lib/redis'
 import { QUEUE_NAMES, type CeacSubmissionJobData, type StatusCheckJobData, type ArtifactCleanupJobData } from '../lib/queues'
 import { createClient } from '@supabase/supabase-js'
-import { CeacAutomationService } from './services/ceac-automation'
+import { CeacAutomationService } from './services/ceac-automation-refactored'
 import { ProgressService } from '../lib/progress/progress-service'
 import { getArtifactStorage } from '../lib/artifact-storage'
 
@@ -102,7 +102,7 @@ const submissionWorker = new Worker(
         jobId: job.data.jobId,
         submissionId: job.data.submissionId,
         userId: job.data.userId,
-        formData: job.data.formData,
+        formData: job.data.formData as any, // Type assertion for now
         embassy: job.data.embassy,
         ceacVersion: job.data.ceacVersion || '2025.01'
       })
@@ -165,8 +165,8 @@ const submissionWorker = new Worker(
   {
     connection: redis,
     concurrency: parseInt(process.env.WORKER_CONCURRENCY || '2'),
-    removeOnComplete: 10,
-    removeOnFail: 50,
+    removeOnComplete: { count: 10 },
+    removeOnFail: { count: 50 },
   }
 )
 
@@ -235,8 +235,8 @@ const statusWorker = new Worker(
   {
     connection: redis,
     concurrency: 5,
-    removeOnComplete: 5,
-    removeOnFail: 20,
+    removeOnComplete: { count: 5 },
+    removeOnFail: { count: 20 },
   }
 )
 
@@ -264,8 +264,8 @@ const cleanupWorker = new Worker(
   {
     connection: redis,
     concurrency: 1,
-    removeOnComplete: 5,
-    removeOnFail: 10,
+    removeOnComplete: { count: 5 },
+    removeOnFail: { count: 10 },
   }
 )
 

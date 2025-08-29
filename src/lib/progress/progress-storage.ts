@@ -134,16 +134,13 @@ export class ProgressStorage {
 
       const latest = updates[updates.length - 1]
       const totalSteps = 17 // Total DS-160 form steps
-      const completedSteps = updates.filter(u => 
-        u.step_name.startsWith('form_step_') || 
-        u.step_name === 'form_submitted' ||
-        u.step_name === 'job_completed'
-      ).length
-
-      const progressPercentage = Math.min(
-        Math.round((completedSteps / totalSteps) * 100),
-        100
-      )
+      
+      // Use the latest progress percentage directly from the automation
+      // This ensures we always show the correct progress without jumping
+      const progressPercentage = latest.progress_percentage || 0
+      
+      // Calculate completed steps based on the actual progress percentage
+      const completedSteps = Math.round((progressPercentage / 100) * totalSteps)
 
       // Check if there's an active CAPTCHA challenge
       const activeCaptcha = await this.getCaptchaChallenge(jobId)

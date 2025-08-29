@@ -2005,13 +2005,13 @@ export class CeacAutomationService {
     console.log('📝 Starting DS-160 Step 2 form filling...')
     
     // Update progress
-    await this.progressService.updateStepProgress(
-      jobId,
-      'form_step_2_filling',
-      'running',
-      'Starting to fill Step 2 form fields',
-      80
-    )
+          await this.progressService.updateStepProgress(
+        jobId,
+        'form_step_2' as any,
+        'running',
+        'Starting to fill Step 2 form fields',
+        80
+      )
     
     const totalFields = getStep2FieldMappings().length
     console.log(`📝 Found ${totalFields} Step 2 fields to fill`)

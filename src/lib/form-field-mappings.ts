@@ -1520,6 +1520,27 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
              }
            ]
          }
+       },
+       {
+         fieldName: 'us_history.permanent_resident',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblPERM_RESIDENT_IND',
+         type: 'radio',
+         required: false,
+         valueMapping: {
+           'Yes': 'Y',
+           'No': 'N'
+         },
+         conditional: {
+           value: 'Y',
+           showFields: [
+             {
+               fieldName: 'us_history.permanent_resident_explanation',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxPERM_RESIDENT_EXPL',
+               type: 'textarea',
+               required: false
+             }
+           ]
+         }
        }
      ]
    },
@@ -2943,6 +2964,28 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
      {
        sectionName: 'Security and Background Information - Step 16',
        fields: [
+         // Removal or Deportation Hearing Question
+         {
+           fieldName: 'security_background4.subject_of_removal_or_deportation_hearing',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblRemovalHearing_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background4.subject_of_removal_or_deportation_hearing_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxRemovalHearing',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
          // Immigration Benefit Fraud Question
          {
            fieldName: 'security_background4.immigration_benefit_by_fraud_or_misrepresentation',
@@ -2959,6 +3002,50 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
                {
                  fieldName: 'security_background4.immigration_benefit_by_fraud_or_misrepresentation_explain',
                  selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxImmigrationFraud',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Failed to Attend Hearing Question
+         {
+           fieldName: 'security_background4.failed_to_attend_hearing_last_five_years',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblFailToAttend_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background4.failed_to_attend_hearing_last_five_years_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxFailToAttend',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Visa Violation Question
+         {
+           fieldName: 'security_background4.unlawfully_present_or_visa_violation',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblVisaViolation_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background4.unlawfully_present_or_visa_violation_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxVisaViolation',
                  type: 'textarea',
                  required: true
                }
@@ -3052,6 +3139,50 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
                {
                  fieldName: 'security_background5.renounced_citizenship_to_avoid_tax_explain',
                  selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxRenounceExp',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Former J Visitor Question
+         {
+           fieldName: 'security_background5.former_j_visitor_not_fulfilled_2yr',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblFormerJVisitor_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background5.former_j_visitor_not_fulfilled_2yr_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxFormerJVisitor',
+                 type: 'textarea',
+                 required: true
+               }
+             ]
+           }
+         },
+         // Public School F Status Question
+         {
+           fieldName: 'security_background5.public_school_f_status_without_reimbursing',
+           selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblAttWoReimb_0',
+           type: 'radio',
+           required: true,
+           valueMapping: {
+             'Yes': 'Y',
+             'No': 'N'
+           },
+           conditional: {
+             value: 'Y',
+             showFields: [
+               {
+                 fieldName: 'security_background5.public_school_f_status_without_reimbursing_explain',
+                 selector: '#ctl00_SiteContentPlaceHolder_FormView1_tbxAttWoReimb',
                  type: 'textarea',
                  required: true
                }

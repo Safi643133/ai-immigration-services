@@ -411,6 +411,18 @@ export const validateStep5 = (formData: FormData): ValidationResult => {
     }
   }
   
+  // Permanent resident question
+  if (!formData['us_history.permanent_resident']) {
+    errors.push('Please specify if you are or have ever been a U.S. legal permanent resident')
+  }
+  
+  // If permanent resident is Yes, validate explanation
+  if (formData['us_history.permanent_resident'] === 'Yes') {
+    if (!formData['us_history.permanent_resident_explanation']?.trim()) {
+      errors.push('Explanation is required when you are or have been a U.S. legal permanent resident')
+    }
+  }
+  
   return {
     isValid: errors.length === 0,
     errors

@@ -13,6 +13,7 @@ export default function Step5({ formData, onChange }: StepProps) {
   const visaCancelled = (get('us_history.visa_cancelled_revoked') || '').toString().toLowerCase() === 'yes'
   const visaRefused = (get('us_history.visa_refused') || '').toString().toLowerCase() === 'yes'
   const immigrantPetition = (get('us_history.immigrant_petition') || '').toString().toLowerCase() === 'yes'
+  const permanentResident = (get('us_history.permanent_resident') || '').toString().toLowerCase() === 'yes'
 
   const dlUnknown = get('us_history.driver_license_unknown') === true || get('us_history.driver_license_number') === 'N/A'
   const visaNumUnknown = get('us_history.visa_number_unknown') === true || get('us_history.visa_number') === 'N/A'
@@ -355,6 +356,31 @@ export default function Step5({ formData, onChange }: StepProps) {
               rows={3}
               value={get('us_history.immigrant_petition_explanation')}
               onChange={(e) => set('us_history.immigrant_petition_explanation', e.target.value)}
+              placeholder='Enter explanation'
+              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Question 5: Are you or have you ever been a U.S. legal permanent resident? */}
+      <div className="space-y-4">
+        <label className="block text-sm font-medium text-gray-700">Are you or have you ever been a U.S. legal permanent resident?</label>
+        <div className="mt-1 flex items-center space-x-6">
+          {yesNo.map(opt => (
+            <label key={opt} className="inline-flex items-center">
+              <input type="radio" name="permanent_resident" className="mr-2" checked={get('us_history.permanent_resident') === opt} onChange={() => set('us_history.permanent_resident', opt)} />
+              <span className='text-black'>{opt}</span>
+            </label>
+          ))}
+        </div>
+        {permanentResident && (
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700">Explain</label>
+            <textarea
+              rows={3}
+              value={get('us_history.permanent_resident_explanation')}
+              onChange={(e) => set('us_history.permanent_resident_explanation', e.target.value)}
               placeholder='Enter explanation'
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
