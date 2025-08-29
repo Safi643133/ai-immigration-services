@@ -51,11 +51,21 @@ export class Step16Handler extends BaseStepHandler {
    */
   private async fillRemovalOrDeportationHearingQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const hearingValue = formData['security_background4.subject_of_removal_or_deportation_hearing']
+    console.log(`📝 Checking for removal or deportation hearing question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblRemovalHearing_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Removal or deportation hearing question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling removal or deportation hearing question: ${hearingValue}`)
     
     if (hearingValue === 'Yes' || hearingValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblRemovalHearing_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for removal or deportation hearing')
@@ -86,11 +96,21 @@ export class Step16Handler extends BaseStepHandler {
    */
   private async fillImmigrationBenefitFraudQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const fraudValue = formData['security_background4.immigration_benefit_by_fraud_or_misrepresentation']
+    console.log(`📝 Checking for immigration benefit fraud question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblImmigrationFraud_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Immigration benefit fraud question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling immigration benefit fraud question: ${fraudValue}`)
     
     if (fraudValue === 'Yes' || fraudValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblImmigrationFraud_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for immigration benefit fraud')
@@ -121,11 +141,21 @@ export class Step16Handler extends BaseStepHandler {
    */
   private async fillFailedToAttendHearingQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const failedValue = formData['security_background4.failed_to_attend_hearing_last_five_years']
+    console.log(`📝 Checking for failed to attend hearing question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblFailToAttend_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Failed to attend hearing question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling failed to attend hearing question: ${failedValue}`)
     
     if (failedValue === 'Yes' || failedValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblFailToAttend_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for failed to attend hearing')
@@ -156,11 +186,21 @@ export class Step16Handler extends BaseStepHandler {
    */
   private async fillVisaViolationQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const violationValue = formData['security_background4.unlawfully_present_or_visa_violation']
+    console.log(`📝 Checking for visa violation question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblVisaViolation_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Visa violation question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling visa violation question: ${violationValue}`)
     
     if (violationValue === 'Yes' || violationValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblVisaViolation_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for visa violation')
@@ -191,11 +231,21 @@ export class Step16Handler extends BaseStepHandler {
    */
   private async fillRemovedOrDeportedQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const deportValue = formData['security_background4.removed_or_deported_from_any_country']
+    console.log(`📝 Checking for removed or deported question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDeport_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Removed or deported question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling removed or deported question: ${deportValue}`)
     
     if (deportValue === 'Yes' || deportValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblDeport_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for removed or deported')

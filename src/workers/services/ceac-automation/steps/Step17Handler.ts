@@ -33,7 +33,7 @@ export class Step17Handler extends BaseStepHandler {
       97
     )
 
-    // Fill all Step 17 questions dynamically
+    // Fill all Step 17 questions dynamically (only the ones that exist on this form)
     await this.fillChildCustodyQuestion(page, jobId, formData)
     await this.fillVotingViolationQuestion(page, jobId, formData)
     await this.fillRenouncedCitizenshipQuestion(page, jobId, formData)
@@ -51,11 +51,21 @@ export class Step17Handler extends BaseStepHandler {
    */
   private async fillChildCustodyQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const custodyValue = formData['security_background5.withheld_child_custody']
+    console.log(`📝 Checking for child custody question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblChildCustody_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Child custody question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling child custody question: ${custodyValue}`)
     
     if (custodyValue === 'Yes' || custodyValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblChildCustody_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for child custody')
@@ -86,11 +96,21 @@ export class Step17Handler extends BaseStepHandler {
    */
   private async fillVotingViolationQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const votingValue = formData['security_background5.voted_in_us_violation']
+    console.log(`📝 Checking for voting violation question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblVotingViolation_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Voting violation question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling voting violation question: ${votingValue}`)
     
     if (votingValue === 'Yes' || votingValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblVotingViolation_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for voting violation')
@@ -121,11 +141,21 @@ export class Step17Handler extends BaseStepHandler {
    */
   private async fillRenouncedCitizenshipQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const renouncedValue = formData['security_background5.renounced_citizenship_to_avoid_tax']
+    console.log(`📝 Checking for renounced citizenship question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblRenounceExp_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Renounced citizenship question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling renounced citizenship question: ${renouncedValue}`)
     
     if (renouncedValue === 'Yes' || renouncedValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblRenounceExp_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for renounced citizenship')
@@ -156,11 +186,21 @@ export class Step17Handler extends BaseStepHandler {
    */
   private async fillFormerJVisitorQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const jVisitorValue = formData['security_background5.former_j_visitor_not_fulfilled_2yr']
+    console.log(`📝 Checking for former J visitor question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblFormerJVisitor_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Former J visitor question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling former J visitor question: ${jVisitorValue}`)
     
     if (jVisitorValue === 'Yes' || jVisitorValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblFormerJVisitor_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for former J visitor')
@@ -191,11 +231,21 @@ export class Step17Handler extends BaseStepHandler {
    */
   private async fillPublicSchoolFStatusQuestion(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
     const schoolValue = formData['security_background5.public_school_f_status_without_reimbursing']
+    console.log(`📝 Checking for public school F status question...`)
+    
+    // Check if the question exists on the page
+    const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblAttWoReimb_0')
+    const questionExists = await yesElement.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!questionExists) {
+      console.log('⏭️ Public school F status question not present on this form, skipping...')
+      return
+    }
+    
     console.log(`📝 Filling public school F status question: ${schoolValue}`)
     
     if (schoolValue === 'Yes' || schoolValue === 'Y') {
       // Select Yes
-      const yesElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_rblAttWoReimb_0')
       await yesElement.waitFor({ state: 'visible', timeout: 15000 })
       await yesElement.check()
       console.log('✅ Selected "Yes" for public school F status')
