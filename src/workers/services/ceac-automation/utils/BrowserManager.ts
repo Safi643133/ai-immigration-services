@@ -17,9 +17,13 @@ export class BrowserManager {
 
     console.log('🌐 Initializing Playwright browser...')
     
+    // Run headless in production for better performance
+    const isProduction = process.env.NODE_ENV === 'production'
+    const isHeadless = isProduction || process.env.HEADLESS_BROWSER === 'true'
+    
     this.browser = await chromium.launch({
-      headless: false, // Always show browser window for testing
-      slowMo: 500, // Slower actions for better visibility
+      headless: isHeadless, // Headless in production, visible in development
+      slowMo: isProduction ? 0 : 500, // No slowMo in production for speed
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -31,7 +35,7 @@ export class BrowserManager {
       ]
     })
 
-    console.log('✅ Browser initialized')
+    console.log(`✅ Browser initialized (${isHeadless ? 'headless' : 'visible'} mode)`)
   }
 
   async createBrowserContext(jobId: string): Promise<BrowserContext> {
@@ -41,19 +45,18 @@ export class BrowserManager {
 
     console.log('🔧 Creating browser context...')
 
-    const context = await this.browser.newContext({
+    // Create context options
+    const contextOptions: any = {
       viewport: { width: 1920, height: 1080 },
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       locale: 'en-US',
-      timezoneId: 'America/New_York',
-      recordVideo: {
-        dir: `./artifacts/${jobId}/videos/`,
-        size: { width: 1920, height: 1080 }
-      },
-      recordHar: {
-        path: `./artifacts/${jobId}/session.har`
-      }
-    })
+      timezoneId: 'America/New_York'
+    }
+
+    // Note: Video recording and HAR session recording removed permanently
+    console.log('🔧 Browser context created without recording (recording disabled)')
+
+    const context = await this.browser.newContext(contextOptions)
 
     console.log('✅ Browser context created')
     return context
@@ -119,6 +122,12 @@ export class BrowserManager {
   }
 
   async takeScreenshot(page: Page, jobId: string, name: string): Promise<void> {
+    // Only take screenshots if explicitly enabled
+    if (process.env.ENABLE_DEBUG_SCREENSHOTS !== 'true') {
+      console.log(`📸 Debug screenshots disabled, skipping: ${name}`)
+      return
+    }
+
     try {
       console.log(`📸 Taking screenshot: ${name}`)
       
@@ -129,7 +138,6 @@ export class BrowserManager {
       
       // Save screenshot using artifact storage
       const filename = `${name}-${jobId}-${Date.now()}.png`
-      const filePath = `./artifacts/${jobId}/screenshots/${filename}`
       
       await this.artifactStorage.storeArtifact(screenshot, {
         jobId,
@@ -140,24 +148,24 @@ export class BrowserManager {
         metadata: { name, jobId }
       })
       
-      console.log(`✅ Screenshot saved: ${filePath}`)
+      console.log(`✅ Screenshot saved: ${filename}`)
 
     } catch (error) {
       console.error(`❌ Failed to take screenshot ${name}:`, error)
     }
   }
 
-  async saveSessionArtifacts(context: BrowserContext, jobId: string): Promise<void> {
+  async closeContext(context: BrowserContext): Promise<void> {
     try {
-      console.log('💾 Saving session artifacts...')
+      console.log('🔄 Closing browser context...')
       
-      // Close context to finalize video recording
+      // Close context
       await context.close()
       
-      console.log('✅ Session artifacts saved')
+      console.log('✅ Browser context closed')
 
     } catch (error) {
-      console.error('❌ Failed to save session artifacts:', error)
+      console.error('❌ Error closing context:', error)
     }
   }
 

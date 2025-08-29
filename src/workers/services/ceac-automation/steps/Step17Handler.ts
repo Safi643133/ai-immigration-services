@@ -311,7 +311,10 @@ export class Step17Handler extends BaseStepHandler {
           'Successfully completed all DS-160 form steps',
           100
         )
-        await page.screenshot({ path: `after-step17-next-button-click-${jobId}.png` })
+        // Take screenshot after navigation (disabled for production)
+        if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+          await page.screenshot({ path: `after-step17-next-button-click-${jobId}.png` })
+        }
         console.log('✅ Successfully completed all DS-160 form steps')
         
         // Mark job as completed
@@ -322,8 +325,11 @@ export class Step17Handler extends BaseStepHandler {
       }
     } catch (error) {
       console.error('❌ Error clicking Step 17 Next button:', error)
-      await page.screenshot({ path: `error-step17-next-${jobId}.png` })
-      console.log('📸 Screenshot saved: error-step17-next.png')
+      // Take a screenshot for debugging (disabled for production)
+      if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+        await page.screenshot({ path: `error-step17-next-${jobId}.png` })
+        console.log('📸 Screenshot saved: error-step17-next.png')
+      }
       throw error
     }
   }

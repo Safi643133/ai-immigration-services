@@ -1093,9 +1093,11 @@ export class Step12Handler extends BaseStepHandler {
     } catch (error) {
       console.error('❌ Error clicking Step 12 Next button:', error)
       
-      // Take a screenshot for debugging
-      await page.screenshot({ path: `error-step12-next-${jobId}.png` })
-      console.log('📸 Screenshot saved: error-step12-next.png')
+      // Take a screenshot for debugging (disabled for production)
+      if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+        await page.screenshot({ path: `error-step12-next-${jobId}.png` })
+        console.log('📸 Screenshot saved: error-step12-next.png')
+      }
       
       throw error
     }

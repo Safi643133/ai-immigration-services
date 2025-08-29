@@ -195,15 +195,16 @@ export class JobManager {
 }
 
 // Queue event listeners for monitoring
-ceacSubmissionQueue.on('global:completed', (jobId: string) => {
+// Note: Using any type for global events due to BullMQ type limitations
+;(ceacSubmissionQueue as any).on('global:completed', (jobId: string) => {
   console.log(`✅ CEAC submission job ${jobId} completed`)
 })
 
-ceacSubmissionQueue.on('global:failed', (jobId: string, failedReason: string) => {
+;(ceacSubmissionQueue as any).on('global:failed', (jobId: string, failedReason: string) => {
   console.error(`❌ CEAC submission job ${jobId} failed:`, failedReason)
 })
 
-ceacSubmissionQueue.on('global:stalled', (jobId: string) => {
+;(ceacSubmissionQueue as any).on('global:stalled', (jobId: string) => {
   console.warn(`⚠️ CEAC submission job ${jobId} stalled`)
 })
 

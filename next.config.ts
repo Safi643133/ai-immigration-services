@@ -10,10 +10,8 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
-  // Enable experimental features if needed
-  experimental: {
-    serverComponentsExternalPackages: ['@aws-sdk/client-textract'],
-  },
+  // Configure external packages for server components
+  serverExternalPackages: ['@aws-sdk/client-textract'],
   // Configure image domains to allow external images
   images: {
     remotePatterns: [

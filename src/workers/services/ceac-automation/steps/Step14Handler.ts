@@ -451,8 +451,10 @@ export class Step14Handler extends BaseStepHandler {
           80
         )
         
-        // Take screenshot after navigation
-        await page.screenshot({ path: `after-step14-next-button-click-${jobId}.png` })
+        // Take screenshot after navigation (disabled for production)
+        if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+          await page.screenshot({ path: `after-step14-next-button-click-${jobId}.png` })
+        }
         
         console.log('✅ Successfully navigated to Step 15')
       } else {
@@ -461,9 +463,11 @@ export class Step14Handler extends BaseStepHandler {
     } catch (error) {
       console.error('❌ Error clicking Step 14 Next button:', error)
       
-      // Take a screenshot for debugging
-      await page.screenshot({ path: `error-step14-next-${jobId}.png` })
-      console.log('📸 Screenshot saved: error-step14-next.png')
+      // Take a screenshot for debugging (disabled for production)
+      if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+        await page.screenshot({ path: `error-step14-next-${jobId}.png` })
+        console.log('📸 Screenshot saved: error-step14-next.png')
+      }
       
       throw error
     }

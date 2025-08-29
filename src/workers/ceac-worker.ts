@@ -365,6 +365,6 @@ process.on('unhandledRejection', (reason, promise) => {
 
 console.log('✅ CEAC Worker started successfully')
 console.log(`🔧 Worker concurrency: ${process.env.WORKER_CONCURRENCY || '2'}`)
-console.log(`🏢 Environment: ${process.env.NODE_ENV || 'development'}`)
+console.log(`🏢 Environment: ${process.env.NODE_ENV || 'production'}`)
 
 export { submissionWorker, statusWorker, cleanupWorker }

@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# artifacts and local storage
+/artifacts/
+*.har
+*.mp4
+*.webm

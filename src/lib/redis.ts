@@ -4,84 +4,115 @@ import Redis from 'ioredis'
  * Redis Connection Configuration
  * 
  * This file manages the Redis connection for BullMQ job queue.
- * Supports both local development and production environments.
+ * Uses singleton pattern to prevent multiple connections.
  */
 
-// Redis connection configuration
-const redisConfig = {
-  // Development: Local Redis instance
-  development: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD,
-    db: parseInt(process.env.REDIS_DB || '0'),
-    
-    // BullMQ requirement: maxRetriesPerRequest must be null
-    maxRetriesPerRequest: null,
-    enableOfflineQueue: false,
-    lazyConnect: true,
-    retryDelayOnFailover: 1000,
-    enableReadyCheck: false,
-  },
+// Singleton Redis instance
+let redisInstance: Redis | null = null
+
+// Redis connection configuration for Upstash
+function getRedisConfig() {
+  const host = process.env.REDIS_HOST || 'national-pig-20161.upstash.io'
+  const port = parseInt(process.env.REDIS_PORT || '6379')
+  const password = process.env.REDIS_PASSWORD || 'AU7BAAIncDExNDIzZThmMWEzNjE0YjNjOTM0MjJlMTcwMWJlMTJiOXAxMjAxNjE'
   
-  // Production: Redis instance with connection pooling
-  production: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-    password: process.env.REDIS_PASSWORD,
+  if (!host || !password) {
+    throw new Error('Redis configuration missing: REDIS_HOST and REDIS_PASSWORD must be set')
+  }
+  
+  return {
+    host,
+    port,
+    password,
     db: parseInt(process.env.REDIS_DB || '0'),
     
     // BullMQ requirement: maxRetriesPerRequest must be null
     maxRetriesPerRequest: null,
-    enableOfflineQueue: false,
-    lazyConnect: true,
-    retryDelayOnFailover: 1000,
-    enableReadyCheck: false,
     
-    // TLS for production Redis (if needed)
-    ...(process.env.REDIS_TLS === 'true' && {
-      tls: {
-        rejectUnauthorized: false
-      }
-    })
+    // Connection settings optimized for Upstash
+    connectTimeout: 60000,
+    commandTimeout: 30000,
+    lazyConnect: true,
+    
+    // Prevent automatic reconnection loops
+    retryDelayOnFailover: 5000,
+    retryDelayOnClusterDown: 2000,
+    enableOfflineQueue: true,
+    
+    // TLS required for Upstash
+    tls: {
+      rejectUnauthorized: false,
+      servername: host
+    },
+    
+    // Connection pool settings
+    family: 4,
+    keepAlive: true,
+    
+    // Custom reconnection logic
+    reconnectOnError: (err: any) => {
+      console.log('Redis reconnection check:', err.message)
+      // Only reconnect on specific errors
+      return err.message.includes('READONLY') || err.message.includes('MOVED')
+    }
   }
 }
 
-const environment = process.env.NODE_ENV || 'development'
-const config = environment === 'production' 
-  ? redisConfig.production 
-  : redisConfig.development
+// Create or get existing Redis connection
+function createRedisConnection(): Redis {
+  if (redisInstance) {
+    console.log('♻️ Reusing existing Redis connection')
+    return redisInstance
+  }
 
-// Create Redis connection
-export const redis = new Redis(config)
+  console.log('🔧 Creating new Redis connection to Upstash...')
+  const config = getRedisConfig()
+  redisInstance = new Redis(config as any)
 
-// Connection event handlers
-redis.on('connect', () => {
-  console.log(`✅ Redis connected in ${environment} mode`)
-})
+  // Connection event handlers
+  redisInstance.on('connect', () => {
+    console.log('✅ Redis connected to Upstash')
+  })
 
-redis.on('error', (error) => {
-  console.error('❌ Redis connection error:', error)
-})
+  redisInstance.on('error', (error) => {
+    console.error('❌ Redis connection error:', error.message)
+    // Don't recreate instance on every error to prevent spam
+  })
 
-redis.on('ready', () => {
-  console.log('🚀 Redis ready for operations')
-})
+  redisInstance.on('ready', () => {
+    console.log('🚀 Redis ready for operations')
+  })
 
-redis.on('close', () => {
-  console.log('📪 Redis connection closed')
-})
+  redisInstance.on('close', () => {
+    console.log('📪 Redis connection closed')
+  })
 
-// Graceful shutdown
+  redisInstance.on('reconnecting', (timeToReconnect: number) => {
+    console.log(`🔄 Redis reconnecting in ${timeToReconnect}ms...`)
+  })
+
+  return redisInstance
+}
+
+// Export the Redis connection
+export const redis = createRedisConnection()
+
+// Graceful shutdown handlers
 process.on('SIGINT', async () => {
   console.log('🔄 Gracefully shutting down Redis connection...')
-  await redis.quit()
+  if (redisInstance) {
+    await redisInstance.quit()
+    redisInstance = null
+  }
   process.exit(0)
 })
 
 process.on('SIGTERM', async () => {
   console.log('🔄 Gracefully shutting down Redis connection...')
-  await redis.quit()
+  if (redisInstance) {
+    await redisInstance.quit()
+    redisInstance = null
+  }
   process.exit(0)
 })
 

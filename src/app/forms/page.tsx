@@ -212,12 +212,12 @@ export default function FormsPage() {
       // The server can use the service role key to verify the user
       
       const requestBody = {
-        form_template_id: selectedTemplate.id,
-        form_data: formData,
-        extracted_data_summary: extractedData.map(item => ({
-          field_name: item.field_name,
-          field_value: item.field_value,
-          confidence_score: item.confidence_score
+          form_template_id: selectedTemplate.id,
+          form_data: formData,
+          extracted_data_summary: extractedData.map(item => ({
+            field_name: item.field_name,
+            field_value: item.field_value,
+            confidence_score: item.confidence_score
         })),
         embassy: 'Pakistan, Islamabad' // Default embassy
       }
@@ -251,7 +251,7 @@ export default function FormsPage() {
       } else {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`
         try {
-          const error = await response.json()
+        const error = await response.json()
           errorMessage = error.error || errorMessage
         } catch (parseError) {
           console.error('Failed to parse error response:', parseError)
@@ -315,7 +315,7 @@ export default function FormsPage() {
     }
   }
 
- 
+
   const renderField = (fieldName: string, fieldConfig: FormField, value: string = '') => {
     const { type, required, options } = fieldConfig
 
@@ -691,35 +691,35 @@ export default function FormsPage() {
                       )}
                     </div>
                   ) : (
-                    <form className="space-y-6">
-                      {selectedTemplate.fields && typeof selectedTemplate.fields === 'object' && 
-                        Object.entries(selectedTemplate.fields as FormFields).map(([section, sectionFields]) => (
-                          <div key={section} className="border-t border-gray-200 pt-6">
-                            <h4 className="text-md font-medium text-gray-900 mb-4 capitalize">
-                              {section.replace(/_/g, ' ')}
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {sectionFields && typeof sectionFields === 'object' && 
-                                Object.entries(sectionFields as FormSection).map(([fieldName, fieldConfig]) => {
-                                  const fullFieldName = `${section}.${fieldName}`
-                                  const value = formData[fullFieldName] || ''
-                                  
-                                  return (
-                                    <div key={fieldName}>
-                                      <label className="block text-sm font-medium text-gray-700 capitalize">
-                                        {fieldName.replace(/_/g, ' ')}
-                                        {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
-                                      </label>
-                                      {renderField(fullFieldName, fieldConfig, value)}
-                                    </div>
-                                  )
-                                })
-                              }
-                            </div>
+                  <form className="space-y-6">
+                    {selectedTemplate.fields && typeof selectedTemplate.fields === 'object' && 
+                      Object.entries(selectedTemplate.fields as FormFields).map(([section, sectionFields]) => (
+                        <div key={section} className="border-t border-gray-200 pt-6">
+                          <h4 className="text-md font-medium text-gray-900 mb-4 capitalize">
+                            {section.replace(/_/g, ' ')}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {sectionFields && typeof sectionFields === 'object' && 
+                              Object.entries(sectionFields as FormSection).map(([fieldName, fieldConfig]) => {
+                                const fullFieldName = `${section}.${fieldName}`
+                                const value = formData[fullFieldName] || ''
+                                
+                                return (
+                                  <div key={fieldName}>
+                                    <label className="block text-sm font-medium text-gray-700 capitalize">
+                                      {fieldName.replace(/_/g, ' ')}
+                                      {fieldConfig.required && <span className="text-red-500 ml-1">*</span>}
+                                    </label>
+                                    {renderField(fullFieldName, fieldConfig, value)}
+                                  </div>
+                                )
+                              })
+                            }
                           </div>
-                        ))
-                      }
-                    </form>
+                        </div>
+                      ))
+                    }
+                  </form>
                   )}
                 </div>
               ) : (

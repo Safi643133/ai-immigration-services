@@ -86,19 +86,17 @@ export class CeacAutomationService {
       }
 
       // Create browser context with proper settings
-      context = await this.browser.newContext({
+      const contextOptions: any = {
         viewport: { width: 1920, height: 1080 },
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         locale: 'en-US',
-        timezoneId: 'America/New_York',
-        recordVideo: {
-          dir: `./artifacts/${params.jobId}/videos/`,
-          size: { width: 1920, height: 1080 }
-        },
-        recordHar: {
-          path: `./artifacts/${params.jobId}/session.har`
-        }
-      })
+        timezoneId: 'America/New_York'
+      }
+
+      // Note: Video recording and HAR session recording removed permanently
+      console.log('🔧 Browser context created without recording (recording disabled)')
+
+      context = await this.browser.newContext(contextOptions)
 
       // Create page
       page = await context.newPage()
@@ -148,7 +146,7 @@ export class CeacAutomationService {
       await this.takeScreenshot(page, params.jobId, 'final-confirmation')
 
       // Save session artifacts
-      await this.saveSessionArtifacts(context, params.jobId)
+      await this.closeContext(context)
 
       // Mark job as completed
       await this.progressService.markJobCompleted(params.jobId, {
@@ -1422,34 +1420,19 @@ export class CeacAutomationService {
   }
 
   /**
-   * Save session artifacts (HAR, video, etc.)
+   * Close browser context
    */
-  private async saveSessionArtifacts(context: BrowserContext, jobId: string): Promise<void> {
+  private async closeContext(context: BrowserContext): Promise<void> {
     try {
-      // HAR file is automatically saved by Playwright
-      // Video is automatically saved by Playwright
+      console.log('🔄 Closing browser context...')
       
-      // Save page HTML
-      const pages = context.pages()
-      if (pages.length > 0) {
-        const html = await pages[0].content()
-        
-        const artifactStorage = getArtifactStorage()
-        await artifactStorage.storeArtifact(html, {
-          jobId,
-          type: 'html',
-          filename: 'final-page.html',
-          mimeType: 'text/html',
-          size: Buffer.from(html).length,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            page_url: pages[0].url()
-          }
-        })
-      }
-
+      // Close context
+      await context.close()
+      
+      console.log('✅ Browser context closed')
+      
     } catch (error) {
-      console.warn('Failed to save session artifacts:', error)
+      console.error('❌ Error closing context:', error)
     }
   }
 
@@ -6195,9 +6178,11 @@ export class CeacAutomationService {
     } catch (error) {
       console.error('❌ Error clicking Step 10 Next button:', error)
       
-      // Take a screenshot for debugging
-      await page.screenshot({ path: `error-step10-next-${jobId}.png` })
-      console.log('📸 Screenshot saved: error-step10-next.png')
+      // Take a screenshot for debugging (disabled for production)
+      if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+        await page.screenshot({ path: `error-step10-next-${jobId}.png` })
+        console.log('📸 Screenshot saved: error-step10-next.png')
+      }
       
       throw error
     }
@@ -6231,9 +6216,11 @@ export class CeacAutomationService {
     } catch (error) {
       console.error('❌ Error clicking Step 11 Next button:', error)
       
-      // Take a screenshot for debugging
-      await page.screenshot({ path: `error-step11-next-${jobId}.png` })
-      console.log('📸 Screenshot saved: error-step11-next.png')
+      // Take a screenshot for debugging (disabled for production)
+      if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+        await page.screenshot({ path: `error-step11-next-${jobId}.png` })
+        console.log('📸 Screenshot saved: error-step11-next.png')
+      }
       
       throw error
     }
@@ -10633,9 +10620,11 @@ export class CeacAutomationService {
     } catch (error) {
       console.error('❌ Error clicking Step 12 Next button:', error)
       
-      // Take a screenshot for debugging
-      await page.screenshot({ path: `error-step12-next-${jobId}.png` })
-      console.log('📸 Screenshot saved: error-step12-next.png')
+      // Take a screenshot for debugging (disabled for production)
+      if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+        await page.screenshot({ path: `error-step12-next-${jobId}.png` })
+        console.log('📸 Screenshot saved: error-step12-next.png')
+      }
       
       throw error
     }

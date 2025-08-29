@@ -179,7 +179,7 @@ export class CeacAutomationService {
       }
       
       // Save session artifacts
-      await this.browserManager.saveSessionArtifacts(context, params.jobId)
+      await this.browserManager.closeContext(context)
 
       return {
         success: true,

@@ -161,9 +161,10 @@ export async function GET(request: NextRequest) {
     // If specific step requested, return only that step's info
     if (step) {
       const stepNumber = parseInt(step)
+      const stepKey = stepNumber as keyof typeof formValidationInfo.required_fields_per_step
       const stepInfo = {
         step: stepNumber,
-        required_fields: formValidationInfo.required_fields_per_step[stepNumber] || [],
+        required_fields: formValidationInfo.required_fields_per_step[stepKey] || [],
         conditional_fields: formValidationInfo.conditional_fields,
         validation_rules: formValidationInfo.validation_rules
       }

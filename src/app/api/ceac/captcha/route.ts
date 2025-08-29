@@ -85,10 +85,9 @@ export async function GET(request: NextRequest) {
               const challenge = await progressService.getCaptchaChallenge(job.id)
               if (challenge && (activeOnly ? !challenge.solved : true)) {
                 return {
-                  job_id: job.id,
                   job_status: job.status,
                   embassy_location: job.embassy_location,
-                  created_at: job.created_at,
+                  job_created_at: job.created_at,
                   ...challenge
                 }
               }

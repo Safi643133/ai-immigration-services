@@ -311,15 +311,21 @@ export class Step16Handler extends BaseStepHandler {
           'Successfully navigated to Step 17',
           95
         )
-        await page.screenshot({ path: `after-step16-next-button-click-${jobId}.png` })
+        // Take screenshot after navigation (disabled for production)
+        if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+          await page.screenshot({ path: `after-step16-next-button-click-${jobId}.png` })
+        }
         console.log('✅ Successfully navigated to Step 17')
       } else {
         throw new Error('Step 16 Next button not found')
       }
     } catch (error) {
       console.error('❌ Error clicking Step 16 Next button:', error)
-      await page.screenshot({ path: `error-step16-next-${jobId}.png` })
-      console.log('📸 Screenshot saved: error-step16-next.png')
+      // Take a screenshot for debugging (disabled for production)
+      if (process.env.ENABLE_DEBUG_SCREENSHOTS === 'true') {
+        await page.screenshot({ path: `error-step16-next-${jobId}.png` })
+        console.log('📸 Screenshot saved: error-step16-next.png')
+      }
       throw error
     }
   }
