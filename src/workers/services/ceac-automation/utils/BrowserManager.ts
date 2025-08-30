@@ -21,18 +21,38 @@ export class BrowserManager {
     const isProduction = process.env.NODE_ENV === 'production'
     const isHeadless = isProduction || process.env.HEADLESS_BROWSER === 'true'
     
+    const args = [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--disable-gpu'
+    ]
+
+    // Add production-specific args to prevent extension interference
+    if (isProduction) {
+      args.push(
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-default-apps',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-features=TranslateUI',
+        '--disable-component-extensions-with-background-pages',
+        '--no-default-browser-check',
+        '--disable-sync',
+        '--metrics-recording-only',
+        '--no-report-upload'
+      )
+    }
+
     this.browser = await chromium.launch({
       headless: isHeadless, // Headless in production, visible in development
       slowMo: isProduction ? 0 : 500, // No slowMo in production for speed
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu'
-      ]
+      args
     })
 
     console.log(`✅ Browser initialized (${isHeadless ? 'headless' : 'visible'} mode)`)

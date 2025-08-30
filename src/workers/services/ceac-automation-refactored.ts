@@ -87,7 +87,12 @@ export class CeacAutomationService {
 
       // Wait for page reload after embassy selection
       console.log('⏳ Waiting for page reload after embassy selection...')
-      await page.waitForLoadState('networkidle')
+      try {
+        await page.waitForLoadState('networkidle', { timeout: 60000 })
+      } catch (error) {
+        console.log('⚠️ NetworkIdle timeout, trying domcontentloaded...')
+        await page.waitForLoadState('domcontentloaded', { timeout: 30000 })
+      }
       await page.waitForTimeout(3000) // Additional wait for any dynamic content
 
       // Handle CAPTCHA first (if present after embassy selection)

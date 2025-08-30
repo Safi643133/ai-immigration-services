@@ -110,7 +110,7 @@ const submissionWorker = new Worker(
 
       // Update job with results
       await updateJobStatus(job.data.jobId, {
-        status: 'completed',
+        status: 'succeeded',
         finished_at: new Date().toISOString(),
         ceac_application_id: result.applicationId,
         ceac_confirmation_id: result.confirmationId,

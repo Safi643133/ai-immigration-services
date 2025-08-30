@@ -8,8 +8,7 @@
     "start": "next start",
     "worker": "NODE_ENV=production tsx src/workers/ceac-worker.ts",
     "worker:dev": "NODE_ENV=development tsx watch src/workers/ceac-worker.ts",
-    "worker:prod": "NODE_ENV=production tsx src/workers/ceac-worker.ts",
-    "postinstall": "npx playwright install --with-deps chromium"
+    "worker:prod": "NODE_ENV=production tsx src/workers/ceac-worker.ts"
   },
   "dependencies": {
     "@aws-sdk/client-textract": "^3.844.0",
