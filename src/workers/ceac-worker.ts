@@ -110,7 +110,7 @@ const submissionWorker = new Worker(
 
       // Update job with results
       await updateJobStatus(job.data.jobId, {
-        status: 'succeeded',
+        status: 'failed',
         finished_at: new Date().toISOString(),
         ceac_application_id: result.applicationId,
         ceac_confirmation_id: result.confirmationId,
@@ -323,6 +323,8 @@ async function logJobEvent(jobId: string, event: {
         message: event.message,
         metadata: event.metadata || {}
       })
+
+      console.log('Logged job event:', event)
 
     if (error) {
       console.error('Failed to log job event:', error)

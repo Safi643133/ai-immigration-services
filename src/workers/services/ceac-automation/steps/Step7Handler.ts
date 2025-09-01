@@ -159,46 +159,80 @@ export class Step7Handler extends BaseStepHandler {
             case 'date_split':
               // Handle split date fields
               if (fieldMapping.dateSelectors) {
-                const date = new Date(fieldValue.toString())
-                const day = date.getDate().toString().padStart(2, '0')
-                const month = (date.getMonth() + 1).toString().padStart(2, '0') // Use numeric month (01-12)
-                const year = date.getFullYear().toString()
+                // Check if this is the expiration date field and if NA is selected
+                if (fieldMapping.fieldName === 'passport_info.passport_expiry_date') {
+                  const expiryNA = formData['passport_info.passport_expiry_na']
+                  
+                  if (expiryNA === true || fieldValue === 'N/A') {
+                    console.log(`📝 Expiration date NA is selected, skipping date fields`)
+                    continue
+                  }
+                }
                 
-                console.log(`📝 Splitting date ${fieldValue} into: day=${day}, month=${month}, year=${year}`)
-                
-                // Fill day dropdown
-                const dayElement = page.locator(fieldMapping.dateSelectors.day)
-                await dayElement.waitFor({ state: 'visible', timeout: 15000 })
-                await dayElement.selectOption({ value: day })
-                console.log(`✅ Filled day: ${day}`)
-                
-                // Small delay between date components
-                await page.waitForTimeout(500)
-                
-                // Fill month dropdown
-                const monthElement = page.locator(fieldMapping.dateSelectors.month)
-                await monthElement.waitFor({ state: 'visible', timeout: 15000 })
-                
-                // Get available options for debugging
-                const monthOptions = await monthElement.locator('option').all()
-                const availableMonths = await Promise.all(monthOptions.map(async (opt) => {
-                  const value = await opt.getAttribute('value')
-                  const text = await opt.textContent()
-                  return { value, text }
-                }))
-                console.log(`📝 Available month options:`, availableMonths)
-                
-                await monthElement.selectOption({ value: month })
-                console.log(`✅ Filled month: ${month}`)
-                
-                // Small delay between date components
-                await page.waitForTimeout(500)
-                
-                // Fill year input
-                const yearElement = page.locator(fieldMapping.dateSelectors.year)
-                await yearElement.waitFor({ state: 'visible', timeout: 15000 })
-                await yearElement.fill(year)
-                console.log(`✅ Filled year: ${year}`)
+                // Handle normal date filling (when NA is not selected)
+                try {
+                  const date = new Date(fieldValue.toString())
+                  
+                  // Check if the date is valid
+                  if (isNaN(date.getTime())) {
+                    console.log(`⚠️ Invalid date value: ${fieldValue}, skipping date field`)
+                    continue
+                  }
+                  
+                  const day = date.getDate().toString().padStart(2, '0')
+                  const month = (date.getMonth() + 1).toString().padStart(2, '0') // Use numeric month (01-12)
+                  const year = date.getFullYear().toString()
+                  
+                  console.log(`📝 Splitting date ${fieldValue} into: day=${day}, month=${month}, year=${year}`)
+                  
+                  // Fill day dropdown
+                  const dayElement = page.locator(fieldMapping.dateSelectors.day)
+                  if (await dayElement.isVisible({ timeout: 2000 })) {
+                    await dayElement.selectOption({ value: day })
+                    console.log(`✅ Filled day: ${day}`)
+                  } else {
+                    console.log(`ℹ️ Day dropdown not visible, skipping...`)
+                    continue
+                  }
+                  
+                  // Small delay between date components
+                  await page.waitForTimeout(500)
+                  
+                  // Fill month dropdown
+                  const monthElement = page.locator(fieldMapping.dateSelectors.month)
+                  if (await monthElement.isVisible({ timeout: 2000 })) {
+                    // Get available options for debugging
+                    const monthOptions = await monthElement.locator('option').all()
+                    const availableMonths = await Promise.all(monthOptions.map(async (opt) => {
+                      const value = await opt.getAttribute('value')
+                      const text = await opt.textContent()
+                      return { value, text }
+                    }))
+                    console.log(`📝 Available month options:`, availableMonths)
+                    
+                    await monthElement.selectOption({ value: month })
+                    console.log(`✅ Filled month: ${month}`)
+                  } else {
+                    console.log(`ℹ️ Month dropdown not visible, skipping...`)
+                    continue
+                  }
+                  
+                  // Small delay between date components
+                  await page.waitForTimeout(500)
+                  
+                  // Fill year input
+                  const yearElement = page.locator(fieldMapping.dateSelectors.year)
+                  if (await yearElement.isVisible({ timeout: 2000 })) {
+                    await yearElement.fill(year)
+                    console.log(`✅ Filled year: ${year}`)
+                  } else {
+                    console.log(`ℹ️ Year input not visible, skipping...`)
+                    continue
+                  }
+                } catch (error) {
+                  console.log(`ℹ️ Error filling date fields: ${error instanceof Error ? error.message : 'Unknown error'}`)
+                  continue
+                }
               }
               break
               

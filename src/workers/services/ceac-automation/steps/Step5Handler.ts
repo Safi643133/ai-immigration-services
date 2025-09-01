@@ -144,22 +144,32 @@ export class Step5Handler extends BaseStepHandler {
     // Handle "Are you or have you ever been a U.S. legal permanent resident?" radio button (independent)
     const permanentResident = formData['us_history.permanent_resident'];
     if (permanentResident) {
-      console.log(`📝 Filling permanent resident: ${permanentResident}`);
-      const radioValue = permanentResident === 'Yes' ? 'Y' : 'N';
-      const radioButtonId = `ctl00_SiteContentPlaceHolder_FormView1_rblPERM_RESIDENT_IND_${radioValue === 'Y' ? '0' : '1'}`;
-      const radioElement = page.locator(`#${radioButtonId}`);
-      await radioElement.waitFor({ state: 'visible', timeout: 15000 });
-      await radioElement.click();
-      console.log(`✅ Selected permanent resident: ${permanentResident} (${radioValue})`);
+      try {
+        console.log(`📝 Checking if permanent resident question is present...`);
+        const radioValue = permanentResident === 'Yes' ? 'Y' : 'N';
+        const radioButtonId = `ctl00_SiteContentPlaceHolder_FormView1_rblPERM_RESIDENT_IND_${radioValue === 'Y' ? '0' : '1'}`;
+        const radioElement = page.locator(`#${radioButtonId}`);
+        
+        // Check if element is visible before trying to interact with it
+        if (await radioElement.isVisible({ timeout: 2000 })) {
+          console.log(`✅ Permanent resident question is present, selecting: ${permanentResident}`);
+          await radioElement.click();
+          console.log(`✅ Selected permanent resident: ${permanentResident} (${radioValue})`);
 
-      // Wait for postback
-      await this.waitForPostback(page, 'permanent resident selection');
-      console.log('✅ Postback completed after permanent resident selection');
+          // Wait for postback
+          await this.waitForPostback(page, 'permanent resident selection');
+          console.log('✅ Postback completed after permanent resident selection');
 
-      // Handle conditional fields if Yes
-      if (permanentResident === 'Yes') {
-        console.log('📝 Permanent resident is Yes, filling explanation...');
-        await this.fillPermanentResidentFields(page, jobId, formData);
+          // Handle conditional fields if Yes
+          if (permanentResident === 'Yes') {
+            console.log('📝 Permanent resident is Yes, filling explanation...');
+            await this.fillPermanentResidentFields(page, jobId, formData);
+          }
+        } else {
+          console.log('ℹ️ Permanent resident question not present on this form, skipping...');
+        }
+      } catch (error) {
+        console.log('ℹ️ Error with permanent resident question, skipping: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
     }
 

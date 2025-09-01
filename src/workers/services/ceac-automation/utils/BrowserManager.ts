@@ -19,7 +19,7 @@ export class BrowserManager {
     
     // Run headless in production for better performance
     const isProduction = process.env.NODE_ENV === 'production'
-    const isHeadless = isProduction || process.env.HEADLESS_BROWSER === 'true'
+    const isHeadless = false
     
     const args = [
       '--no-sandbox',
