@@ -31,16 +31,15 @@ export const uploadDocument = async (
 }
 
 export const getUserDocuments = async (): Promise<Document[]> => {
-  const { data, error } = await supabase
-    .from('documents')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    throw error
+  const response = await fetch('/api/documents')
+  
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to fetch documents')
   }
 
-  return data || []
+  const result = await response.json()
+  return result.documents || []
 }
 
 export const getDocumentById = async (id: string): Promise<Document | null> => {
@@ -80,29 +79,13 @@ export const updateDocumentStatus = async (
 }
 
 export const deleteDocument = async (id: string): Promise<void> => {
-  // First get the document to get the file path
-  const document = await getDocumentById(id)
-  if (!document) {
-    throw new Error('Document not found')
-  }
+  const response = await fetch(`/api/documents/${id}`, {
+    method: 'DELETE'
+  })
 
-  // Delete from storage
-  const { error: storageError } = await supabase.storage
-    .from('documents')
-    .remove([document.file_path])
-
-  if (storageError) {
-    console.error('Storage delete error:', storageError)
-  }
-
-  // Delete from database
-  const { error: dbError } = await supabase
-    .from('documents')
-    .delete()
-    .eq('id', id)
-
-  if (dbError) {
-    throw dbError
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to delete document')
   }
 }
 

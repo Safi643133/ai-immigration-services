@@ -42,14 +42,17 @@ export default function DocumentsPage() {
     if (user && !authLoading) {
       loadDocuments()
     }
+  }, [user, authLoading, router])
 
+  // Separate cleanup effect for polling intervals
+  useEffect(() => {
     // Cleanup function to clear all polling intervals when component unmounts
     return () => {
       Object.values(pollingIntervals).forEach(interval => {
         clearInterval(interval)
       })
     }
-  }, [user, authLoading, router, pollingIntervals])
+  }, [pollingIntervals])
 
   const loadDocuments = async () => {
     try {
