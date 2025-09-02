@@ -12,9 +12,9 @@ let redisInstance: Redis | null = null
 
 // Redis connection configuration for Upstash
 function getRedisConfig() {
-  const host = process.env.REDIS_HOST || 'national-pig-20161.upstash.io'
+  const host = process.env.REDIS_HOST || 'crack-boa-59611.upstash.io'
   const port = parseInt(process.env.REDIS_PORT || '6379')
-  const password = process.env.REDIS_PASSWORD || 'AU7BAAIncDExNDIzZThmMWEzNjE0YjNjOTM0MjJlMTcwMWJlMTJiOXAxMjAxNjE'
+  const password = process.env.REDIS_PASSWORD || 'AejbAAIncDFhMWRjNzAwODA2Yjg0NWMxYWRiNWEzMmYxMTFmZjJmOHAxNTk2MTE'
   
   if (!host || !password) {
     throw new Error('Redis configuration missing: REDIS_HOST and REDIS_PASSWORD must be set')

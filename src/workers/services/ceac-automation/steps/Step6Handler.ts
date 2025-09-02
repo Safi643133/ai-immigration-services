@@ -61,6 +61,23 @@ export class Step6Handler extends BaseStepHandler {
       }
     }
 
+    // Social media validation
+    if (formData['contact_info.social_media_platform'] && 
+        formData['contact_info.social_media_platform'] !== 'NONE' && 
+        !formData['contact_info.social_media_identifier']?.trim()) {
+      errors.push('Social media identifier is required when a platform is selected')
+    }
+
+    // Additional social media validation
+    if (formData['contact_info.other_websites'] === 'Yes') {
+      if (!formData['contact_info.additional_social_platform']?.trim()) {
+        errors.push('Additional social media platform is required when other websites is Yes')
+      }
+      if (!formData['contact_info.additional_social_handle']?.trim()) {
+        errors.push('Additional social media handle is required when other websites is Yes')
+      }
+    }
+
     return { valid: errors.length === 0, errors }
   }
 
@@ -101,10 +118,28 @@ export class Step6Handler extends BaseStepHandler {
       const step6Fields = getStep6FieldMappings()
       console.log(`📝 Found ${step6Fields.length} Step 6 fields to fill`)
 
+      // Check if social media section exists before processing
+      const hasSocialMediaSection = await this.checkSocialMediaSectionExists(page)
+      if (!hasSocialMediaSection) {
+        console.log('⏭️ Social media section not found, will skip social media fields')
+      }
+
       // Fill main fields first
       for (const fieldMapping of step6Fields) {
         try {
           const fieldValue = formData[fieldMapping.fieldName]
+
+          // Skip social media fields if section doesn't exist
+          if (!hasSocialMediaSection && (
+            fieldMapping.fieldName === 'contact_info.social_media_platform' ||
+            fieldMapping.fieldName === 'contact_info.social_media_identifier' ||
+            fieldMapping.fieldName === 'contact_info.other_websites' ||
+            fieldMapping.fieldName === 'contact_info.additional_social_platform' ||
+            fieldMapping.fieldName === 'contact_info.additional_social_handle'
+          )) {
+            console.log(`⏭️ Skipping social media field ${fieldMapping.fieldName} - section not present on page`)
+            continue
+          }
 
           // Special handling for additional phone/email questions - only set default if field is completely missing
           if ((fieldMapping.fieldName === 'contact_info.other_phone_numbers' || 
@@ -267,10 +302,22 @@ export class Step6Handler extends BaseStepHandler {
     } else if (fieldMapping.fieldName === 'contact_info.other_phone_numbers') {
       console.log('📝 Handling additional phone numbers conditional fields...')
       await this.fillAdditionalPhoneNumberField(page, jobId, formData)
-    } else if (fieldMapping.fieldName === 'contact_info.other_email_addresses') {
-      console.log('📝 Handling additional email addresses conditional fields...')
-      await this.fillAdditionalEmailAddressField(page, jobId, formData)
-    }
+            } else if (fieldMapping.fieldName === 'contact_info.other_email_addresses') {
+          console.log('📝 Handling additional email addresses conditional fields...')
+          await this.fillAdditionalEmailAddressField(page, jobId, formData)
+        } else if (fieldMapping.fieldName === 'contact_info.social_media_platform') {
+          console.log('📝 Handling social media platform selection...')
+          await this.handleSocialMediaPlatformSelection(page, jobId, formData)
+        } else if (fieldMapping.fieldName === 'contact_info.other_websites') {
+          console.log('📝 Handling additional social media conditional fields...')
+          // Check if additional social media section exists before handling
+          const hasAdditionalSocialSection = await this.checkAdditionalSocialSectionExists(page)
+          if (hasAdditionalSocialSection) {
+            await this.handleAdditionalSocialMediaFields(page, jobId, formData)
+          } else {
+            console.log('⏭️ Additional social media section not found, skipping...')
+          }
+        }
     
     console.log(`✅ Completed conditional fields for: ${fieldMapping.fieldName}`)
   }
@@ -416,5 +463,103 @@ export class Step6Handler extends BaseStepHandler {
     }
     
     console.log('✅ Completed filling additional email address field')
+  }
+
+  /**
+   * Handle social media platform selection and identifier
+   */
+  private async handleSocialMediaPlatformSelection(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Checking if social media section exists...')
+    
+    // Check if social media section exists on the page
+    const socialMediaSection = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlSocial_ctl00_ddlSocialMedia')
+    const isSectionVisible = await socialMediaSection.isVisible({ timeout: 5000 }).catch(() => false)
+    
+    if (!isSectionVisible) {
+      console.log('⏭️ Social media section not found on this page, skipping...')
+      return
+    }
+    
+    console.log('✅ Social media section found, proceeding with platform selection...')
+    
+    // Wait for social media fields to be fully loaded
+    await page.waitForTimeout(2000)
+    
+    const platform = formData['contact_info.social_media_platform']
+    if (platform && platform !== 'NONE') {
+      // Fill social media identifier
+      const identifier = formData['contact_info.social_media_identifier']
+      if (identifier) {
+        console.log(`📝 Filling social media identifier: ${identifier}`)
+        const identifierElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlSocial_ctl00_tbxSocialMediaIdent')
+        await identifierElement.waitFor({ state: 'visible', timeout: 15000 })
+        await identifierElement.fill(identifier.toString())
+        console.log(`✅ Filled social media identifier: ${identifier}`)
+      } else {
+        console.log('⚠️ Social media platform selected but no identifier provided')
+      }
+    } else {
+      console.log('📝 No social media platform selected or NONE selected, skipping identifier')
+    }
+    
+    console.log('✅ Completed social media platform selection handling')
+  }
+
+  /**
+   * Handle additional social media fields
+   */
+  private async handleAdditionalSocialMediaFields(page: Page, jobId: string, formData: DS160FormData): Promise<void> {
+    console.log('📝 Handling additional social media fields...')
+    
+    // Wait for additional social media fields to appear
+    await page.waitForTimeout(3000)
+    
+    const additionalPlatform = formData['contact_info.additional_social_platform']
+    if (additionalPlatform) {
+      console.log(`📝 Filling additional social media platform: ${additionalPlatform}`)
+      const platformElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlAddSocial_ctl00_tbxAddSocialPlat')
+      await platformElement.waitFor({ state: 'visible', timeout: 15000 })
+      await platformElement.fill(additionalPlatform.toString())
+      console.log(`✅ Filled additional social media platform: ${additionalPlatform}`)
+    }
+    
+    const additionalHandle = formData['contact_info.additional_social_handle']
+    if (additionalHandle) {
+      console.log(`📝 Filling additional social media handle: ${additionalHandle}`)
+      const handleElement = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlAddSocial_ctl00_tbxAddSocialHand')
+      await handleElement.waitFor({ state: 'visible', timeout: 15000 })
+      await handleElement.fill(additionalHandle.toString())
+      console.log(`✅ Filled additional social media handle: ${additionalHandle}`)
+    }
+    
+    console.log('✅ Completed additional social media fields handling')
+  }
+
+  /**
+   * Check if social media section exists on the current page
+   */
+  private async checkSocialMediaSectionExists(page: Page): Promise<boolean> {
+    try {
+      const socialMediaSection = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_dtlSocial_ctl00_ddlSocialMedia')
+      const isVisible = await socialMediaSection.isVisible({ timeout: 3000 }).catch(() => false)
+      return isVisible
+    } catch (error) {
+      console.log('⚠️ Error checking social media section existence:', error)
+      return false
+    }
+  }
+
+  /**
+   * Check if additional social media section exists on the current page
+   */
+  private async checkAdditionalSocialSectionExists(page: Page): Promise<boolean> {
+    try {
+      const additionalSocialSection = page.locator('#ctl00_SiteContentPlaceHolder_FormView1_upnlAdditionalSocial')
+      const isVisible = await additionalSocialSection.isVisible({ timeout: 3000 }).catch(() => false)
+      return isVisible
+    } catch (error) {
+      console.log('⚠️ Error checking additional social media section existence:', error)
+      return false
+    }
   }
 }

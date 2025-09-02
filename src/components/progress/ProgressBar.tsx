@@ -94,7 +94,7 @@ export default function ProgressBar({
           color: 'bg-gray-500',
           textColor: 'text-gray-600',
           icon: '❓',
-          label: 'Unknown'
+          label: 'Running'
         }
     }
   }

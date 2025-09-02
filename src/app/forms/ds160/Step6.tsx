@@ -28,9 +28,28 @@ export default function Step6({ formData, onChange }: StepProps) {
   const otherWebsites = (get('contact_info.other_websites') || '').toString().toLowerCase() === 'yes'
 
   const socialProviders = [
-    'ASK.FM', 'DOUBAN', 'FACEBOOK', 'FLICKR', 'GOOGLE+', 'INSTAGRAM', 'LINKEDIN', 'MYSPACE', 'PINTEREST',
-    'QZONE (QQ)', 'REDDIT', 'SINA WEIBO', 'TENCENT WEIBO', 'TUMBLR', 'TWITTER', 'TWOO', 'VINE', 'VKONTAKTE (VK)',
-    'YOUKU', 'YOUTUBE', 'NONE'
+    { label: '- Select One -', value: '' },
+    { label: 'ASK.FM', value: 'ASKF' },
+    { label: 'DOUBAN', value: 'DUBN' },
+    { label: 'FACEBOOK', value: 'FCBK' },
+    { label: 'FLICKR', value: 'FLKR' },
+    { label: 'GOOGLE+', value: 'GOGL' },
+    { label: 'INSTAGRAM', value: 'INST' },
+    { label: 'LINKEDIN', value: 'LINK' },
+    { label: 'MYSPACE', value: 'MYSP' },
+    { label: 'PINTEREST', value: 'PTST' },
+    { label: 'QZONE (QQ)', value: 'QZNE' },
+    { label: 'REDDIT', value: 'RDDT' },
+    { label: 'SINA WEIBO', value: 'SWBO' },
+    { label: 'TENCENT WEIBO', value: 'TWBO' },
+    { label: 'TUMBLR', value: 'TUMB' },
+    { label: 'TWITTER', value: 'TWIT' },
+    { label: 'TWOO', value: 'TWOO' },
+    { label: 'VINE', value: 'VINE' },
+    { label: 'VKONTAKTE (VK)', value: 'VKON' },
+    { label: 'YOUKU', value: 'YUKU' },
+    { label: 'YOUTUBE', value: 'YTUB' },
+    { label: 'NONE', value: 'NONE' }
   ]
 
   return (
@@ -423,8 +442,7 @@ export default function Step6({ formData, onChange }: StepProps) {
               onChange={(e) => set('contact_info.social_media_platform', e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             >
-              <option value="">Select</option>
-              {socialProviders.map(p => <option key={p} value={p}>{p}</option>)}
+              {socialProviders.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           </div>
           <div>
@@ -433,8 +451,13 @@ export default function Step6({ formData, onChange }: StepProps) {
               type="text"
               value={get('contact_info.social_media_identifier')}
               onChange={(e) => set('contact_info.social_media_identifier', e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className={`mt-1 block w-full rounded-md border-gray-300 p-3 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${
+                get('contact_info.social_media_platform') === 'NONE' || !get('contact_info.social_media_platform') 
+                  ? 'bg-gray-100 cursor-not-allowed' 
+                  : ''
+              }`}
               placeholder='Enter identifier'
+              disabled={get('contact_info.social_media_platform') === 'NONE' || !get('contact_info.social_media_platform')}
             />
           </div>
         </div>

@@ -194,9 +194,9 @@ export default function ProgressStatus({
         }
       default:
         return {
-          title: 'Unknown Step',
+          title: 'Running',
           description: 'Processing automation step',
-          icon: '❓'
+          icon: '⚡'
         }
     }
   }

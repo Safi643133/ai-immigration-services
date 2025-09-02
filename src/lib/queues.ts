@@ -22,7 +22,7 @@ const defaultQueueConfig = {
   defaultJobOptions: {
     removeOnComplete: 50,  // Keep last 50 completed jobs
     removeOnFail: 100,     // Keep last 100 failed jobs
-    attempts: 3,           // Retry failed jobs 3 times
+    attempts: 1,           // No retries - process job only once
     backoff: {
       type: 'exponential' as const,
       delay: 2000,         // Start with 2 second delay
@@ -106,7 +106,7 @@ export class JobManager {
         jobId,
         priority: data.priority || 1,
         delay: 0,
-        attempts: 3,
+        attempts: 1,        // No retries - process job only once
         removeOnComplete: 10,
         removeOnFail: 50,
       }
@@ -125,7 +125,7 @@ export class JobManager {
       {
         jobId,
         delay: 60000, // Check after 1 minute
-        attempts: 2,
+        attempts: 1,  // No retries - process job only once
       }
     )
   }

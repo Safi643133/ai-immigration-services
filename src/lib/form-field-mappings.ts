@@ -1739,6 +1739,69 @@ export const DS160_FORM_MAPPINGS: FormSection[] = [
              }
            ]
          }
+       },
+       // Social Media Section
+       {
+         fieldName: 'contact_info.social_media_platform',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlSocial_ctl00_ddlSocialMedia',
+         type: 'select',
+         required: false,
+         valueMapping: {
+           'ASK.FM': 'ASKF',
+           'DOUBAN': 'DUBN',
+           'FACEBOOK': 'FCBK',
+           'FLICKR': 'FLKR',
+           'GOOGLE+': 'GOGL',
+           'INSTAGRAM': 'INST',
+           'LINKEDIN': 'LINK',
+           'MYSPACE': 'MYSP',
+           'PINTEREST': 'PTST',
+           'QZONE (QQ)': 'QZNE',
+           'REDDIT': 'RDDT',
+           'SINA WEIBO': 'SWBO',
+           'TENCENT WEIBO': 'TWBO',
+           'TUMBLR': 'TUMB',
+           'TWITTER': 'TWIT',
+           'TWOO': 'TWOO',
+           'VINE': 'VINE',
+           'VKONTAKTE (VK)': 'VKON',
+           'YOUKU': 'YUKU',
+           'YOUTUBE': 'YTUB',
+           'NONE': 'NONE'
+         }
+       },
+       {
+         fieldName: 'contact_info.social_media_identifier',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlSocial_ctl00_tbxSocialMediaIdent',
+         type: 'text',
+         required: false
+       },
+       {
+         fieldName: 'contact_info.other_websites',
+         selector: '#ctl00_SiteContentPlaceHolder_FormView1_rblAddSocial',
+         type: 'radio',
+         required: false,
+         valueMapping: {
+           'Yes': 'Y',
+           'No': 'N'
+         },
+         conditional: {
+           value: 'Y',
+           showFields: [
+             {
+               fieldName: 'contact_info.additional_social_platform',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlAddSocial_ctl00_tbxAddSocialPlat',
+               type: 'text',
+               required: false
+             },
+             {
+               fieldName: 'contact_info.additional_social_handle',
+               selector: '#ctl00_SiteContentPlaceHolder_FormView1_dtlAddSocial_ctl00_tbxAddSocialHand',
+               type: 'text',
+               required: false
+             }
+           ]
+         }
        }
      ]
    },
