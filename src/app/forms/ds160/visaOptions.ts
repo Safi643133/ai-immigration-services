@@ -1,5 +1,4 @@
 export const visaClassOptions = [
-  'PLEASE SELECT A VISA CLASS',
   'FOREIGN GOVERNMENT OFFICIAL (A)',
   'TEMP. BUSINESS OR PLEASURE VISITOR (B)',
   'ALIEN IN TRANSIT (C)',
@@ -24,12 +23,11 @@ export const visaClassOptions = [
   'VICTIM OF TRAFFICKING (T)',
   'VICTIM OF CRIMINAL ACTIVITY (U)',
   'NAFTA PROFESSIONAL (TD/TN)',
-  'PAROLE BENEFICIARY (PARCIS)'
+  'PAROLE-BEN'
 ]
 
 export const specifyMap: Record<string, string[]> = {
   'FOREIGN GOVERNMENT OFFICIAL (A)': [
-    'PLEASE SELECT',
     'AMBASSADOR OR PUBLIC MINISTER (A1)',
     'CHILD OF AN A1 (A1)',
     'CAREER DIPLOMAT/CONSULAR OFFICER (A1)',
@@ -42,13 +40,11 @@ export const specifyMap: Record<string, string[]> = {
     'SPOUSE OF AN A3 (A3)'
   ],
   'TEMP. BUSINESS OR PLEASURE VISITOR (B)': [
-    'PLEASE SELECT',
     'BUSINESS OR TOURISM (TEMPORARY VISITOR) (B1/B2)',
     'BUSINESS/CONFERENCE (B1)',
     'TOURISM/MEDICAL TREATMENT (B2)'
   ],
   'ALIEN IN TRANSIT (C)': [
-    'PLEASE SELECT',
     'CREWMEMBER IN TRANSIT (C1/D)',
     'TRANSIT (C1)',
     'TRANSIT TO U.N. HEADQUARTERS (C2)',
@@ -60,19 +56,16 @@ export const specifyMap: Record<string, string[]> = {
     'LIGHTERING CREWMEMBER IN TRANSIT (C4/D3)'
   ],
   'CNMI WORKER OR INVESTOR (CW/E2C)': [
-    'PLEASE SELECT',
     'CNMI TEMPORARY WORKER (CW1)',
     'CHILD OF CW1 (CW2)',
     'SPOUSE OF CW1 (CW2)',
     'CNMI LONG TERM INVESTOR (E2C)'
   ],
   'CREWMEMBER (D)': [
-    'PLEASE SELECT',
     'CREWMEMBER (D)',
     'LIGHTERING CREWMEMBER (D3)'
   ],
   'TREATY TRADER OR INVESTOR (E)': [
-    'PLEASE SELECT',
     'CHILD OF AN E1 (E1)',
     'EXECUTIVE/MGR/ESSENTIAL EMP (E1)',
     'SPOUSE OF AN E1 (E1)',
@@ -85,13 +78,11 @@ export const specifyMap: Record<string, string[]> = {
     'SPOUSE OF AN E3 (E3D)'
   ],
   'ACADEMIC OR LANGUAGE STUDENT (F)': [
-    'PLEASE SELECT',
     'STUDENT (F1)',
     'CHILD OF AN F1 (F2)',
     'SPOUSE OF AN F1 (F2)'
   ],
   'INTERNATIONAL ORGANIZATION REP./EMP. (G)': [
-    'PLEASE SELECT',
     'CHILD OF A G1 (G1)',
     'PRINCIPAL REPRESENTATIVE (G1)',
     'SPOUSE OF A G1 (G1)',
@@ -110,7 +101,6 @@ export const specifyMap: Record<string, string[]> = {
     'SPOUSE OF A G5 (G5)'
   ],
   'TEMPORARY WORKER (H)': [
-    'PLEASE SELECT',
     'SPECIALTY OCCUPATION (H1B)',
     'CHILEAN SPEC. OCCUPATION (H1B1)',
     'SINGAPOREAN SPEC. OCCUPATION (H1B1)',
@@ -122,44 +112,37 @@ export const specifyMap: Record<string, string[]> = {
     'SPOUSE OF AN H (H4)'
   ],
   'FOREIGN MEDIA REPRESENTATIVE (I)': [
-    'PLEASE SELECT',
     'CHILD OF AN I (I)',
     'FOREIGN MEDIA REPRESENTATIVE (I)',
     'SPOUSE OF AN I (I)'
   ],
   'EXCHANGE VISITOR (J)': [
-    'PLEASE SELECT',
     'EXCHANGE VISITOR (J1)',
     'CHILD OF A J1 (J2)',
     'SPOUSE OF A J1 (J2)'
   ],
   'FIANCÉ(E) OR SPOUSE OF A U.S. CITIZEN (K)': [
-    'PLEASE SELECT',
     'FIANCÉ(E) OF A U.S. CITIZEN (K1)',
     'CHILD OF A K1 (K2)',
     'SPOUSE OF A U.S. CITIZEN (K3)',
     'CHILD OF A K3 (K4)'
   ],
   'INTRACOMPANY TRANSFEREE (L)': [
-    'PLEASE SELECT',
     'INTRACOMPANY TRANSFEREE (L1)',
     'CHILD OF A L1 (L2)',
     'SPOUSE OF A L1 (L2)'
   ],
   'VOCATIONAL/NONACADEMIC STUDENT (M)': [
-    'PLEASE SELECT',
     'STUDENT (M1)',
     'CHILD OF M1 (M2)',
     'SPOUSE OF M1 (M2)',
     'COMMUTER STUDENT (M3)'
   ],
   'OTHER (N)': [
-    'PLEASE SELECT',
     'CHILD OF A N8 (N9)',
     'PARENT OF CERTAIN SPECIAL IMMIGRANT (N8)'
   ],
   'NATO STAFF (NATO)': [
-    'PLEASE SELECT',
     'CHILD OF NATO 1 (NATO1)',
     'PRINCIPAL REPRESENTATIVE (NATO1)',
     'SPOUSE OF NATO1 (NATO1)',
@@ -183,14 +166,12 @@ export const specifyMap: Record<string, string[]> = {
     'SPOUSE OF NATO7 (NATO7)'
   ],
   'ALIEN WITH EXTRAORDINARY ABILITY (O)': [
-    'PLEASE SELECT',
     'EXTRAORDINARY ABILITY (O1)',
     'ALIEN ACCOMPANYING/ASSISTING (O2)',
     'CHILD OF O1 OR O2 (O3)',
     'SPOUSE OF O1 OR O2 (O3)'
   ],
   'INTERNATIONALLY RECOGNIZED ALIEN (P)': [
-    'PLEASE SELECT',
     'INTERNATIONALLY RECOGNIZED ALIEN (P1)',
     'ARTIST/ENTERTAINER EXCHANGE PROG. (P2)',
     'ARTIST/ENTERTAINER IN CULTURAL PROG. (P3)',
@@ -198,21 +179,17 @@ export const specifyMap: Record<string, string[]> = {
     'SPOUSE OF P1, P2 OR P3 (P4)'
   ],
   'CULTURAL EXCHANGE VISITOR (Q)': [
-    'PLEASE SELECT',
     'CULTURAL EXCHANGE VISITOR (Q1)'
   ],
   'RELIGIOUS WORKER (R)': [
-    'PLEASE SELECT',
     'RELIGIOUS WORKER (R1)',
     'CHILD OF R1 (R2)',
     'SPOUSE OF R1 (R2)'
   ],
   'INFORMANT OR WITNESS (S)': [
-    'PLEASE SELECT',
     'FAMILY MEMBER OF AN INFORMANT (S7)'
   ],
   'VICTIM OF TRAFFICKING (T)': [
-    'PLEASE SELECT',
     'VICTIM OF TRAFFICKING (T1)',
     'SPOUSE OF T1 (T2)',
     'CHILD OF T1 (T3)',
@@ -221,7 +198,6 @@ export const specifyMap: Record<string, string[]> = {
     'ADULT/MINOR CHILD OF A DERIV BEN OF A T1 (T6)'
   ],
   'VICTIM OF CRIMINAL ACTIVITY (U)': [
-    'PLEASE SELECT',
     'VICTIM OF CRIME (U1)',
     'SPOUSE OF U1 (U2)',
     'CHILD OF U1 (U3)',
@@ -229,13 +205,11 @@ export const specifyMap: Record<string, string[]> = {
     'SIBLING OF U1 (U5)'
   ],
   'NAFTA PROFESSIONAL (TD/TN)': [
-    'PLEASE SELECT',
     'CHILD OF TN (TD)',
     'SPOUSE OF TN (TD)'
   ],
-  'PAROLE BENEFICIARY (PARCIS)': [
-    'PLEASE SELECT',
-    'PARCIS (USCIS APPROVED PAROLE)'
+  'PAROLE-BEN': [
+    'PRL-PARCIS'
   ]
 }
 

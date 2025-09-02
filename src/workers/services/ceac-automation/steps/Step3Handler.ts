@@ -248,6 +248,9 @@ export class Step3Handler extends BaseStepHandler {
               'TRAINEE (H3)': 'H3-H3',
               'CHILD OF AN H3 (H4)': 'H4-CH',
               'SPOUSE OF AN H3 (H4)': 'H4-SP'
+            },
+            'PAROLE-BEN': {
+              'PRL-PARCIS': 'PRL-PARCIS'
             }
           }
           
