@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [initialSessionLoaded, setInitialSessionLoaded] = useState(false)
 
   useEffect(() => {
     // Get initial session
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         console.log('Initial session loaded, setting loading to false')
+        setInitialSessionLoaded(true)
         setLoading(false)
       } catch (error) {
         console.error('Error in getInitialSession:', error)
@@ -73,6 +75,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.id)
+        
+        // Don't process auth changes until initial session is loaded
+        if (!initialSessionLoaded) {
+          console.log('Skipping auth change - initial session not loaded yet')
+          return
+        }
+        
         setUser(session?.user ?? null)
         
         if (session?.user) {
@@ -92,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     )
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [initialSessionLoaded])
 
   const signIn = async () => {
     try {

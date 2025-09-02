@@ -15,6 +15,8 @@ export default function Home() {
       } else {
         router.push('/login')
       }
+    } else {
+      router.push('/dashboard')
     }
   }, [user, loading, router])
 
